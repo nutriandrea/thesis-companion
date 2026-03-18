@@ -70,9 +70,11 @@ export default function SocratePage() {
     Promise.all([
       supabase.from("memory_entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
-    ]).then(([memRes, sugRes]) => {
+      supabase.from("student_profiles" as any).select("severita, thesis_stage").eq("user_id", user.id).single(),
+    ]).then(([memRes, sugRes, spRes]) => {
       if (memRes.data) memoryRef.current = memRes.data;
       if ((sugRes as any).data) suggestionsRef.current = (sugRes as any).data;
+      if ((spRes as any).data?.severita != null) setSeverita((spRes as any).data.severita);
     });
 
     supabase.from("socrate_messages").select("*").eq("user_id", user.id).order("created_at", { ascending: true })
