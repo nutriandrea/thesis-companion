@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles } from "lucide-react";
+import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles, Zap } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import companiesData from "@/data/companies.json";
+import supervisorsData from "@/data/supervisors.json";
+import topicsData from "@/data/topics.json";
+import type { Company, Supervisor, Topic } from "@/types/data";
 
 interface ChatMsg {
   id: string;
