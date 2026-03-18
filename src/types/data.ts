@@ -18,7 +18,7 @@ export interface Supervisor {
   about: string | null; objectives: string[]; fieldIds: string[];
 }
 export interface Company {
-  id: string; name: string; description: string; about: string; size: string; domains: string[];
+  id: string; name: string; description: string; about: string | null; size: string; domains: string[];
 }
 export interface Expert {
   id: string; firstName: string; lastName: string; email: string; title: string;
