@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import AppLayout from "@/components/layout/AppLayout";
 import AuthPage from "@/pages/AuthPage";
-import OnboardingFlow from "@/components/journey/OnboardingFlow";
+import SocrateIntro from "@/components/journey/SocrateIntro";
 import DashboardPage from "@/pages/DashboardPage";
 import SocratePage from "@/pages/SocratePage";
 import EditorPage from "@/pages/EditorPage";
@@ -15,7 +16,8 @@ import MemoryPage from "@/pages/MemoryPage";
 import PathPage from "@/pages/PathPage";
 
 function AppContent() {
-  const { user, profile, loading, activeSection } = useApp();
+  const { user, profile, loading, activeSection, setActiveSection } = useApp();
+  const [interactionMode, setInteractionMode] = useState<"voice" | "text" | null>(null);
 
   if (loading) {
     return (
@@ -28,16 +30,23 @@ function AppContent() {
     );
   }
 
-  // Not logged in
   if (!user) return <AuthPage />;
 
-  // Logged in but no onboarding
-  if (profile && !profile.onboarding_done) return <OnboardingFlow />;
+  // Onboarding not done → cinematic Socrate intro
+  if (profile && !profile.onboarding_done) {
+    return (
+      <SocrateIntro
+        onComplete={(mode) => {
+          setInteractionMode(mode);
+          setActiveSection("socrate");
+        }}
+      />
+    );
+  }
 
-  // Main app
   const pages: Record<string, React.ReactNode> = {
     dashboard: <DashboardPage />,
-    socrate: <SocratePage />,
+    socrate: <SocratePage mode={interactionMode || "text"} />,
     editor: <EditorPage />,
     suggestions: <SuggestionsPage />,
     contacts: <ContactsPage />,
@@ -49,7 +58,7 @@ function AppContent() {
     paths: <PathPage />,
   };
 
-  return <AppLayout>{pages[activeSection] || <SocratePage />}</AppLayout>;
+  return <AppLayout>{pages[activeSection] || <SocratePage mode={interactionMode || "text"} />}</AppLayout>;
 }
 
 export default function Index() {
