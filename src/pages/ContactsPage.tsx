@@ -90,12 +90,18 @@ export default function ContactsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-accent/10"><Contact className="w-5 h-5 text-accent" /></div>
-        <div>
-          <h1 className="text-xl font-bold font-display">Rubrica Contatti</h1>
-          <p className="text-sm text-muted-foreground">{supervisors.length} professori · {experts.length} esperti · {professorSuggestions.length} suggeriti · {supervisorAffinities.length} affinità</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-accent/10"><Contact className="w-5 h-5 text-accent" /></div>
+          <div>
+            <h1 className="text-xl font-bold font-display">Rubrica Contatti</h1>
+            <p className="text-sm text-muted-foreground">{supervisors.length} professori · {experts.length} esperti · {supervisorAffinities.length} affinità</p>
+          </div>
         </div>
+        <Button onClick={filterDatabase} disabled={filterLoading} variant="outline" size="sm" className="gap-1.5">
+          {filterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-ai" />}
+          {filterLoading ? "Filtrando..." : "Filtra con Socrate"}
+        </Button>
       </div>
 
       {/* Socrate Professor Suggestions Banner */}
