@@ -301,6 +301,7 @@ export type Database = {
           reasoning_style: string | null
           research_maturity: string | null
           sections_progress: Json | null
+          severita: number | null
           strengths: Json | null
           thesis_quality_score: number | null
           thesis_stage: string | null
@@ -328,6 +329,7 @@ export type Database = {
           reasoning_style?: string | null
           research_maturity?: string | null
           sections_progress?: Json | null
+          severita?: number | null
           strengths?: Json | null
           thesis_quality_score?: number | null
           thesis_stage?: string | null
@@ -355,6 +357,7 @@ export type Database = {
           reasoning_style?: string | null
           research_maturity?: string | null
           sections_progress?: Json | null
+          severita?: number | null
           strengths?: Json | null
           thesis_quality_score?: number | null
           thesis_stage?: string | null
