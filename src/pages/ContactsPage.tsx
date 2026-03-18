@@ -202,6 +202,7 @@ export default function ContactsPage() {
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-sm truncate">{contact.name}</h3>
                       {affinity && <span className="text-xs font-bold text-ai shrink-0">{affinity.score}%</span>}
+                      {affinity?.matched_traits?.includes("exploration") && <Badge variant="secondary" className="text-[9px] bg-warning/10 text-warning border-0 shrink-0"><Compass className="w-2.5 h-2.5 mr-0.5 inline" />Esplora</Badge>}
                       {isMatch && !affinity && <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="Match" />}
                       <Badge variant={contact.type === "supervisor" ? "default" : "secondary"} className="text-[10px] shrink-0">
                         {contact.type === "supervisor" ? "Prof" : "Expert"}
