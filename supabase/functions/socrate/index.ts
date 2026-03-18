@@ -322,6 +322,73 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       });
     }
 
+    // ─── GET SESSION STATS ───
+    if (currentMode === "get_session_stats") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const [eventsRes, profileRes, msgCountRes] = await Promise.all([
+        supabase.from("session_events").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(100),
+        supabase.from("student_profiles").select("overall_completion, estimated_days_remaining, sections_progress, last_active_at, thesis_stage, total_exchanges, total_extractions").eq("user_id", userId).single(),
+        supabase.from("socrate_messages").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      ]);
+
+      const events = eventsRes.data || [];
+      const studentProfile = profileRes.data;
+      const totalMessages = msgCountRes.count || 0;
+
+      // Compute stats from events
+      const chatEvents = events.filter((e: any) => e.event_type === "chat_exchange");
+      const latexEvents = events.filter((e: any) => e.event_type === "latex_analysis");
+      const fusionEvents = events.filter((e: any) => e.event_type === "fusion_analysis");
+
+      // Activity by day (last 14 days)
+      const activityByDay: Record<string, number> = {};
+      const now = new Date();
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        activityByDay[d.toISOString().split("T")[0]] = 0;
+      }
+      events.forEach((e: any) => {
+        const day = e.created_at.split("T")[0];
+        if (activityByDay[day] !== undefined) activityByDay[day]++;
+      });
+
+      // Session durations (group events by day)
+      const uniqueSessionDays = new Set(events.map((e: any) => e.created_at.split("T")[0]));
+
+      return new Response(JSON.stringify({
+        stats: {
+          totalMessages,
+          totalChatSessions: chatEvents.length,
+          totalLatexAnalyses: latexEvents.length,
+          totalFusionAnalyses: fusionEvents.length,
+          totalSessions: uniqueSessionDays.size,
+          totalExtractions: studentProfile?.total_extractions || 0,
+        },
+        progress: {
+          overallCompletion: studentProfile?.overall_completion || 0,
+          estimatedDaysRemaining: studentProfile?.estimated_days_remaining,
+          sectionsProgress: studentProfile?.sections_progress || {},
+          thesisStage: studentProfile?.thesis_stage,
+          lastActiveAt: studentProfile?.last_active_at,
+        },
+        activityByDay,
+        recentEvents: events.slice(0, 20).map((e: any) => ({
+          type: e.event_type,
+          section: e.section,
+          data: e.event_data,
+          createdAt: e.created_at,
+        })),
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ─── ANALYZE FULL: Fusion Engine ───
     if (currentMode === "analyze_full") {
       if (!userId) {
