@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import AppLayout from "@/components/layout/AppLayout";
 import AuthPage from "@/pages/AuthPage";
@@ -16,15 +15,14 @@ import MemoryPage from "@/pages/MemoryPage";
 import PathPage from "@/pages/PathPage";
 
 function AppContent() {
-  const { user, profile, loading, activeSection, setActiveSection } = useApp();
-  const [interactionMode, setInteractionMode] = useState<"voice" | "text" | null>(null);
+  const { user, profile, loading, activeSection, setActiveSection, setInputMode } = useApp();
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-muted-foreground">Caricamento...</p>
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-muted-foreground">Caricamento...</p>
         </div>
       </div>
     );
@@ -32,12 +30,11 @@ function AppContent() {
 
   if (!user) return <AuthPage />;
 
-  // Onboarding not done → cinematic Socrate intro
   if (profile && !profile.onboarding_done) {
     return (
       <SocrateIntro
         onComplete={(mode) => {
-          setInteractionMode(mode);
+          setInputMode(mode);
           setActiveSection("socrate");
         }}
       />
@@ -46,7 +43,7 @@ function AppContent() {
 
   const pages: Record<string, React.ReactNode> = {
     dashboard: <DashboardPage />,
-    socrate: <SocratePage mode={interactionMode || "text"} />,
+    socrate: <SocratePage />,
     editor: <EditorPage />,
     suggestions: <SuggestionsPage />,
     contacts: <ContactsPage />,
@@ -58,7 +55,7 @@ function AppContent() {
     paths: <PathPage />,
   };
 
-  return <AppLayout>{pages[activeSection] || <SocratePage mode={interactionMode || "text"} />}</AppLayout>;
+  return <AppLayout>{pages[activeSection] || <SocratePage />}</AppLayout>;
 }
 
 export default function Index() {

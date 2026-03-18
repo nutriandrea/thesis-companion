@@ -5,6 +5,7 @@ import type { RoadmapPhase } from "@/types/data";
 import { mockRoadmap } from "@/data/mock-roadmap";
 
 export type JourneyState = "lost" | "vague_idea" | "topic_chosen" | "finding_contacts" | "writing";
+export type InputMode = "voice" | "text";
 
 export interface Profile {
   first_name: string;
@@ -26,10 +27,15 @@ interface AppState {
   loading: boolean;
   activeSection: string;
   setActiveSection: (s: string) => void;
+  inputMode: InputMode;
+  setInputMode: (m: InputMode) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (v: boolean) => void;
   roadmap: RoadmapPhase[];
   toggleTask: (phaseId: string, taskId: string) => void;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   signOut: () => Promise<void>;
+  overallProgress: number;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -45,14 +51,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("socrate");
+  const [inputMode, setInputMode] = useState<InputMode>("text");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [roadmap, setRoadmap] = useState<RoadmapPhase[]>(mockRoadmap);
+
+  const totalTasks = roadmap.flatMap(p => p.tasks).length;
+  const completedTasks = roadmap.flatMap(p => p.tasks).filter(t => t.completed).length;
+  const overallProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Auth listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer profile fetch to avoid deadlock
         setTimeout(() => fetchProfile(session.user.id), 0);
       } else {
         setProfile(null);
@@ -94,7 +105,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         socrate_done: data.socrate_done,
       });
 
-      // Navigate based on state
       if (!data.onboarding_done) {
         setActiveSection("onboarding");
       } else if (!data.socrate_done) {
@@ -132,7 +142,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       user, profile, loading, activeSection, setActiveSection,
-      roadmap, toggleTask, updateProfile, signOut,
+      inputMode, setInputMode, sidebarCollapsed, setSidebarCollapsed,
+      roadmap, toggleTask, updateProfile, signOut, overallProgress,
     }}>
       {children}
     </AppContext.Provider>
