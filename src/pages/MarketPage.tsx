@@ -39,6 +39,7 @@ export default function MarketPage() {
   const { suggestions: marketSuggestions } = useSocrateSuggestions(user?.id, ["company", "career"]);
   const { affinities: topicAffinities } = useAffinityScores(user?.id, "topic");
   const { affinities: companyAffinities } = useAffinityScores(user?.id, "company");
+  const { filterDatabase, loading: filterLoading } = useDatabaseFilter();
 
   const topicAffinityMap = useMemo(() => new Map(topicAffinities.map(a => [a.entity_id, a])), [topicAffinities]);
   const companyAffinityMap = useMemo(() => new Map(companyAffinities.map(a => [a.entity_id, a])), [companyAffinities]);
