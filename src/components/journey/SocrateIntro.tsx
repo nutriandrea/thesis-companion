@@ -1,17 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp, JourneyState } from "@/contexts/AppContext";
-import { Button } from "@/components/ui/button";
-import { Mic, PenTool, ArrowRight } from "lucide-react";
+import { Mic, PenTool } from "lucide-react";
 import socrateImg from "@/assets/socrate.png";
-
-const journeyOptions: { state: JourneyState; label: string }[] = [
-  { state: "lost", label: "Non ho ancora idea" },
-  { state: "vague_idea", label: "Ho un'idea vaga" },
-  { state: "topic_chosen", label: "Ho scelto il topic" },
-  { state: "finding_contacts", label: "Cerco contatti e supervisore" },
-  { state: "writing", label: "Sto già scrivendo" },
-];
 
 type InteractionMode = "voice" | "text";
 
@@ -19,235 +10,243 @@ interface Props {
   onComplete: (mode: InteractionMode) => void;
 }
 
+const roleOptions = [
+  { id: "triennale", label: "Triennale" },
+  { id: "magistrale", label: "Magistrale" },
+  { id: "ciclo_unico", label: "Ciclo Unico" },
+  { id: "dottorando", label: "Dottorando" },
+  { id: "erasmus", label: "Erasmus" },
+  { id: "lavoratore", label: "Lavoratore" },
+  { id: "fuori_corso", label: "Fuori corso" },
+  { id: "altro", label: "Altro" },
+];
+
+const journeyOptions: { state: JourneyState; label: string }[] = [
+  { state: "lost", label: "Non ho ancora idea" },
+  { state: "vague_idea", label: "Ho un'idea vaga" },
+  { state: "topic_chosen", label: "Ho scelto il topic" },
+  { state: "finding_contacts", label: "Cerco supervisore" },
+];
+
+const subtitles = [
+  { text: "Non ti dirò cosa fare.", delay: 0, duration: 2500 },
+  { text: "Voglio tirare fuori la tua tesi.", delay: 2800, duration: 2500 },
+  { text: "Sei pronto per il duello?", delay: 5600, duration: 2000 },
+];
+
 export default function SocrateIntro({ onComplete }: Props) {
   const { profile, updateProfile } = useApp();
-  const [phase, setPhase] = useState(0); // 0=black, 1=socrate appears, 2=intro text, 3=collect info, 4=mode choice
-  const [university, setUniversity] = useState(profile?.university || "");
-  const [selectedState, setSelectedState] = useState<JourneyState | null>(
-    (profile?.journey_state as JourneyState) || null
-  );
+  const [phase, setPhase] = useState(0);
+  // 0=CHI SEI, 1=STATO DI AVANZAMENTO, 2=Socrate reveal+subtitles, 3=COME VUOI COMUNICARE, 4=Voice orb
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState<JourneyState | null>(null);
+  const [currentSubtitle, setCurrentSubtitle] = useState("");
 
-  // Phase progression: black → socrate image → text → form
+  // Phase 2: Socrate subtitles auto-advance
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 800);   // show socrate
-    const t2 = setTimeout(() => setPhase(2), 2400);  // show intro text
-    const t3 = setTimeout(() => setPhase(3), 5000);  // show form
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
+    if (phase !== 2) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-  const handleContinueToChoice = async () => {
-    if (!university.trim() || !selectedState) return;
-    await updateProfile({ university, journey_state: selectedState });
-    setPhase(4);
+    subtitles.forEach((sub) => {
+      timers.push(setTimeout(() => setCurrentSubtitle(sub.text), sub.delay));
+    });
+
+    // Auto-advance after subtitles
+    timers.push(setTimeout(() => setPhase(3), 8500));
+
+    return () => timers.forEach(clearTimeout);
+  }, [phase]);
+
+  const handleRoleSelect = (roleId: string) => {
+    setSelectedRole(roleId);
+    // Small delay then advance
+    setTimeout(() => setPhase(1), 400);
+  };
+
+  const handleStateSelect = async (state: JourneyState) => {
+    setSelectedState(state);
+    const role = roleOptions.find(r => r.id === selectedRole);
+    await updateProfile({
+      degree: role?.label || "",
+      journey_state: state,
+    });
+    setTimeout(() => setPhase(2), 400);
   };
 
   const handleModeChoice = async (mode: InteractionMode) => {
-    await updateProfile({ onboarding_done: true });
-    onComplete(mode);
+    if (mode === "voice") {
+      setPhase(4);
+      // Small delay then complete
+      setTimeout(async () => {
+        await updateProfile({ onboarding_done: true });
+        onComplete(mode);
+      }, 2000);
+    } else {
+      await updateProfile({ onboarding_done: true });
+      onComplete(mode);
+    }
   };
 
-  const name = profile?.first_name || "studente";
-
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0a] overflow-hidden flex items-center justify-center">
-      {/* Subtle ambient glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#1a1510]/40 blur-[120px]" />
-      </div>
-
+    <div className="fixed inset-0 z-50 bg-black overflow-hidden flex items-center justify-center">
       <AnimatePresence mode="wait">
-        {/* Phase 0: Pure black */}
+
+        {/* Phase 0: CHI SEI? */}
         {phase === 0 && (
           <motion.div
-            key="black"
-            initial={{ opacity: 1 }}
+            key="chi-sei"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0"
-          />
+            transition={{ duration: 0.6 }}
+            className="flex flex-col items-center px-6"
+          >
+            <h2 className="text-white text-2xl font-bold tracking-wider uppercase mb-12">
+              CHI SEI?
+            </h2>
+            <div className="grid grid-cols-2 gap-4 max-w-sm w-full">
+              {roleOptions.map((role) => (
+                <button
+                  key={role.id}
+                  onClick={() => handleRoleSelect(role.id)}
+                  className={`px-6 py-4 text-sm font-medium transition-all ${
+                    selectedRole === role.id
+                      ? "bg-white text-black"
+                      : "bg-[#1a1a1a] text-white/80 hover:bg-[#252525]"
+                  }`}
+                >
+                  {role.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
         )}
 
-        {/* Phase 1-2: Socrate appears */}
-        {(phase === 1 || phase === 2) && (
+        {/* Phase 1: STATO DI AVANZAMENTO */}
+        {phase === 1 && (
+          <motion.div
+            key="stato"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col items-center px-6"
+          >
+            <h2 className="text-white text-2xl font-bold tracking-wider uppercase mb-10 text-center max-w-[200px] leading-relaxed">
+              STATO DI AVANZAMENTO
+            </h2>
+            <div className="flex flex-col gap-5 w-[200px]">
+              {journeyOptions.map((opt) => (
+                <button
+                  key={opt.state}
+                  onClick={() => handleStateSelect(opt.state)}
+                  className={`px-6 py-4 text-sm font-medium transition-all ${
+                    selectedState === opt.state
+                      ? "bg-white text-black"
+                      : "bg-[#1a1a1a] text-white/80 hover:bg-[#252525]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Phase 2: Socrate reveal with subtitles */}
+        {phase === 2 && (
           <motion.div
             key="socrate-reveal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.5 }}
-            className="flex flex-col items-center text-center px-6"
+            className="relative w-full h-full flex items-center justify-center"
           >
-            {/* Socrate portrait */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 2, ease: "easeOut" }}
-              className="relative w-40 h-40 md:w-52 md:h-52 rounded-full overflow-hidden mb-8 ring-1 ring-[#c9a96e]/20"
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10" />
-              <img src={socrateImg} alt="Socrate" className="w-full h-full object-cover" />
-            </motion.div>
-
-            {/* Intro text - appears in phase 2 */}
-            <AnimatePresence>
-              {phase >= 2 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1.2, delay: 0.2 }}
-                  className="max-w-lg space-y-4"
-                >
-                  <p className="text-[#c9a96e]/90 text-sm tracking-[0.2em] uppercase font-sans">
-                    Il Duello Socratico
-                  </p>
-                  <h1 className="text-[#e8dcc8] text-2xl md:text-3xl font-display leading-snug">
-                    {name}, benvenuto.
-                  </h1>
-                  <p className="text-[#a09882] text-base md:text-lg leading-relaxed font-sans">
-                    Non ti dirò cosa fare.<br />
-                    Voglio tirare fuori <em className="text-[#c9a96e]">la tua tesi</em>.
-                  </p>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.5 }}
+            <img
+              src={socrateImg}
+              alt="Socrate"
+              className="max-w-[500px] w-full h-auto object-contain"
+            />
+            {/* Subtitles */}
+            <div className="absolute bottom-[12%] left-0 right-0 flex justify-center">
+              <AnimatePresence mode="wait">
+                {currentSubtitle && (
+                  <motion.p
+                    key={currentSubtitle}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-white text-lg md:text-xl font-bold tracking-wide text-center px-4"
                   >
-                    <Button
-                      onClick={() => setPhase(3)}
-                      className="mt-6 bg-transparent border border-[#c9a96e]/30 text-[#c9a96e] hover:bg-[#c9a96e]/10 rounded-full px-8 py-2 text-sm"
-                    >
-                      Continua <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    {currentSubtitle}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         )}
 
-        {/* Phase 3: Collect university & state */}
+        {/* Phase 3: COME VUOI COMUNICARE */}
         {phase === 3 && (
           <motion.div
-            key="collect"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col items-center px-6 max-w-md w-full"
-          >
-            {/* Small Socrate avatar */}
-            <div className="w-16 h-16 rounded-full overflow-hidden mb-6 ring-1 ring-[#c9a96e]/20">
-              <img src={socrateImg} alt="Socrate" className="w-full h-full object-cover" />
-            </div>
-
-            <p className="text-[#a09882] text-sm mb-2 font-sans text-center">
-              Socrate vuole conoscerti.
-            </p>
-            <h2 className="text-[#e8dcc8] text-xl font-display mb-8 text-center">
-              Dimmi di te, {name}.
-            </h2>
-
-            <div className="w-full space-y-5">
-              {/* University */}
-              <div>
-                <label className="text-[#a09882] text-xs font-sans mb-1.5 block tracking-wide uppercase">
-                  Università
-                </label>
-                <input
-                  value={university}
-                  onChange={e => setUniversity(e.target.value)}
-                  placeholder="es. Politecnico di Milano"
-                  className="w-full bg-[#151515] border border-[#2a2a2a] rounded-lg px-4 py-3 text-sm text-[#e8dcc8] placeholder-[#555] focus:outline-none focus:border-[#c9a96e]/40 font-sans"
-                />
-              </div>
-
-              {/* Journey state */}
-              <div>
-                <label className="text-[#a09882] text-xs font-sans mb-2 block tracking-wide uppercase">
-                  Dove ti trovi?
-                </label>
-                <div className="space-y-2">
-                  {journeyOptions.map(opt => (
-                    <button
-                      key={opt.state}
-                      onClick={() => setSelectedState(opt.state)}
-                      className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-sans transition-all border ${
-                        selectedState === opt.state
-                          ? "border-[#c9a96e]/50 bg-[#c9a96e]/10 text-[#c9a96e]"
-                          : "border-[#2a2a2a] bg-[#151515] text-[#a09882] hover:border-[#3a3a3a]"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                onClick={handleContinueToChoice}
-                disabled={!university.trim() || !selectedState}
-                className="w-full mt-2 bg-[#c9a96e] text-[#0a0a0a] hover:bg-[#d4b87d] rounded-lg font-sans font-semibold disabled:opacity-30"
-              >
-                Continua <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Phase 4: Voice or Text choice */}
-        {phase === 4 && (
-          <motion.div
             key="mode-choice"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col items-center px-6 max-w-lg w-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col items-center px-6"
           >
-            <div className="w-20 h-20 rounded-full overflow-hidden mb-6 ring-1 ring-[#c9a96e]/20">
-              <img src={socrateImg} alt="Socrate" className="w-full h-full object-cover" />
-            </div>
-
-            <p className="text-[#c9a96e]/80 text-xs tracking-[0.2em] uppercase font-sans mb-2">
-              Scegli la tua arma
-            </p>
-            <h2 className="text-[#e8dcc8] text-2xl font-display mb-2 text-center">
-              Come vuoi affrontare il duello?
+            <h2 className="text-white text-2xl font-bold tracking-wider uppercase mb-10 text-center max-w-[220px] leading-relaxed">
+              COME VUOI COMUNICARE
             </h2>
-            <p className="text-[#a09882] text-sm mb-10 text-center font-sans max-w-sm">
-              Puoi parlare con Socrate a voce, oppure sfidarlo per iscritto. 
-              In entrambi i casi, non aspettarti risposte facili.
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-              {/* Voice */}
+            <div className="flex gap-6">
               <button
                 onClick={() => handleModeChoice("voice")}
-                className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-[#2a2a2a] bg-[#111] hover:border-[#c9a96e]/40 hover:bg-[#c9a96e]/5 transition-all"
+                className="bg-[#1a1a1a] hover:bg-[#252525] transition-all px-8 py-4 flex flex-col items-center gap-2"
               >
-                <div className="w-14 h-14 rounded-full bg-[#c9a96e]/10 flex items-center justify-center group-hover:bg-[#c9a96e]/20 transition-colors">
-                  <Mic className="w-6 h-6 text-[#c9a96e]" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[#e8dcc8] font-semibold text-sm font-sans">Parlare</p>
-                  <p className="text-[#777] text-xs font-sans mt-1">Dialogo a voce</p>
-                </div>
+                <Mic className="w-6 h-6 text-white/80" />
+                <span className="text-white/80 text-sm font-medium">Parlare</span>
               </button>
-
-              {/* Text */}
               <button
                 onClick={() => handleModeChoice("text")}
-                className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-[#2a2a2a] bg-[#111] hover:border-[#c9a96e]/40 hover:bg-[#c9a96e]/5 transition-all"
+                className="bg-[#1a1a1a] hover:bg-[#252525] transition-all px-8 py-4 flex flex-col items-center gap-2"
               >
-                <div className="w-14 h-14 rounded-full bg-[#c9a96e]/10 flex items-center justify-center group-hover:bg-[#c9a96e]/20 transition-colors">
-                  <PenTool className="w-6 h-6 text-[#c9a96e]" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[#e8dcc8] font-semibold text-sm font-sans">Scrivere</p>
-                  <p className="text-[#777] text-xs font-sans mt-1">Chat testuale</p>
-                </div>
+                <PenTool className="w-6 h-6 text-white/80" />
+                <span className="text-white/80 text-sm font-medium">Scrivere</span>
               </button>
             </div>
           </motion.div>
         )}
+
+        {/* Phase 4: Voice orb */}
+        {phase === 4 && (
+          <motion.div
+            key="voice-orb"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+            className="flex flex-col items-center"
+          >
+            {/* Gradient orb */}
+            <div className="relative w-72 h-72 md:w-96 md:h-96 mb-8">
+              <div
+                className="w-full h-full rounded-full animate-pulse"
+                style={{
+                  background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 40%, #7b61ff 70%, #4a90d9 100%)",
+                  filter: "blur(1px)",
+                }}
+              />
+              {/* Subtle ring lines */}
+              <div className="absolute inset-0 rounded-full border border-white/5" />
+            </div>
+            <h2 className="text-white text-xl font-bold tracking-wider uppercase text-center leading-relaxed">
+              SPEAK WITH<br />ME
+            </h2>
+          </motion.div>
+        )}
+
       </AnimatePresence>
     </div>
   );
