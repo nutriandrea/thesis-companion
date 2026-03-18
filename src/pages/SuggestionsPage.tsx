@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Lightbulb, GraduationCap, Building2, Search, BookOpen, Globe, Sparkles, Target, Briefcase, Zap, FileText, RefreshCw } from "lucide-react";
+import { Lightbulb, GraduationCap, Building2, Search, BookOpen, Globe, Sparkles, Target, Briefcase, Zap, FileText, RefreshCw, Loader2, Filter as FilterIcon } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
+import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
 import topicsData from "@/data/topics.json";
 import companiesData from "@/data/companies.json";
 import fieldsData from "@/data/fields.json";
@@ -41,6 +43,7 @@ export default function SuggestionsPage() {
   // Realtime suggestions & affinities
   const { suggestions: aiSuggestions, loading, refresh } = useSocrateSuggestions(user?.id);
   const { affinities } = useAffinityScores(user?.id, "topic");
+  const { filterDatabase, loading: filterLoading } = useDatabaseFilter();
 
   const tabFilters: Record<TabFilter, string[]> = {
     all: [],
@@ -102,6 +105,10 @@ export default function SuggestionsPage() {
         <button onClick={refresh} className="ml-auto p-2 rounded-lg hover:bg-muted transition-colors" title="Aggiorna">
           <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? "animate-spin" : ""}`} />
         </button>
+        <Button onClick={filterDatabase} disabled={filterLoading} variant="outline" size="sm" className="gap-1.5">
+          {filterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FilterIcon className="w-3.5 h-3.5 text-ai" />}
+          {filterLoading ? "Filtrando..." : "Filtra Database"}
+        </Button>
       </div>
 
       {/* Stats Banner */}

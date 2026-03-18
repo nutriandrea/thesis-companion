@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Contact, Search, Mail, Building2, GraduationCap, Filter, Sparkles } from "lucide-react";
+import { Contact, Search, Mail, Building2, GraduationCap, Filter, Sparkles, Loader2, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
+import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
 import supervisorsData from "@/data/supervisors.json";
 import expertsData from "@/data/experts.json";
 import companiesData from "@/data/companies.json";
@@ -39,6 +41,7 @@ export default function ContactsPage() {
   // Realtime suggestions & affinities
   const { suggestions: professorSuggestions } = useSocrateSuggestions(user?.id, ["professor"]);
   const { affinities: supervisorAffinities } = useAffinityScores(user?.id, "supervisor");
+  const { filterDatabase, loading: filterLoading } = useDatabaseFilter();
 
   const allContacts: ContactType[] = useMemo(() => {
     const sups = supervisors.map(s => ({
@@ -87,12 +90,18 @@ export default function ContactsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-accent/10"><Contact className="w-5 h-5 text-accent" /></div>
-        <div>
-          <h1 className="text-xl font-bold font-display">Rubrica Contatti</h1>
-          <p className="text-sm text-muted-foreground">{supervisors.length} professori · {experts.length} esperti · {professorSuggestions.length} suggeriti · {supervisorAffinities.length} affinità</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-accent/10"><Contact className="w-5 h-5 text-accent" /></div>
+          <div>
+            <h1 className="text-xl font-bold font-display">Rubrica Contatti</h1>
+            <p className="text-sm text-muted-foreground">{supervisors.length} professori · {experts.length} esperti · {supervisorAffinities.length} affinità</p>
+          </div>
         </div>
+        <Button onClick={filterDatabase} disabled={filterLoading} variant="outline" size="sm" className="gap-1.5">
+          {filterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-ai" />}
+          {filterLoading ? "Filtrando..." : "Filtra con Socrate"}
+        </Button>
       </div>
 
       {/* Socrate Professor Suggestions Banner */}
@@ -193,6 +202,7 @@ export default function ContactsPage() {
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-sm truncate">{contact.name}</h3>
                       {affinity && <span className="text-xs font-bold text-ai shrink-0">{affinity.score}%</span>}
+                      {affinity?.matched_traits?.includes("exploration") && <Badge variant="secondary" className="text-[9px] bg-warning/10 text-warning border-0 shrink-0"><Compass className="w-2.5 h-2.5 mr-0.5 inline" />Esplora</Badge>}
                       {isMatch && !affinity && <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="Match" />}
                       <Badge variant={contact.type === "supervisor" ? "default" : "secondary"} className="text-[10px] shrink-0">
                         {contact.type === "supervisor" ? "Prof" : "Expert"}
