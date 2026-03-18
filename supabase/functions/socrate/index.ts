@@ -1533,11 +1533,43 @@ Chiama TUTTE le funzioni disponibili.`,
     // ─── REPORT MODE ───
     let systemPrompt = "";
 
-    // Load student profile for richer context
+    // Load student profile for richer context + compute severity
     let studentProfileCtx = "";
+    let severita = 1.0; // Default: maximum severity
+    let currentStage = "exploration";
     if (userId) {
       const { data: sp } = await supabase.from("student_profiles").select("*").eq("user_id", userId).single();
       if (sp) {
+        currentStage = sp.thesis_stage || "exploration";
+
+        // ─── COMPUTE SEVERITY DYNAMICALLY ───
+        // Based on thesis stage, completion, and overall maturity
+        const stageSeverity: Record<string, number> = {
+          exploration: 1.0,    // Maximum: student needs strong provocation
+          topic_chosen: 0.85,  // Still high: validate the choice
+          structuring: 0.7,    // Moderate: help organize
+          writing: 0.55,       // Lower: constructive feedback
+          revision: 0.4,       // Lowest: collaborative refinement
+        };
+        severita = stageSeverity[currentStage] ?? 1.0;
+
+        // Adjust based on completion (more complete = slightly less severe)
+        const completion = sp.overall_completion || 0;
+        if (completion > 50) severita = Math.max(0.3, severita - 0.1);
+        if (completion > 80) severita = Math.max(0.25, severita - 0.1);
+
+        // Adjust based on research maturity
+        if (sp.research_maturity === "advanced") severita = Math.max(0.3, severita - 0.1);
+        else if (sp.research_maturity === "beginner") severita = Math.min(1.0, severita + 0.1);
+
+        // Round to 2 decimals
+        severita = Math.round(severita * 100) / 100;
+
+        // Persist the computed severity if it changed
+        if (sp.severita !== severita) {
+          await supabase.from("student_profiles").update({ severita }).eq("user_id", userId);
+        }
+
         studentProfileCtx = `
 PROFILO INTELLETTUALE (dal database):
 - Stile di ragionamento: ${sp.reasoning_style || "non ancora valutato"}
@@ -1550,9 +1582,41 @@ PROFILO INTELLETTUALE (dal database):
 - Fase tesi: ${sp.thesis_stage}
 - Punteggio tesi: ${sp.thesis_quality_score}/10
 - Sessioni totali: ${sp.total_exchanges} scambi, ${sp.total_extractions} analisi
+- SEVERITÀ ATTUALE: ${severita} (1.0=massima, 0.0=minima)
 `;
       }
     }
+
+    // Build severity instructions block
+    const severityInstructions = severita >= 0.8
+      ? `LIVELLO SEVERITÀ: ${severita} (ALTO — Fase iniziale/esplorazione)
+- Sii SPIETATO e PROVOCATORIO. Non accettare risposte vaghe.
+- Attacca ogni fragilità logica senza pietà.
+- Usa ironia socratica tagliente.
+- Demolisci certezze infondate con controargomenti devastanti.
+- "Non mi stai convincendo. Perché ESATTAMENTE dovrei crederti?"
+- "Questo è un pensiero pigro. Scava più a fondo."
+- Ogni risposta deve contenere almeno una domanda che mette in crisi.`
+      : severita >= 0.6
+      ? `LIVELLO SEVERITÀ: ${severita} (MODERATO — Fase strutturazione)
+- Mantieni tono critico ma costruttivo.
+- Sfida la struttura e la logica, ma offri anche direzioni.
+- "Capisco il tuo punto, MA hai considerato...?"
+- Alterna provocazione a suggerimenti strutturali.
+- Chiedi di giustificare le scelte metodologiche.`
+      : severita >= 0.4
+      ? `LIVELLO SEVERITÀ: ${severita} (COLLABORATIVO — Fase scrittura)
+- Sii un co-pensatore più che un avversario.
+- Critica costruttiva focalizzata su miglioramenti concreti.
+- "Ottimo inizio. Ora come possiamo rafforzare questa argomentazione?"
+- Suggerisci formulazioni alternative, connessioni tra sezioni.
+- Mantieni domande stimolanti ma supportive.`
+      : `LIVELLO SEVERITÀ: ${severita} (SUPPORTIVO — Fase revisione)
+- Guida gentile verso il perfezionamento.
+- Focus su coerenza, completezza, e qualità finale.
+- "Quasi perfetto. L'unico punto debole che vedo è..."
+- Aiuta a lucidare, non a demolire.
+- Celebra i progressi, poi suggerisci micro-miglioramenti.`;
 
     if (currentMode === "report") {
       systemPrompt = `Sei Socrate. Genera un REPORT DI SESSIONE completo.
