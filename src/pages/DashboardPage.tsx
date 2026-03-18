@@ -177,6 +177,42 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Top Affinities */}
+      {topAffinities.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-ai" />
+              <h2 className="text-sm font-bold font-display text-foreground">Affinità Calcolate</h2>
+            </div>
+            <button onClick={() => setActiveSection("market")} className="text-xs text-accent hover:underline">Vedi tutte →</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {topAffinities.slice(0, 6).map((aff, i) => {
+              const Icon = aff.entity_type === "company" ? Building2 : aff.entity_type === "supervisor" ? GraduationCap : Target;
+              const typeLabel = aff.entity_type === "company" ? "Azienda" : aff.entity_type === "supervisor" ? "Professore" : "Topic";
+              return (
+                <motion.div key={aff.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
+                  className="bg-card border rounded-lg p-3 hover:shadow-sm transition-shadow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">{typeLabel}</span>
+                    <span className="ml-auto text-sm font-bold text-accent">{aff.score}%</span>
+                  </div>
+                  <p className="text-xs font-medium text-foreground truncate">{aff.entity_name}</p>
+                  <Progress value={aff.score} className="h-1 mt-1.5" />
+                  {aff.matched_traits?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {aff.matched_traits.slice(0, 2).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Next Tasks */}
       <div>
         <div className="flex items-center justify-between mb-3">
