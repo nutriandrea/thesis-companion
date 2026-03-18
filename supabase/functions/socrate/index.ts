@@ -637,6 +637,9 @@ Chiama TUTTE le funzioni disponibili.`,
         );
       }
 
+      // Log fusion event
+      await logEvent("fusion_analysis", { profileUpdated: !!profileUpdate, affinities: affinities.length, suggestions: newSuggestions.length }, "socrate");
+
       return new Response(JSON.stringify({
         profileUpdate,
         affinities,
