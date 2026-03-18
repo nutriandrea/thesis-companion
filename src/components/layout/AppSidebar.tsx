@@ -1,51 +1,85 @@
 import { useApp } from "@/contexts/AppContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  LayoutDashboard, MessageCircle, BookOpen, Lightbulb,
-  Contact, TrendingUp, User, Route,
-  GitBranch, Zap, Brain, Lock, LogOut,
-  ChevronLeft, ChevronRight, Mic, PenTool
+  Compass, Search, Map, FlaskConical, FileText,
+  MessageCircle, BookOpen, Lightbulb,
+  Contact, TrendingUp, User, Brain,
+  Lock, LogOut, ChevronLeft, ChevronRight,
+  Mic, PenTool, Zap, Target, Users, Database,
+  CalendarDays, BookMarked, HeartHandshake
 } from "lucide-react";
 import socrateImg from "@/assets/socrate.png";
 
-const navSections = [
-  {
-    label: "Percorso",
-    items: [
-      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { id: "paths", label: "Percorsi AI", icon: Route, badge: "AI" },
-      { id: "futures", label: "Futuri", icon: GitBranch, badge: "AI" },
-    ],
-  },
-  {
-    label: "Strumenti",
-    items: [
-      { id: "socrate", label: "Socrate", icon: MessageCircle, badge: "AI" },
-      { id: "editor", label: "Editor", icon: BookOpen },
-      { id: "actions", label: "Azioni", icon: Zap, badge: "AI" },
-    ],
-  },
-  {
-    label: "Esplora",
-    items: [
-      { id: "suggestions", label: "Suggerimenti", icon: Lightbulb },
-      { id: "contacts", label: "Rubrica", icon: Contact },
-      { id: "market", label: "Mercato", icon: TrendingUp },
-    ],
-  },
-  {
-    label: "Personale",
-    items: [
-      { id: "memory", label: "Memoria", icon: Brain },
-      { id: "profile", label: "Profilo", icon: User },
-    ],
-  },
+// 5 thesis journey stages
+const journeyStages = [
+  { id: "orientation", label: "Orientamento", icon: Compass, weeks: "1-4" },
+  { id: "topic-search", label: "Topic & Supervisore", icon: Search, weeks: "2-8" },
+  { id: "planning", label: "Pianificazione", icon: Map, weeks: "4-10" },
+  { id: "execution", label: "Esecuzione", icon: FlaskConical, weeks: "6-20" },
+  { id: "writing", label: "Scrittura", icon: FileText, weeks: "16-24" },
+];
+
+// Building blocks (tools/resources)
+const buildingBlocks = [
+  { id: "socrate", label: "Socrate", icon: MessageCircle, badge: "AI" },
+  { id: "suggestions", label: "Topic", icon: Target },
+  { id: "contacts", label: "Supervisori", icon: Users },
+  { id: "market", label: "Aziende", icon: TrendingUp },
+  { id: "editor", label: "Editor", icon: BookOpen },
+  { id: "actions", label: "Azioni", icon: Zap, badge: "AI" },
+  { id: "memory", label: "Memoria", icon: Brain },
+];
+
+const personalItems = [
+  { id: "dashboard", label: "Dashboard", icon: Lightbulb },
+  { id: "profile", label: "Profilo", icon: User },
 ];
 
 export default function AppSidebar() {
-  const { activeSection, setActiveSection, profile, signOut, sidebarCollapsed, setSidebarCollapsed, inputMode, setInputMode } = useApp();
+  const { activeSection, setActiveSection, profile, signOut, sidebarCollapsed, setSidebarCollapsed, inputMode, setInputMode, roadmap } = useApp();
   const socrateUnlocked = profile?.socrate_done;
   const collapsed = sidebarCollapsed;
+
+  // Find current stage based on roadmap progress
+  const currentStageIndex = roadmap.findIndex(p => p.progress < 100);
+  const currentStageId = currentStageIndex >= 0 ? roadmap[currentStageIndex].id : roadmap[roadmap.length - 1].id;
+
+  const renderNavButton = (item: { id: string; label: string; icon: any; badge?: string }, locked = false) => {
+    const isActive = activeSection === item.id;
+    return (
+      <button
+        key={item.id}
+        onClick={() => !locked && setActiveSection(item.id)}
+        disabled={locked}
+        title={collapsed ? item.label : undefined}
+        className={`
+          relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-all
+          ${collapsed ? "justify-center" : ""}
+          ${locked ? "text-muted-foreground/30 cursor-not-allowed" :
+            isActive ? "text-accent-foreground" :
+            "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"}
+        `}
+      >
+        {isActive && (
+          <motion.div layoutId="sidebar-active"
+            className="absolute inset-0 rounded-md bg-accent/10 border border-accent/20"
+            transition={{ type: "spring", stiffness: 350, damping: 30 }} />
+        )}
+        <item.icon className={`w-4 h-4 relative z-10 shrink-0 ${isActive ? "text-accent" : ""}`} />
+        {!collapsed && (
+          <>
+            <span className="relative z-10 truncate">{item.label}</span>
+            {locked && <Lock className="w-3 h-3 ml-auto relative z-10 text-muted-foreground/20" />}
+            {item.badge && !locked && (
+              <span className="ml-auto relative z-10 px-1 py-0.5 text-[8px] font-bold rounded bg-accent/20 text-accent">
+                {item.badge}
+              </span>
+            )}
+          </>
+        )}
+      </button>
+    );
+  };
 
   return (
     <aside className={`fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-300 border-r border-border ${
@@ -65,12 +99,11 @@ export default function AppSidebar() {
       </div>
 
       {/* Input Mode Toggle */}
-      <div className={`px-3 py-3 border-b border-border ${collapsed ? "flex justify-center" : ""}`}>
+      <div className={`px-3 py-2.5 border-b border-border ${collapsed ? "flex justify-center" : ""}`}>
         {collapsed ? (
           <button
             onClick={() => setInputMode(inputMode === "text" ? "voice" : "text")}
             className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            title={inputMode === "text" ? "Passa a voce" : "Passa a testo"}
           >
             {inputMode === "text" ? <PenTool className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
           </button>
@@ -96,58 +129,94 @@ export default function AppSidebar() {
         )}
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-2 py-3 space-y-4 overflow-y-auto">
-        {navSections.map(section => (
-          <div key={section.label}>
-            {!collapsed && (
-              <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-semibold px-2 mb-1.5">
-                {section.label}
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {section.items.map(item => {
-                const isActive = activeSection === item.id;
-                const isSocrate = item.id === "socrate";
-                const isLocked = !isSocrate && !socrateUnlocked;
+        {/* Journey Stages */}
+        <div>
+          {!collapsed && (
+            <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-semibold px-2 mb-2">
+              Percorso Tesi
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {journeyStages.map((stage, i) => {
+              const phaseData = roadmap.find(p => p.id === stage.id);
+              const progress = phaseData?.progress || 0;
+              const isCurrent = stage.id === currentStageId;
+              const isActive = activeSection === stage.id;
+              const isLocked = !socrateUnlocked;
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => !isLocked && setActiveSection(item.id)}
-                    disabled={isLocked}
-                    title={collapsed ? item.label : undefined}
-                    className={`
-                      relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-all
-                      ${collapsed ? "justify-center" : ""}
-                      ${isLocked ? "text-muted-foreground/30 cursor-not-allowed" :
-                        isActive ? "text-accent-foreground" :
-                        "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"}
-                    `}
-                  >
-                    {isActive && (
-                      <motion.div layoutId="sidebar-active"
-                        className="absolute inset-0 rounded-md bg-accent/10 border border-accent/20"
-                        transition={{ type: "spring", stiffness: 350, damping: 30 }} />
-                    )}
-                    <item.icon className={`w-4 h-4 relative z-10 shrink-0 ${isActive ? "text-accent" : ""}`} />
-                    {!collapsed && (
-                      <>
-                        <span className="relative z-10 truncate">{item.label}</span>
-                        {isLocked && <Lock className="w-3 h-3 ml-auto relative z-10 text-muted-foreground/20" />}
-                        {"badge" in item && item.badge && !isLocked && (
-                          <span className="ml-auto relative z-10 px-1 py-0.5 text-[8px] font-bold rounded bg-accent/20 text-accent">
-                            {item.badge}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+              return (
+                <button
+                  key={stage.id}
+                  onClick={() => !isLocked && setActiveSection(stage.id)}
+                  disabled={isLocked}
+                  title={collapsed ? `${stage.label} (W${stage.weeks})` : undefined}
+                  className={`
+                    relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-all
+                    ${collapsed ? "justify-center" : ""}
+                    ${isLocked ? "text-muted-foreground/30 cursor-not-allowed" :
+                      isActive ? "text-accent-foreground" :
+                      isCurrent ? "text-foreground" :
+                      "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"}
+                  `}
+                >
+                  {isActive && (
+                    <motion.div layoutId="sidebar-active"
+                      className="absolute inset-0 rounded-md bg-accent/10 border border-accent/20"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }} />
+                  )}
+                  <div className="relative z-10 shrink-0">
+                    <stage.icon className={`w-4 h-4 ${isActive ? "text-accent" : isCurrent ? "text-accent" : ""}`} />
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <div className="relative z-10 flex-1 min-w-0">
+                        <span className="block truncate">{stage.label}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex-1 h-0.5 bg-secondary rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-accent rounded-full transition-all"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <span className="text-[8px] text-muted-foreground shrink-0">W{stage.weeks}</span>
+                        </div>
+                      </div>
+                      {isLocked && <Lock className="w-3 h-3 ml-auto relative z-10 text-muted-foreground/20" />}
+                    </>
+                  )}
+                </button>
+              );
+            })}
           </div>
-        ))}
+        </div>
+
+        {/* Building Blocks */}
+        <div>
+          {!collapsed && (
+            <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-semibold px-2 mb-1.5">
+              Strumenti
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {buildingBlocks.map(item => {
+              const isLocked = item.id !== "socrate" && !socrateUnlocked;
+              return renderNavButton(item, isLocked);
+            })}
+          </div>
+        </div>
+
+        {/* Personal */}
+        <div>
+          {!collapsed && (
+            <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-semibold px-2 mb-1.5">
+              Personale
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {personalItems.map(item => renderNavButton(item, !socrateUnlocked))}
+          </div>
+        </div>
       </nav>
 
       {/* Footer */}
@@ -176,7 +245,6 @@ export default function AppSidebar() {
         </div>
       </div>
 
-      {/* Collapse/Expand button when collapsed */}
       {collapsed && (
         <button
           onClick={() => setSidebarCollapsed(false)}

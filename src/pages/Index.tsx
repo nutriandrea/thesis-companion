@@ -42,6 +42,13 @@ function AppContent() {
   }
 
   const pages: Record<string, React.ReactNode> = {
+    // Journey stages → Dashboard with stage focus
+    "orientation": <DashboardPage />,
+    "topic-search": <DashboardPage />,
+    "planning": <DashboardPage />,
+    "execution": <DashboardPage />,
+    "writing": <DashboardPage />,
+    // Building blocks
     dashboard: <DashboardPage />,
     socrate: <SocratePage />,
     editor: <EditorPage />,
