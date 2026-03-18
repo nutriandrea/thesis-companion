@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FileText, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -108,7 +108,13 @@ function latexToPreview(latex: string): string {
 }
 
 export default function EditorPage() {
-  const [latex, setLatex] = useState(SAMPLE_LATEX);
+  const [latex, setLatex] = useState(() => {
+    return localStorage.getItem("thesis-latex-content") || SAMPLE_LATEX;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("thesis-latex-content", latex);
+  }, [latex]);
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
