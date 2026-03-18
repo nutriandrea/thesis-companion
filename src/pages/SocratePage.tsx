@@ -51,6 +51,7 @@ export default function SocratePage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [severita, setSeverita] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const latexContent = useLatexContent();
   const exchangeCountRef = useRef(0);
