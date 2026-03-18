@@ -1621,6 +1621,8 @@ PROFILO INTELLETTUALE (dal database):
     if (currentMode === "report") {
       systemPrompt = `Sei Socrate. Genera un REPORT DI SESSIONE completo.
 
+${severityInstructions}
+
 CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
 ${studentProfileCtx}
