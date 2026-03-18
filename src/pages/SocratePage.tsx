@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mic, FileText, Brain, Loader2 } from "lucide-react";
+import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,12 @@ function useLatexContent() {
   useEffect(() => {
     const stored = localStorage.getItem("thesis-latex-content");
     if (stored) setLatex(stored);
+    const handler = () => {
+      const updated = localStorage.getItem("thesis-latex-content");
+      if (updated) setLatex(updated);
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
   }, []);
   return latex;
 }
@@ -40,21 +46,35 @@ export default function SocratePage() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const latexContent = useLatexContent();
-  const extractionCountRef = useRef(0); // track messages since last extraction
+  const exchangeCountRef = useRef(0);
+  const memoryRef = useRef<any[]>([]);
+  const suggestionsRef = useRef<any[]>([]);
 
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
     : "";
 
-  // Load chat history
+  // Load chat history + memory + suggestions
   useEffect(() => {
     if (!user) return;
+
+    // Load existing memory & suggestions for context
+    Promise.all([
+      supabase.from("memory_entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
+      supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
+    ]).then(([memRes, sugRes]) => {
+      if (memRes.data) memoryRef.current = memRes.data;
+      if ((sugRes as any).data) suggestionsRef.current = (sugRes as any).data;
+    });
+
     supabase.from("socrate_messages").select("*").eq("user_id", user.id).order("created_at", { ascending: true })
       .then(({ data }) => {
         if (data && data.length > 0) {
           setMessages(data.map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: m.content })));
+          exchangeCountRef.current = Math.floor(data.length / 2);
         } else {
           const welcome: ChatMsg = {
             id: "welcome", role: "assistant",
@@ -70,43 +90,74 @@ export default function SocratePage() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  // Background extraction: memory + suggestions
-  const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
+  // Background extraction: memory + suggestions (runs silently)
+  const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[], silent = false) => {
     if (!user) return;
-    const recentMsgs = msgs.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+    if (!silent) setIsExtracting(true);
+    const recentMsgs = msgs.slice(-20).map((m) => ({ role: m.role, content: m.content }));
 
-    // Run both extractions in parallel
     const [memResp, sugResp] = await Promise.allSettled([
-      fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, mode: "extract_memory" }) }),
-      fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent, mode: "extract_suggestions" }) }),
+      fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({
+          messages: recentMsgs,
+          studentContext,
+          latexContent,
+          memoryEntries: memoryRef.current.slice(-20),
+          mode: "extract_memory",
+        }),
+      }),
+      fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({
+          messages: recentMsgs,
+          studentContext,
+          latexContent,
+          existingSuggestions: suggestionsRef.current.slice(-30),
+          mode: "extract_suggestions",
+        }),
+      }),
     ]);
 
-    // Save memory entries
+    let newMemories = 0;
+    let newSuggestions = 0;
+
     if (memResp.status === "fulfilled" && memResp.value.ok) {
       try {
         const data = await memResp.value.json();
         if (data.entries?.length > 0) {
           await supabase.from("memory_entries").insert(
-            data.entries.map((e: { type: string; title: string; detail: string }) => ({ user_id: user.id, type: e.type, title: e.title, detail: e.detail }))
+            data.entries.map((e: any) => ({ user_id: user.id, type: e.type, title: e.title, detail: e.detail }))
           );
+          memoryRef.current = [...data.entries, ...memoryRef.current];
+          newMemories = data.entries.length;
         }
       } catch (e) { console.error("Memory save error:", e); }
     }
 
-    // Save suggestions
     if (sugResp.status === "fulfilled" && sugResp.value.ok) {
       try {
         const data = await sugResp.value.json();
         if (data.suggestions?.length > 0) {
           await supabase.from("socrate_suggestions" as any).insert(
-            data.suggestions.map((s: { category: string; title: string; detail: string; reason: string }) => ({
+            data.suggestions.map((s: any) => ({
               user_id: user.id, category: s.category, title: s.title, detail: s.detail, reason: s.reason,
             }))
           );
+          suggestionsRef.current = [...data.suggestions, ...suggestionsRef.current];
+          newSuggestions = data.suggestions.length;
         }
       } catch (e) { console.error("Suggestions save error:", e); }
     }
-  }, [user, studentContext, latexContent]);
+
+    if (!silent && (newMemories > 0 || newSuggestions > 0)) {
+      toast({
+        title: "🧠 Analisi completata",
+        description: `${newMemories} memorie + ${newSuggestions} suggerimenti estratti e distribuiti nelle sezioni.`,
+      });
+    }
+    if (!silent) setIsExtracting(false);
+  }, [user, studentContext, latexContent, toast]);
 
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
@@ -147,12 +198,20 @@ export default function SocratePage() {
     setIsStreaming(true);
 
     await supabase.from("socrate_messages").insert({ user_id: user.id, role: "user", content: text });
+
+    // Include memory context in the API call for continuity
     const apiMessages = [...messages, userMsg].slice(-20).map((m) => ({ role: m.role, content: m.content }));
 
     try {
       const resp = await fetch(SOCRATE_URL, {
         method: "POST", headers: AUTH_HEADERS,
-        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, mode: "chat" }),
+        body: JSON.stringify({
+          messages: apiMessages,
+          studentContext,
+          latexContent,
+          memoryEntries: memoryRef.current.slice(-15),
+          mode: "chat",
+        }),
       });
 
       if (!resp.ok) {
@@ -171,11 +230,10 @@ export default function SocratePage() {
       }
       if (!profile?.socrate_done) await updateProfile({ socrate_done: true });
 
-      // Background extraction every 5 exchanges (10 messages)
-      extractionCountRef.current += 2;
-      if (extractionCountRef.current >= 10) {
-        extractionCountRef.current = 0;
-        runBackgroundExtraction([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
+      // Auto-extract every 3 exchanges (6 messages)
+      exchangeCountRef.current += 1;
+      if (exchangeCountRef.current % 3 === 0) {
+        runBackgroundExtraction([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }], true);
       }
     } catch (e) {
       console.error(e);
@@ -185,7 +243,7 @@ export default function SocratePage() {
     }
   }, [isStreaming, user, messages, studentContext, profile, updateProfile, toast, latexContent, streamResponse, runBackgroundExtraction]);
 
-  // Generate report + trigger extraction
+  // Generate report + trigger full extraction
   const generateReport = async () => {
     if (isStreaming || isGeneratingReport || !user || messages.length < 3) return;
     setIsGeneratingReport(true);
@@ -195,7 +253,13 @@ export default function SocratePage() {
     try {
       const resp = await fetch(SOCRATE_URL, {
         method: "POST", headers: AUTH_HEADERS,
-        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, mode: "report" }),
+        body: JSON.stringify({
+          messages: apiMessages,
+          studentContext,
+          latexContent,
+          memoryEntries: memoryRef.current.slice(-15),
+          mode: "report",
+        }),
       });
 
       if (!resp.ok) {
@@ -217,9 +281,9 @@ export default function SocratePage() {
         await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `📋 REPORT:\n${reportContent}` });
       }
 
-      // Always extract on report generation
+      // Always run full extraction on report
       await runBackgroundExtraction(messages);
-      toast({ title: "Report generato", description: "Suggerimenti e memoria aggiornati." });
+      toast({ title: "📋 Report generato", description: "I contenuti sono stati distribuiti nelle sezioni del sito." });
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Errore", description: "Errore nella generazione del report." });
@@ -253,8 +317,16 @@ export default function SocratePage() {
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
         <GradientOrb size="sm" />
-        <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">TEXT ME</h1>
+        <div>
+          <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">Socrate</h1>
+          <p className="text-[10px] text-muted-foreground">Hub centrale · Profiler silenzioso</p>
+        </div>
         <div className="ml-auto flex items-center gap-2">
+          {isExtracting && (
+            <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <Loader2 className="w-3 h-3 animate-spin" /> Analisi in corso...
+            </span>
+          )}
           {messages.length >= 3 && (
             <button onClick={generateReport} disabled={isStreaming || isGeneratingReport}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
@@ -263,7 +335,7 @@ export default function SocratePage() {
             </button>
           )}
           {messages.length >= 5 && (
-            <button onClick={() => runBackgroundExtraction(messages)} disabled={isStreaming}
+            <button onClick={() => runBackgroundExtraction(messages)} disabled={isStreaming || isExtracting}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
               <Brain className="w-3.5 h-3.5" /> Analizza
             </button>
