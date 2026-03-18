@@ -51,6 +51,7 @@ export default function SocratePage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [severita, setSeverita] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const latexContent = useLatexContent();
   const exchangeCountRef = useRef(0);
@@ -69,9 +70,11 @@ export default function SocratePage() {
     Promise.all([
       supabase.from("memory_entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
-    ]).then(([memRes, sugRes]) => {
+      supabase.from("student_profiles" as any).select("severita, thesis_stage").eq("user_id", user.id).single(),
+    ]).then(([memRes, sugRes, spRes]) => {
       if (memRes.data) memoryRef.current = memRes.data;
       if ((sugRes as any).data) suggestionsRef.current = (sugRes as any).data;
+      if ((spRes as any).data?.severita != null) setSeverita((spRes as any).data.severita);
     });
 
     supabase.from("socrate_messages").select("*").eq("user_id", user.id).order("created_at", { ascending: true })
@@ -367,6 +370,18 @@ export default function SocratePage() {
           <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">Socrate</h1>
           <p className="text-[10px] text-muted-foreground">Hub centrale · Profiler silenzioso</p>
         </div>
+        {severita !== null && (
+          <div className="flex items-center gap-1.5 ml-2" title={`Severità: ${severita} — ${severita >= 0.8 ? "Spietato" : severita >= 0.6 ? "Critico" : severita >= 0.4 ? "Collaborativo" : "Supportivo"}`}>
+            <div className="flex gap-0.5">
+              {[0.2, 0.4, 0.6, 0.8, 1.0].map((threshold, i) => (
+                <div key={i} className={`w-1.5 h-3 rounded-sm ${severita >= threshold ? (severita >= 0.8 ? "bg-destructive" : severita >= 0.6 ? "bg-warning" : "bg-accent") : "bg-border"}`} />
+              ))}
+            </div>
+            <span className="text-[9px] text-muted-foreground">
+              {severita >= 0.8 ? "🔥" : severita >= 0.6 ? "⚡" : severita >= 0.4 ? "🤝" : "💡"}
+            </span>
+          </div>
+        )}
         <div className="ml-auto flex items-center gap-2">
           {isExtracting && (
             <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">

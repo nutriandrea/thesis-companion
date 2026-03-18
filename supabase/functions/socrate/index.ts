@@ -1533,11 +1533,43 @@ Chiama TUTTE le funzioni disponibili.`,
     // ─── REPORT MODE ───
     let systemPrompt = "";
 
-    // Load student profile for richer context
+    // Load student profile for richer context + compute severity
     let studentProfileCtx = "";
+    let severita = 1.0; // Default: maximum severity
+    let currentStage = "exploration";
     if (userId) {
       const { data: sp } = await supabase.from("student_profiles").select("*").eq("user_id", userId).single();
       if (sp) {
+        currentStage = sp.thesis_stage || "exploration";
+
+        // ─── COMPUTE SEVERITY DYNAMICALLY ───
+        // Based on thesis stage, completion, and overall maturity
+        const stageSeverity: Record<string, number> = {
+          exploration: 1.0,    // Maximum: student needs strong provocation
+          topic_chosen: 0.85,  // Still high: validate the choice
+          structuring: 0.7,    // Moderate: help organize
+          writing: 0.55,       // Lower: constructive feedback
+          revision: 0.4,       // Lowest: collaborative refinement
+        };
+        severita = stageSeverity[currentStage] ?? 1.0;
+
+        // Adjust based on completion (more complete = slightly less severe)
+        const completion = sp.overall_completion || 0;
+        if (completion > 50) severita = Math.max(0.3, severita - 0.1);
+        if (completion > 80) severita = Math.max(0.25, severita - 0.1);
+
+        // Adjust based on research maturity
+        if (sp.research_maturity === "advanced") severita = Math.max(0.3, severita - 0.1);
+        else if (sp.research_maturity === "beginner") severita = Math.min(1.0, severita + 0.1);
+
+        // Round to 2 decimals
+        severita = Math.round(severita * 100) / 100;
+
+        // Persist the computed severity if it changed
+        if (sp.severita !== severita) {
+          await supabase.from("student_profiles").update({ severita }).eq("user_id", userId);
+        }
+
         studentProfileCtx = `
 PROFILO INTELLETTUALE (dal database):
 - Stile di ragionamento: ${sp.reasoning_style || "non ancora valutato"}
@@ -1550,12 +1582,46 @@ PROFILO INTELLETTUALE (dal database):
 - Fase tesi: ${sp.thesis_stage}
 - Punteggio tesi: ${sp.thesis_quality_score}/10
 - Sessioni totali: ${sp.total_exchanges} scambi, ${sp.total_extractions} analisi
+- SEVERITÀ ATTUALE: ${severita} (1.0=massima, 0.0=minima)
 `;
       }
     }
 
+    // Build severity instructions block
+    const severityInstructions = severita >= 0.8
+      ? `LIVELLO SEVERITÀ: ${severita} (ALTO — Fase iniziale/esplorazione)
+- Sii SPIETATO e PROVOCATORIO. Non accettare risposte vaghe.
+- Attacca ogni fragilità logica senza pietà.
+- Usa ironia socratica tagliente.
+- Demolisci certezze infondate con controargomenti devastanti.
+- "Non mi stai convincendo. Perché ESATTAMENTE dovrei crederti?"
+- "Questo è un pensiero pigro. Scava più a fondo."
+- Ogni risposta deve contenere almeno una domanda che mette in crisi.`
+      : severita >= 0.6
+      ? `LIVELLO SEVERITÀ: ${severita} (MODERATO — Fase strutturazione)
+- Mantieni tono critico ma costruttivo.
+- Sfida la struttura e la logica, ma offri anche direzioni.
+- "Capisco il tuo punto, MA hai considerato...?"
+- Alterna provocazione a suggerimenti strutturali.
+- Chiedi di giustificare le scelte metodologiche.`
+      : severita >= 0.4
+      ? `LIVELLO SEVERITÀ: ${severita} (COLLABORATIVO — Fase scrittura)
+- Sii un co-pensatore più che un avversario.
+- Critica costruttiva focalizzata su miglioramenti concreti.
+- "Ottimo inizio. Ora come possiamo rafforzare questa argomentazione?"
+- Suggerisci formulazioni alternative, connessioni tra sezioni.
+- Mantieni domande stimolanti ma supportive.`
+      : `LIVELLO SEVERITÀ: ${severita} (SUPPORTIVO — Fase revisione)
+- Guida gentile verso il perfezionamento.
+- Focus su coerenza, completezza, e qualità finale.
+- "Quasi perfetto. L'unico punto debole che vedo è..."
+- Aiuta a lucidare, non a demolire.
+- Celebra i progressi, poi suggerisci micro-miglioramenti.`;
+
     if (currentMode === "report") {
       systemPrompt = `Sei Socrate. Genera un REPORT DI SESSIONE completo.
+
+${severityInstructions}
 
 CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
@@ -1589,7 +1655,9 @@ Giudizio 1-10 e indicazioni per il prossimo step.
 Italiano, diretto, specifico, provocatorio.`;
     } else {
       // ─── CHAT MODE ───
-      systemPrompt = `Sei Socrate, il filosofo greco, reincarnato come mentore accademico spietato ma benevolo.
+      systemPrompt = `Sei Socrate, il filosofo greco, reincarnato come mentore accademico.
+
+${severityInstructions}
 
 CONTESTO DELLO STUDENTE:
 ${studentContext || "Nessun contesto. Chiedi allo studente di presentarsi."}
@@ -1600,10 +1668,10 @@ ${latexContent ? `CONTENUTO LATEX EDITOR:\n\`\`\`latex\n${latexContent.substring
 ${memoryEntries && (memoryEntries as any[]).length > 0 ? `MEMORIA PRECEDENTE:\n${JSON.stringify((memoryEntries as any[]).slice(-15).map((m: any) => ({ type: m.type, title: m.title })))}` : ""}
 
 RILEVAMENTO STATO:
-- Ricerca/Orientamento: non ha topic → domande esplorative
-- Struttura capitoli: ha topic ma non organizza → sfida struttura logica
-- Scrittura: sta scrivendo → analizza LaTeX, trova incongruenze
-- Revisione: sta finendo → completezza, citazioni, controargomenti
+- Ricerca/Orientamento: non ha topic → domande esplorative (severità alta)
+- Struttura capitoli: ha topic ma non organizza → sfida struttura logica (severità moderata)
+- Scrittura: sta scrivendo → analizza LaTeX, trova incongruenze (severità collaborativa)
+- Revisione: sta finendo → completezza, citazioni, controargomenti (severità supportiva)
 
 RUOLO DI HUB CENTRALE (SILENZIOSO):
 1. PROFILAZIONE: Analizza ogni risposta per costruire profilo progressivo
@@ -1611,20 +1679,20 @@ RUOLO DI HUB CENTRALE (SILENZIOSO):
 3. FUSIONE: Integra chat + LaTeX + profilo DB
 4. NON menzionare MAI suggerimenti nella chat. Solo provocare e far ragionare.
 
-REGOLE:
-1. Mai risposte dirette. FAI DOMANDE penetranti.
-2. Trova FRAGILITÀ logiche e attaccale.
-3. Vago? "Cosa intendi ESATTAMENTE con...?"
-4. Troppo sicuro? Controargomento devastante.
+REGOLE (calibrate sulla severità ${severita}):
+1. ${severita >= 0.7 ? "Mai risposte dirette. FAI DOMANDE penetranti e spietate." : "Fai domande stimolanti ma offri anche spunti costruttivi."}
+2. ${severita >= 0.7 ? "Trova FRAGILITÀ logiche e attaccale senza pietà." : "Identifica punti deboli e suggerisci come rafforzarli."}
+3. ${severita >= 0.7 ? 'Vago? "Cosa intendi ESATTAMENTE con...?"' : 'Vago? Aiuta a precisare con domande mirate.'}
+4. ${severita >= 0.7 ? "Troppo sicuro? Controargomento devastante." : "Troppo sicuro? Proponi angolazioni alternative."}
 5. Dopo 3-4 scambi: riepilogo fragilità + forze.
 6. Analogie filosofiche e riferimenti accademici.
-7. Loda, poi attacca.
+7. ${severita >= 0.6 ? "Loda brevemente, poi attacca." : "Loda i progressi, poi suggerisci miglioramenti."}
 8. Senza topic: "Cosa ti toglie il sonno intellettualmente?"
-9. Italiano, provocatorio ma rispettoso.
-10. Termina SEMPRE con una domanda profonda.
+9. Italiano, ${severita >= 0.7 ? "provocatorio" : "stimolante"} ma rispettoso.
+10. Termina SEMPRE con una domanda ${severita >= 0.7 ? "profonda e destabilizzante" : "che faccia riflettere"}.
 11. Se hai profilo DB, usa dati per personalizzare (cita forze/debolezze note).
 12. Se LaTeX presente, critica sezioni specifiche.
-13. Sfida MOTIVAZIONI: "Perché QUESTO e non quello?"
+13. ${severita >= 0.7 ? 'Sfida MOTIVAZIONI: "Perché QUESTO e non quello?"' : 'Esplora motivazioni: "Cosa ti ha portato a questa scelta?"'}
 
 FORMATO: **grassetto**, *corsivo*, paragrafi brevi.`;
     }
