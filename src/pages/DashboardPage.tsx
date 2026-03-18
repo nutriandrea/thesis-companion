@@ -1,11 +1,12 @@
 import { useApp } from "@/contexts/AppContext";
 import { motion } from "framer-motion";
-import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText, Building2, GraduationCap } from "lucide-react";
+import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText, Building2, GraduationCap, Activity, Timer } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionStats } from "@/hooks/useSessionStats";
 
 interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; }
 interface AffinityScore { id: string; entity_type: string; entity_id: string; entity_name: string; score: number; reasoning: string; matched_traits: string[]; }
@@ -17,6 +18,9 @@ export default function DashboardPage() {
   const [nextSteps, setNextSteps] = useState<AISuggestion[]>([]);
   const [thesisFeedback, setThesisFeedback] = useState<AISuggestion[]>([]);
   const [topAffinities, setTopAffinities] = useState<AffinityScore[]>([]);
+
+  // Session stats (realtime)
+  const { data: sessionData } = useSessionStats(user?.id);
 
   const totalTasks = roadmap.flatMap(p => p.tasks).length;
   const completedTasks = roadmap.flatMap(p => p.tasks).filter(t => t.completed).length;
@@ -53,11 +57,21 @@ export default function DashboardPage() {
     });
   }, [user]);
 
+  // Compute real progress from session data or fallback to roadmap
+  const realCompletion = sessionData?.progress?.overallCompletion || overallProgress;
+  const estimatedDays = sessionData?.progress?.estimatedDaysRemaining;
+  const thesisStage = sessionData?.progress?.thesisStage;
+
+  const stageLabels: Record<string, string> = {
+    exploration: "Esplorazione", topic_chosen: "Topic scelto", structuring: "Struttura",
+    writing: "Scrittura", revision: "Revisione",
+  };
+
   const stats = [
-    { label: "Progresso", value: `${overallProgress}%`, sub: `${completedTasks}/${totalTasks} task`, icon: Target, color: "text-accent" },
+    { label: "Tesi", value: `${realCompletion}%`, sub: thesisStage ? stageLabels[thesisStage] || thesisStage : `${completedTasks}/${totalTasks} task`, icon: Target, color: "text-accent" },
     { label: "Fase", value: currentPhase.title, sub: `${currentPhaseIndex + 1} di ${roadmap.length}`, icon: Calendar, color: "text-accent" },
-    { label: "Prossima scadenza", value: nextDeadline ? `${daysUntilDeadline}g` : "—", sub: nextDeadline?.title.slice(0, 25) || "", icon: Clock, color: daysUntilDeadline <= 3 ? "text-destructive" : "text-warning" },
-    { label: "Consegna", value: endDate ? new Date(endDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "—", sub: "Fine prevista", icon: TrendingUp, color: "text-success" },
+    { label: estimatedDays ? "ETA" : "Scadenza", value: estimatedDays ? `${estimatedDays}g` : nextDeadline ? `${daysUntilDeadline}g` : "—", sub: estimatedDays ? "Giorni stimati" : nextDeadline?.title.slice(0, 25) || "", icon: Clock, color: (estimatedDays || daysUntilDeadline) <= 3 ? "text-destructive" : "text-warning" },
+    { label: "Sessioni", value: sessionData?.stats?.totalSessions?.toString() || "0", sub: `${sessionData?.stats?.totalMessages || 0} messaggi`, icon: Activity, color: "text-success" },
   ];
 
   const quickActions = [
@@ -67,12 +81,19 @@ export default function DashboardPage() {
     { label: "Rubrica", icon: Users, section: "contacts" },
   ];
 
+  // Activity sparkline from session data
+  const activityDays = sessionData?.activityByDay ? Object.entries(sessionData.activityByDay) : [];
+  const maxActivity = Math.max(1, ...activityDays.map(([, v]) => v));
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold font-display text-foreground">Ciao, {name}</h1>
         <p className="text-muted-foreground text-xs mt-1">
           {profile?.thesis_topic ? `Stai lavorando su "${profile.thesis_topic}"` : "Ecco il punto sulla tua tesi"}
+          {sessionData?.progress?.lastActiveAt && (
+            <span className="ml-2">· Ultima attività: {new Date(sessionData.progress.lastActiveAt).toLocaleDateString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+          )}
         </p>
       </div>
 
@@ -90,6 +111,73 @@ export default function DashboardPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* Activity Graph */}
+      {activityDays.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-accent" />
+              <span className="text-xs font-semibold text-foreground">Attività ultimi 14 giorni</span>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+              <span>{sessionData?.stats?.totalChatSessions || 0} chat</span>
+              <span>{sessionData?.stats?.totalLatexAnalyses || 0} analisi</span>
+              <span>{sessionData?.stats?.totalFusionAnalyses || 0} fusioni</span>
+            </div>
+          </div>
+          <div className="flex items-end gap-1 h-12">
+            {activityDays.map(([day, count]) => (
+              <div key={day} className="flex-1 flex flex-col items-center gap-0.5" title={`${day}: ${count} eventi`}>
+                <div
+                  className={`w-full rounded-sm transition-all ${count > 0 ? "bg-accent" : "bg-border"}`}
+                  style={{ height: `${Math.max(2, (count / maxActivity) * 40)}px` }}
+                />
+                <span className="text-[8px] text-muted-foreground">{new Date(day).getDate()}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Thesis Sections Progress */}
+      {sessionData?.progress?.sectionsProgress && Object.keys(sessionData.progress.sectionsProgress).length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+          className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-warning" />
+              <span className="text-xs font-semibold text-foreground">Avanzamento Sezioni Tesi</span>
+            </div>
+            <button onClick={() => setActiveSection("editor")} className="text-xs text-accent hover:underline">Editor →</button>
+          </div>
+          <div className="space-y-2">
+            {Object.entries(sessionData.progress.sectionsProgress).map(([name, data]: [string, any]) => {
+              const statusColor = data.status === "complete" ? "text-success" : data.status === "partial" ? "text-warning" : data.status === "missing" ? "text-destructive" : "text-accent";
+              return (
+                <div key={name}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-xs text-foreground">{name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] ${statusColor}`}>{data.status === "complete" ? "✓" : data.status === "missing" ? "✗" : "~"}</span>
+                      <span className="text-xs font-bold text-foreground">{data.completeness}%</span>
+                    </div>
+                  </div>
+                  <Progress value={data.completeness} className="h-1" />
+                </div>
+              );
+            })}
+          </div>
+          {estimatedDays && (
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+              <Timer className="w-3.5 h-3.5 text-warning" />
+              <span className="text-xs text-muted-foreground">Tempo stimato al completamento:</span>
+              <span className="text-xs font-bold text-foreground">{estimatedDays} giorni</span>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -206,6 +294,33 @@ export default function DashboardPage() {
                       {aff.matched_traits.slice(0, 2).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
                     </div>
                   )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Activity */}
+      {sessionData?.recentEvents && sessionData.recentEvents.length > 0 && (
+        <div>
+          <h2 className="text-sm font-bold font-display text-foreground mb-3">Attività Recente</h2>
+          <div className="space-y-1.5">
+            {sessionData.recentEvents.slice(0, 8).map((ev, i) => {
+              const eventLabels: Record<string, string> = {
+                chat_exchange: "💬 Chat con Socrate",
+                latex_analysis: "📝 Analisi LaTeX",
+                fusion_analysis: "🧬 Fusione dati",
+                report_generated: "📋 Report generato",
+                extraction: "🧠 Estrazione profilo",
+              };
+              return (
+                <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + i * 0.03 }}
+                  className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-muted/50 transition-colors">
+                  <span className="text-xs text-foreground">{eventLabels[ev.type] || ev.type}</span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">
+                    {new Date(ev.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </motion.div>
               );
             })}

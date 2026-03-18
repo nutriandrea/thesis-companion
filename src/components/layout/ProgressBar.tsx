@@ -1,11 +1,22 @@
 import { useApp } from "@/contexts/AppContext";
 import { motion } from "framer-motion";
+import { useSessionStats } from "@/hooks/useSessionStats";
 
 export default function ProgressBar() {
-  const { overallProgress, roadmap } = useApp();
+  const { overallProgress, roadmap, user } = useApp();
+  const { data: sessionData } = useSessionStats(user?.id);
+
+  // Use real completion from session data if available
+  const realProgress = sessionData?.progress?.overallCompletion || overallProgress;
+  const estimatedDays = sessionData?.progress?.estimatedDaysRemaining;
+  const thesisStage = sessionData?.progress?.thesisStage;
 
   const totalWeeks = 24;
-  const currentWeek = Math.max(1, Math.round((overallProgress / 100) * totalWeeks));
+  const currentWeek = Math.max(1, Math.round((realProgress / 100) * totalWeeks));
+
+  const stageLabels: Record<string, string> = {
+    exploration: "E", topic_chosen: "T", structuring: "S", writing: "W", revision: "R",
+  };
 
   // Stage markers with their week positions
   const stageMarkers = [
@@ -33,7 +44,7 @@ export default function ProgressBar() {
         <motion.div
           className="absolute left-1/2 -translate-x-1/2 top-6 w-px bg-accent"
           initial={{ height: 0 }}
-          animate={{ height: `${Math.min(overallProgress, 100) * 0.88}%` }}
+          animate={{ height: `${Math.min(realProgress, 100) * 0.88}%` }}
           transition={{ duration: 1, ease: "easeOut" }}
         />
 
@@ -66,17 +77,34 @@ export default function ProgressBar() {
         <motion.div
           className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-accent border-2 border-background z-10"
           initial={{ top: 24 }}
-          animate={{ top: `calc(${Math.min(overallProgress * 0.88, 85)}% + 24px)` }}
+          animate={{ top: `calc(${Math.min(realProgress * 0.88, 85)}% + 24px)` }}
           transition={{ duration: 1, ease: "easeOut" }}
           style={{ boxShadow: "0 0 10px hsl(38 50% 60% / 0.5)" }}
         />
       </div>
 
-      {/* Current week */}
+      {/* Bottom: ETA or current week */}
       <div className="py-3 border-t border-border w-full flex flex-col items-center">
-        <span className="text-[10px] text-muted-foreground">Now</span>
-        <span className="text-xs font-bold text-accent">{currentWeek}</span>
+        {estimatedDays ? (
+          <>
+            <span className="text-[10px] text-muted-foreground">ETA</span>
+            <span className="text-xs font-bold text-accent">{estimatedDays}g</span>
+          </>
+        ) : (
+          <>
+            <span className="text-[10px] text-muted-foreground">Now</span>
+            <span className="text-xs font-bold text-accent">{currentWeek}</span>
+          </>
+        )}
       </div>
+
+      {/* Stage indicator */}
+      {thesisStage && (
+        <div className="py-2 border-t border-border w-full flex flex-col items-center">
+          <span className="text-[8px] text-muted-foreground">Stage</span>
+          <span className="text-[10px] font-bold text-ai">{stageLabels[thesisStage] || "?"}</span>
+        </div>
+      )}
     </div>
   );
 }
