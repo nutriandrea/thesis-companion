@@ -105,6 +105,10 @@ export default function SuggestionsPage() {
         <button onClick={refresh} className="ml-auto p-2 rounded-lg hover:bg-muted transition-colors" title="Aggiorna">
           <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? "animate-spin" : ""}`} />
         </button>
+        <Button onClick={filterDatabase} disabled={filterLoading} variant="outline" size="sm" className="gap-1.5">
+          {filterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FilterIcon className="w-3.5 h-3.5 text-ai" />}
+          {filterLoading ? "Filtrando..." : "Filtra Database"}
+        </Button>
       </div>
 
       {/* Stats Banner */}
