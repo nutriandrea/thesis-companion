@@ -564,6 +564,249 @@ Chiama TUTTE le funzioni disponibili.`,
       });
     }
 
+    // ─── ANALYZE LATEX: Deep thesis analysis ───
+    if (currentMode === "analyze_latex") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!latexContent || latexContent.trim().length < 50) {
+        return new Response(JSON.stringify({ error: "Contenuto LaTeX troppo breve per l'analisi." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Gather context
+      const [profileRes, memRes] = await Promise.all([
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("memory_entries").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+      ]);
+
+      const existingProfile = profileRes.data;
+      const memories = memRes.data || [];
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei l'ANALIZZATORE LATEX di Socrate. Il tuo compito è analizzare il contenuto LaTeX della tesi e:
+
+1. VALUTARE la qualità di ogni sezione (abstract, introduzione, metodologia, risultati, bibliografia)
+2. IDENTIFICARE lacune, sezioni mancanti, argomentazioni deboli
+3. GENERARE feedback azionabili e next steps concreti
+4. AGGIORNARE il profilo intellettuale con dati sulla qualità della scrittura
+
+CONTESTO STUDENTE:
+${studentContext || "Non disponibile"}
+
+PROFILO INTELLETTUALE ATTUALE:
+${existingProfile ? JSON.stringify({
+  reasoning_style: existingProfile.reasoning_style,
+  strengths: existingProfile.strengths,
+  weaknesses: existingProfile.weaknesses,
+  thesis_stage: existingProfile.thesis_stage,
+  thesis_quality_score: existingProfile.thesis_quality_score,
+  writing_quality: existingProfile.writing_quality,
+  latex_sections_analyzed: existingProfile.latex_sections_analyzed,
+}) : "Non ancora creato"}
+
+MEMORIA CONVERSAZIONI:
+${JSON.stringify(memories.slice(0, 10).map((m: any) => ({ type: m.type, title: m.title })))}
+
+CONTENUTO LATEX COMPLETO:
+\`\`\`latex
+${latexContent.substring(0, 8000)}
+\`\`\`
+
+ISTRUZIONI:
+1. Analizza OGNI sezione presente nel LaTeX
+2. Per ogni sezione: valuta completezza (0-100), qualità argomentativa, coerenza
+3. Identifica sezioni MANCANTI rispetto a una tesi completa
+4. Genera feedback specifici per sezione con suggerimenti concreti
+5. Calcola un punteggio qualità tesi complessivo (1-10)
+6. Genera next steps prioritizzati per l'editor
+7. Aggiorna il profilo con i nuovi dati sulla tesi
+
+Chiama TUTTE le funzioni disponibili.`,
+            },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "latex_section_analysis",
+                description: "Detailed analysis of each LaTeX section",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    sections: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          name: { type: "string", description: "Section name (e.g. Abstract, Introduzione, Metodologia)" },
+                          status: { type: "string", enum: ["complete", "partial", "missing", "needs_revision"] },
+                          completeness: { type: "integer", description: "0-100 completeness score" },
+                          quality_notes: { type: "string", description: "Brief quality assessment" },
+                          issues: { type: "array", items: { type: "string" }, description: "Specific issues found" },
+                          suggestions: { type: "array", items: { type: "string" }, description: "Actionable improvements" },
+                        },
+                        required: ["name", "status", "completeness", "quality_notes", "issues", "suggestions"],
+                        additionalProperties: false,
+                      },
+                    },
+                    overall_score: { type: "integer", description: "Overall thesis quality 1-10" },
+                    overall_assessment: { type: "string", description: "Brief overall assessment" },
+                    detected_stage: { type: "string", enum: ["exploration", "topic_chosen", "structuring", "writing", "revision"] },
+                  },
+                  required: ["sections", "overall_score", "overall_assessment", "detected_stage"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            {
+              type: "function",
+              function: {
+                name: "generate_editor_tasks",
+                description: "Generate prioritized next steps for the LaTeX editor",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    tasks: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          priority: { type: "string", enum: ["critical", "high", "medium", "low"] },
+                          section: { type: "string", description: "Which section this task relates to" },
+                          title: { type: "string" },
+                          detail: { type: "string", description: "Detailed description of what to do" },
+                          type: { type: "string", enum: ["write", "revise", "add", "restructure", "reference"] },
+                        },
+                        required: ["priority", "section", "title", "detail", "type"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["tasks"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            {
+              type: "function",
+              function: {
+                name: "update_thesis_profile",
+                description: "Update the student profile with thesis analysis data",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    writing_quality: { type: "string" },
+                    methodology_awareness: { type: "string" },
+                    thesis_stage: { type: "string", enum: ["exploration", "topic_chosen", "structuring", "writing", "revision"] },
+                    thesis_quality_score: { type: "integer" },
+                    strengths_update: { type: "array", items: { type: "string" }, description: "New strengths to add" },
+                    weaknesses_update: { type: "array", items: { type: "string" }, description: "New weaknesses to add" },
+                  },
+                  required: ["writing_quality", "thesis_stage", "thesis_quality_score"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("LaTeX analysis error:", response.status, await response.text());
+        return new Response(JSON.stringify({ error: "Errore analisi LaTeX" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCalls = data.choices?.[0]?.message?.tool_calls || [];
+
+      let sectionAnalysis: any = null;
+      let editorTasks: any[] = [];
+      let thesisProfileUpdate: any = null;
+
+      for (const tc of toolCalls) {
+        try {
+          const args = JSON.parse(tc.function.arguments);
+          if (tc.function.name === "latex_section_analysis") sectionAnalysis = args;
+          if (tc.function.name === "generate_editor_tasks") editorTasks = args.tasks || [];
+          if (tc.function.name === "update_thesis_profile") thesisProfileUpdate = args;
+        } catch { /* skip malformed */ }
+      }
+
+      // Persist profile update
+      if (thesisProfileUpdate && userId) {
+        const updateData: any = {
+          writing_quality: thesisProfileUpdate.writing_quality,
+          thesis_stage: thesisProfileUpdate.thesis_stage,
+          thesis_quality_score: thesisProfileUpdate.thesis_quality_score,
+          latex_sections_analyzed: sectionAnalysis?.sections || [],
+          last_extraction_at: new Date().toISOString(),
+        };
+        if (thesisProfileUpdate.methodology_awareness) {
+          updateData.methodology_awareness = thesisProfileUpdate.methodology_awareness;
+        }
+
+        if (existingProfile) {
+          // Merge strengths/weaknesses
+          if (thesisProfileUpdate.strengths_update?.length) {
+            const existing = (existingProfile.strengths as string[]) || [];
+            updateData.strengths = [...new Set([...existing, ...thesisProfileUpdate.strengths_update])];
+          }
+          if (thesisProfileUpdate.weaknesses_update?.length) {
+            const existing = (existingProfile.weaknesses as string[]) || [];
+            updateData.weaknesses = [...new Set([...existing, ...thesisProfileUpdate.weaknesses_update])];
+          }
+
+          await supabase.from("profile_snapshots").insert({
+            user_id: userId, profile_data: existingProfile,
+            trigger_event: "latex_analysis", version: existingProfile.version || 1,
+          });
+          await supabase.from("student_profiles").update(updateData).eq("user_id", userId);
+        } else {
+          await supabase.from("student_profiles").insert({ user_id: userId, ...updateData, total_extractions: 1 });
+        }
+      }
+
+      // Save editor tasks as suggestions (thesis_feedback + next_step)
+      if (editorTasks.length > 0 && userId) {
+        const suggestions = editorTasks.map((t: any) => ({
+          user_id: userId,
+          category: t.priority === "critical" || t.priority === "high" ? "thesis_feedback" : "next_step",
+          title: `[${t.section}] ${t.title}`,
+          detail: t.detail,
+          reason: `Priorità: ${t.priority} · Tipo: ${t.type}`,
+        }));
+        await supabase.from("socrate_suggestions").insert(suggestions);
+      }
+
+      return new Response(JSON.stringify({
+        sectionAnalysis,
+        editorTasks,
+        thesisProfileUpdate,
+        summary: {
+          sectionsAnalyzed: sectionAnalysis?.sections?.length || 0,
+          overallScore: sectionAnalysis?.overall_score || 0,
+          tasksGenerated: editorTasks.length,
+          stage: sectionAnalysis?.detected_stage || "unknown",
+        },
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ─── REPORT MODE ───
     let systemPrompt = "";
 
