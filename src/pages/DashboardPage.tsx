@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [suggestionCount, setSuggestionCount] = useState(0);
   const [nextSteps, setNextSteps] = useState<AISuggestion[]>([]);
   const [thesisFeedback, setThesisFeedback] = useState<AISuggestion[]>([]);
+  const [topAffinities, setTopAffinities] = useState<AffinityScore[]>([]);
 
   const totalTasks = roadmap.flatMap(p => p.tasks).length;
   const completedTasks = roadmap.flatMap(p => p.tasks).filter(t => t.completed).length;
