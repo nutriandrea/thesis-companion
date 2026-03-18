@@ -84,12 +84,18 @@ export default function MarketPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-success/10"><TrendingUp className="w-5 h-5 text-success" /></div>
-        <div>
-          <h1 className="text-xl font-bold font-display">Mercato</h1>
-          <p className="text-sm text-muted-foreground">{topics.length} topic · {companies.length} aziende · {marketSuggestions.length} suggeriti · {topicAffinities.length + companyAffinities.length} affinità</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-success/10"><TrendingUp className="w-5 h-5 text-success" /></div>
+          <div>
+            <h1 className="text-xl font-bold font-display">Mercato</h1>
+            <p className="text-sm text-muted-foreground">{topics.length} topic · {companies.length} aziende · {topicAffinities.length + companyAffinities.length} affinità</p>
+          </div>
         </div>
+        <Button onClick={filterDatabase} disabled={filterLoading} variant="outline" size="sm" className="gap-1.5">
+          {filterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-ai" />}
+          {filterLoading ? "Filtrando..." : "Filtra con Socrate"}
+        </Button>
       </div>
 
       {/* Socrate Banner */}
