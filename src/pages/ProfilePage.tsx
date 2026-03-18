@@ -30,6 +30,7 @@ interface StudentProfile {
   total_extractions: number;
   version: number;
   updated_at: string;
+  severita: number;
 }
 
 const maturityLabels: Record<string, { label: string; color: string; percent: number }> = {
