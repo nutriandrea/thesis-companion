@@ -1,5 +1,5 @@
 export interface University {
-  id: string; name: string; country: string; domains: string[]; about: string;
+  id: string; name: string; country: string; domains: string[]; about: string | null;
 }
 export interface StudyProgram {
   id: string; name: string; degree: string; universityId: string; about: string | null;
