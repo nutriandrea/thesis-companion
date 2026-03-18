@@ -35,6 +35,26 @@ serve(async (req) => {
     const aiHeaders = { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" };
     const currentMode = mode || "chat";
 
+    // Helper: log session event
+    const logEvent = async (eventType: string, eventData: any = {}, section?: string) => {
+      if (!userId) return;
+      try {
+        await supabase.from("session_events").insert({
+          user_id: userId, event_type: eventType, event_data: eventData, section: section || currentMode,
+        });
+      } catch (e) { console.error("Event log error:", e); }
+    };
+
+    // Helper: update progress on student_profiles
+    const updateProgress = async (sectionProgress?: any, overallCompletion?: number, estimatedDays?: number) => {
+      if (!userId) return;
+      const update: any = { last_active_at: new Date().toISOString() };
+      if (sectionProgress !== undefined) update.sections_progress = sectionProgress;
+      if (overallCompletion !== undefined) update.overall_completion = overallCompletion;
+      if (estimatedDays !== undefined) update.estimated_days_remaining = estimatedDays;
+      await supabase.from("student_profiles").update(update).eq("user_id", userId);
+    };
+
     // ─── EXTRACT MEMORY ───
     if (currentMode === "extract_memory") {
       const response = await fetch(AI_URL, {
@@ -280,6 +300,8 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
         }
       }
 
+      await logEvent("extraction", { suggestions: suggestions.length, profileUpdated: !!profileUpdate }, "socrate");
+
       return new Response(JSON.stringify({ suggestions, profileUpdate }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -298,6 +320,73 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       ]);
 
       return new Response(JSON.stringify({ profile: profileRes.data, affinities: affinityRes.data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── GET SESSION STATS ───
+    if (currentMode === "get_session_stats") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const [eventsRes, profileRes, msgCountRes] = await Promise.all([
+        supabase.from("session_events").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(100),
+        supabase.from("student_profiles").select("overall_completion, estimated_days_remaining, sections_progress, last_active_at, thesis_stage, total_exchanges, total_extractions").eq("user_id", userId).single(),
+        supabase.from("socrate_messages").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      ]);
+
+      const events = eventsRes.data || [];
+      const studentProfile = profileRes.data;
+      const totalMessages = msgCountRes.count || 0;
+
+      // Compute stats from events
+      const chatEvents = events.filter((e: any) => e.event_type === "chat_exchange");
+      const latexEvents = events.filter((e: any) => e.event_type === "latex_analysis");
+      const fusionEvents = events.filter((e: any) => e.event_type === "fusion_analysis");
+
+      // Activity by day (last 14 days)
+      const activityByDay: Record<string, number> = {};
+      const now = new Date();
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        activityByDay[d.toISOString().split("T")[0]] = 0;
+      }
+      events.forEach((e: any) => {
+        const day = e.created_at.split("T")[0];
+        if (activityByDay[day] !== undefined) activityByDay[day]++;
+      });
+
+      // Session durations (group events by day)
+      const uniqueSessionDays = new Set(events.map((e: any) => e.created_at.split("T")[0]));
+
+      return new Response(JSON.stringify({
+        stats: {
+          totalMessages,
+          totalChatSessions: chatEvents.length,
+          totalLatexAnalyses: latexEvents.length,
+          totalFusionAnalyses: fusionEvents.length,
+          totalSessions: uniqueSessionDays.size,
+          totalExtractions: studentProfile?.total_extractions || 0,
+        },
+        progress: {
+          overallCompletion: studentProfile?.overall_completion || 0,
+          estimatedDaysRemaining: studentProfile?.estimated_days_remaining,
+          sectionsProgress: studentProfile?.sections_progress || {},
+          thesisStage: studentProfile?.thesis_stage,
+          lastActiveAt: studentProfile?.last_active_at,
+        },
+        activityByDay,
+        recentEvents: events.slice(0, 20).map((e: any) => ({
+          type: e.event_type,
+          section: e.section,
+          data: e.event_data,
+          createdAt: e.created_at,
+        })),
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -550,6 +639,9 @@ Chiama TUTTE le funzioni disponibili.`,
         );
       }
 
+      // Log fusion event
+      await logEvent("fusion_analysis", { profileUpdated: !!profileUpdate, affinities: affinities.length, suggestions: newSuggestions.length }, "socrate");
+
       return new Response(JSON.stringify({
         profileUpdate,
         affinities,
@@ -792,15 +884,36 @@ Chiama TUTTE le funzioni disponibili.`,
         await supabase.from("socrate_suggestions").insert(suggestions);
       }
 
+      // Log event + update progress
+      const overallScore = sectionAnalysis?.overall_score || 0;
+      const detectedStage = sectionAnalysis?.detected_stage || "writing";
+      const sectionsProgress: any = {};
+      if (sectionAnalysis?.sections) {
+        sectionAnalysis.sections.forEach((s: any) => {
+          sectionsProgress[s.name] = { completeness: s.completeness, status: s.status };
+        });
+      }
+      const avgCompletion = sectionAnalysis?.sections?.length
+        ? Math.round(sectionAnalysis.sections.reduce((sum: number, s: any) => sum + s.completeness, 0) / sectionAnalysis.sections.length)
+        : 0;
+      const estimatedDays = Math.max(1, Math.round((100 - avgCompletion) * 0.5));
+
+      await Promise.all([
+        logEvent("latex_analysis", { overallScore, tasksGenerated: editorTasks.length, sectionsCount: sectionAnalysis?.sections?.length || 0 }, "editor"),
+        updateProgress(sectionsProgress, avgCompletion, estimatedDays),
+      ]);
+
       return new Response(JSON.stringify({
         sectionAnalysis,
         editorTasks,
         thesisProfileUpdate,
         summary: {
           sectionsAnalyzed: sectionAnalysis?.sections?.length || 0,
-          overallScore: sectionAnalysis?.overall_score || 0,
+          overallScore,
           tasksGenerated: editorTasks.length,
-          stage: sectionAnalysis?.detected_stage || "unknown",
+          stage: detectedStage,
+          overallCompletion: avgCompletion,
+          estimatedDaysRemaining: estimatedDays,
         },
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -932,6 +1045,9 @@ FORMATO: **grassetto**, *corsivo*, paragrafi brevi.`;
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Log chat/report event
+    logEvent(currentMode === "report" ? "report_generated" : "chat_exchange", { messagesCount: messages?.length || 0 }, currentMode === "report" ? "report" : "socrate");
 
     return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {

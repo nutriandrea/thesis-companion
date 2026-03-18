@@ -161,6 +161,33 @@ export type Database = {
         }
         Relationships: []
       }
+      session_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          section: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          section?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          section?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       socrate_messages: {
         Row: {
           content: string
@@ -221,13 +248,17 @@ export type Database = {
           created_at: string | null
           critical_thinking: string | null
           deep_interests: Json | null
+          estimated_days_remaining: number | null
           id: string
           industry_fit: Json | null
+          last_active_at: string | null
           last_extraction_at: string | null
           latex_sections_analyzed: Json | null
           methodology_awareness: string | null
+          overall_completion: number | null
           reasoning_style: string | null
           research_maturity: string | null
+          sections_progress: Json | null
           strengths: Json | null
           thesis_quality_score: number | null
           thesis_stage: string | null
@@ -244,13 +275,17 @@ export type Database = {
           created_at?: string | null
           critical_thinking?: string | null
           deep_interests?: Json | null
+          estimated_days_remaining?: number | null
           id?: string
           industry_fit?: Json | null
+          last_active_at?: string | null
           last_extraction_at?: string | null
           latex_sections_analyzed?: Json | null
           methodology_awareness?: string | null
+          overall_completion?: number | null
           reasoning_style?: string | null
           research_maturity?: string | null
+          sections_progress?: Json | null
           strengths?: Json | null
           thesis_quality_score?: number | null
           thesis_stage?: string | null
@@ -267,13 +302,17 @@ export type Database = {
           created_at?: string | null
           critical_thinking?: string | null
           deep_interests?: Json | null
+          estimated_days_remaining?: number | null
           id?: string
           industry_fit?: Json | null
+          last_active_at?: string | null
           last_extraction_at?: string | null
           latex_sections_analyzed?: Json | null
           methodology_awareness?: string | null
+          overall_completion?: number | null
           reasoning_style?: string | null
           research_maturity?: string | null
+          sections_progress?: Json | null
           strengths?: Json | null
           thesis_quality_score?: number | null
           thesis_stage?: string | null
