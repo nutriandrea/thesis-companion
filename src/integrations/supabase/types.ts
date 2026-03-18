@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      affinity_scores: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          id: string
+          matched_traits: Json | null
+          reasoning: string
+          score: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          id?: string
+          matched_traits?: Json | null
+          reasoning?: string
+          score?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          entity_name?: string
+          entity_type?: string
+          id?: string
+          matched_traits?: Json | null
+          reasoning?: string
+          score?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       memory_entries: {
         Row: {
           created_at: string
