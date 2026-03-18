@@ -242,6 +242,48 @@ export type Database = {
         }
         Relationships: []
       }
+      socrate_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          description: string
+          estimated_minutes: number | null
+          id: string
+          priority: string
+          section: string
+          source: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          description: string
+          estimated_minutes?: number | null
+          id?: string
+          priority?: string
+          section: string
+          source?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string
+          estimated_minutes?: number | null
+          id?: string
+          priority?: string
+          section?: string
+          source?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_profiles: {
         Row: {
           career_interests: Json | null
