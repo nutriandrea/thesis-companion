@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Contact, Search, Mail, Building2, GraduationCap } from "lucide-react";
+import { Contact, Search, Mail, Building2, GraduationCap, ExternalLink, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/contexts/AppContext";
 import supervisorsData from "@/data/supervisors.json";
@@ -17,70 +17,152 @@ const universities = universitiesData as University[];
 const fields = fieldsData as Field[];
 function getCompanyName(id: string) { return companies.find(c => c.id === id)?.name || ""; }
 function getUniName(id: string) { return universities.find(u => u.id === id)?.name || ""; }
+function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
 
-type ContactType = { type: "supervisor" | "expert"; name: string; title: string; email: string; org: string; fieldIds: string[]; };
+type ContactType = {
+  type: "supervisor" | "expert"; id: string;
+  name: string; title: string; email: string; org: string;
+  fieldIds: string[]; about: string | null;
+  interests?: string[]; offerInterviews?: boolean;
+};
 
 export default function ContactsPage() {
-  const { profile } = useApp();
+  const { profile, setActiveSection } = useApp();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "supervisor" | "expert">("all");
+  const [fieldFilter, setFieldFilter] = useState<string>("all");
+  const [expanded, setExpanded] = useState<string | null>(null);
   const studentFields = profile?.field_ids || [];
 
   const allContacts: ContactType[] = useMemo(() => {
-    const sups = supervisors.map(s => ({ type: "supervisor" as const, name: `${s.title} ${s.firstName} ${s.lastName}`, title: s.researchInterests.slice(0, 2).join(", "), email: s.email, org: getUniName(s.universityId), fieldIds: s.fieldIds }));
-    const exps = experts.map(e => ({ type: "expert" as const, name: `${e.firstName} ${e.lastName}`, title: e.title, email: e.email, org: getCompanyName(e.companyId), fieldIds: e.fieldIds }));
+    const sups = supervisors.map(s => ({
+      type: "supervisor" as const, id: s.id,
+      name: `${s.title} ${s.firstName} ${s.lastName}`,
+      title: s.researchInterests.slice(0, 2).join(", "),
+      email: s.email, org: getUniName(s.universityId),
+      fieldIds: s.fieldIds, about: s.about,
+      interests: s.researchInterests,
+    }));
+    const exps = experts.map(e => ({
+      type: "expert" as const, id: e.id,
+      name: `${e.firstName} ${e.lastName}`,
+      title: e.title, email: e.email,
+      org: getCompanyName(e.companyId),
+      fieldIds: e.fieldIds, about: e.about,
+      offerInterviews: e.offerInterviews,
+    }));
     return [...sups, ...exps];
   }, []);
 
   const filtered = useMemo(() => allContacts
     .filter(c => filter === "all" || c.type === filter)
-    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.org.toLowerCase().includes(search.toLowerCase()))
+    .filter(c => fieldFilter === "all" || c.fieldIds.includes(fieldFilter))
+    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.org.toLowerCase().includes(search.toLowerCase()) || c.title.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       const aM = a.fieldIds.filter(f => studentFields.includes(f)).length;
       const bM = b.fieldIds.filter(f => studentFields.includes(f)).length;
       return bM - aM;
-    }), [search, filter, allContacts, studentFields]);
+    }),
+    [search, filter, fieldFilter, allContacts, studentFields]);
+
+  const activeFields = useMemo(() => {
+    const ids = new Set(allContacts.flatMap(c => c.fieldIds));
+    return fields.filter(f => ids.has(f.id));
+  }, [allContacts]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-accent/10"><Contact className="w-5 h-5 text-accent" /></div>
-        <div><h1 className="text-xl font-bold font-display">Rubrica Contatti</h1><p className="text-sm text-muted-foreground">{filtered.length} contatti</p></div>
+        <div>
+          <h1 className="text-xl font-bold font-display">Rubrica Contatti</h1>
+          <p className="text-sm text-muted-foreground">{supervisors.length} professori · {experts.length} esperti</p>
+        </div>
       </div>
-      <div className="flex gap-3">
-        <div className="relative flex-1">
+
+      {/* Search + Filters */}
+      <div className="space-y-2">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cerca..."
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cerca per nome, ruolo, organizzazione..."
             className="w-full bg-card border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
         </div>
-        <select value={filter} onChange={e => setFilter(e.target.value as any)}
-          className="bg-card border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent">
-          <option value="all">Tutti</option>
-          <option value="supervisor">Professori</option>
-          <option value="expert">Esperti</option>
-        </select>
+        <div className="flex gap-2 flex-wrap items-center">
+          <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+          <select value={filter} onChange={e => setFilter(e.target.value as any)}
+            className="bg-card border rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent">
+            <option value="all">Tutti ({filtered.length})</option>
+            <option value="supervisor">Professori</option>
+            <option value="expert">Esperti</option>
+          </select>
+          <select value={fieldFilter} onChange={e => setFieldFilter(e.target.value)}
+            className="bg-card border rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-accent">
+            <option value="all">Tutti i campi</option>
+            {activeFields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+        </div>
       </div>
+
+      {/* Contacts Grid */}
       <div className="grid gap-3">
-        {filtered.slice(0, 20).map((contact, i) => (
-          <motion.div key={contact.email} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-            className="bg-card border rounded-xl p-4 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${contact.type === "supervisor" ? "bg-accent/10 text-accent" : "bg-ai/10 text-ai"}`}>
-              {contact.type === "supervisor" ? <GraduationCap className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-sm truncate">{contact.name}</h3>
-                <Badge variant={contact.type === "supervisor" ? "default" : "secondary"} className="text-[10px] shrink-0">
-                  {contact.type === "supervisor" ? "Prof" : "Expert"}
-                </Badge>
+        {filtered.slice(0, 30).map((contact, i) => {
+          const isMatch = contact.fieldIds.some(f => studentFields.includes(f));
+          const isExpanded = expanded === contact.id;
+          return (
+            <motion.div key={contact.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
+              className={`bg-card border rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer ${isMatch ? "border-accent/20" : ""}`}
+              onClick={() => setExpanded(isExpanded ? null : contact.id)}>
+              <div className="flex items-center gap-4 p-4">
+                <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${contact.type === "supervisor" ? "bg-accent/10 text-accent" : "bg-ai/10 text-ai"}`}>
+                  {contact.type === "supervisor" ? <GraduationCap className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-sm truncate">{contact.name}</h3>
+                    {isMatch && <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="Match con i tuoi campi" />}
+                    <Badge variant={contact.type === "supervisor" ? "default" : "secondary"} className="text-[10px] shrink-0">
+                      {contact.type === "supervisor" ? "Prof" : "Expert"}
+                    </Badge>
+                    {contact.offerInterviews && <Badge variant="secondary" className="text-[10px] shrink-0 bg-success/10 text-success">Interviste</Badge>}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{contact.title} · {contact.org}</p>
+                </div>
+                <a href={`mailto:${contact.email}`} onClick={e => e.stopPropagation()}
+                  className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                </a>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{contact.title} · {contact.org}</p>
-            </div>
-            <a href={`mailto:${contact.email}`} className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0">
-              <Mail className="w-4 h-4 text-muted-foreground" />
-            </a>
-          </motion.div>
-        ))}
+
+              {/* Expanded details */}
+              {isExpanded && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                  className="px-4 pb-4 border-t border-border pt-3 space-y-2">
+                  {contact.about && <p className="text-xs text-muted-foreground">{contact.about}</p>}
+                  {contact.interests && contact.interests.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground mb-1">Interessi di ricerca</p>
+                      <div className="flex flex-wrap gap-1">{contact.interests.map(r => <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>)}</div>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1">Campi</p>
+                    <div className="flex flex-wrap gap-1">
+                      {contact.fieldIds.map(f => <Badge key={f} variant={studentFields.includes(f) ? "default" : "secondary"} className="text-[10px]">{getFieldName(f)}</Badge>)}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <a href={`mailto:${contact.email}`} className="text-xs text-accent hover:underline flex items-center gap-1">
+                      <Mail className="w-3 h-3" /> {contact.email}
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          );
+        })}
+        {filtered.length > 30 && (
+          <p className="text-xs text-muted-foreground text-center">Mostrati 30 di {filtered.length}. Usa i filtri per restringere.</p>
+        )}
       </div>
     </div>
   );
