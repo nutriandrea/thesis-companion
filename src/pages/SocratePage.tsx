@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mic } from "lucide-react";
+import { Send, CheckCircle, Mic, FileText, Brain, Loader2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,14 +25,26 @@ function GradientOrb({ size = "lg" }: { size?: "sm" | "lg" }) {
   );
 }
 
+// Hook to get LaTeX content from EditorPage (shared via localStorage for now)
+function useLatexContent() {
+  const [latex, setLatex] = useState<string>("");
+  useEffect(() => {
+    const stored = localStorage.getItem("thesis-latex-content");
+    if (stored) setLatex(stored);
+  }, []);
+  return latex;
+}
+
 export default function SocratePage() {
   const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const latexContent = useLatexContent();
 
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
@@ -53,11 +65,7 @@ export default function SocratePage() {
             id: "welcome",
             role: "assistant",
             content: profile?.first_name
-              ? `**${profile.first_name}.** Finalmente ci incontriamo.\n\nSono Socrate. Non sono qui per darti risposte — sono qui per farti le domande che non vuoi farti.\n\n${
-                  profile.thesis_topic
-                    ? `Mi dicono che vuoi esplorare "${profile.thesis_topic}". Interessante. Ma dimmi una cosa: **perché** questo argomento?`
-                    : `Non hai ancora un argomento. Bene — è meglio partire dal dubbio che dalla falsa certezza.\n\nDimmi: **cosa ti affascina?**`
-                }`
+              ? `**${profile.first_name}.** Finalmente ci incontriamo.\n\nSono Socrate. Non sono qui per darti risposte — sono qui per farti le domande che non vuoi farti.\n\nPrima di iniziare, dimmi: **a che punto sei con la tesi?**\n\n1. 🔍 **Ricerca** — sto ancora cercando un argomento\n2. 📐 **Struttura** — ho un topic ma devo organizzare i capitoli\n3. ✍️ **Scrittura** — sto scrivendo attivamente\n4. 🔄 **Revisione** — sto rivedendo e perfezionando`
               : `Benvenuto. Sono Socrate. Presentati: chi sei, cosa studi, e cosa ti porta qui.`,
           };
           setMessages([welcome]);
@@ -88,7 +96,7 @@ export default function SocratePage() {
         const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-          body: JSON.stringify({ messages: apiMessages, studentContext }),
+          body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, mode: "chat" }),
         });
 
         if (!resp.ok) {
@@ -134,6 +142,12 @@ export default function SocratePage() {
         if (!profile?.socrate_done) {
           await updateProfile({ socrate_done: true });
         }
+
+        // Auto-extract memory entries after every 5 messages
+        const totalMessages = messages.length + 2; // +user +assistant
+        if (totalMessages % 10 === 0) {
+          extractMemory([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
+        }
       } catch (e) {
         console.error(e);
         toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
@@ -141,37 +155,117 @@ export default function SocratePage() {
         setIsStreaming(false);
       }
     },
-    [isStreaming, user, messages, studentContext, profile, updateProfile, toast]
+    [isStreaming, user, messages, studentContext, profile, updateProfile, toast, latexContent]
   );
 
-  // VOICE MODE — full screen orb
+  // Extract memory entries from conversation
+  const extractMemory = async (msgs: ChatMsg[]) => {
+    if (!user) return;
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({
+          messages: msgs.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+          mode: "extract_memory",
+        }),
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.entries && data.entries.length > 0) {
+        const inserts = data.entries.map((e: { type: string; title: string; detail: string }) => ({
+          user_id: user.id, type: e.type, title: e.title, detail: e.detail,
+        }));
+        await supabase.from("memory_entries").insert(inserts);
+      }
+    } catch (e) {
+      console.error("Memory extraction error:", e);
+    }
+  };
+
+  // Generate session report
+  const generateReport = async () => {
+    if (isStreaming || isGeneratingReport || !user || messages.length < 3) return;
+    setIsGeneratingReport(true);
+
+    const apiMessages = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
+
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, mode: "report" }),
+      });
+
+      if (!resp.ok) {
+        toast({ variant: "destructive", title: "Errore", description: "Impossibile generare il report." });
+        setIsGeneratingReport(false);
+        return;
+      }
+
+      const reader = resp.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let reportContent = "";
+      const reportId = `report-${Date.now()}`;
+
+      // Add a separator message
+      setMessages((prev) => [
+        ...prev,
+        { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## 📋 Report di Sessione\n" },
+        { id: reportId, role: "assistant", content: "" },
+      ]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              reportContent += content;
+              setMessages((prev) => prev.map((m) => m.id === reportId ? { ...m, content: reportContent } : m));
+            }
+          } catch {}
+        }
+      }
+
+      if (reportContent) {
+        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `📋 REPORT:\n${reportContent}` });
+      }
+
+      // Also extract memory from the full session
+      await extractMemory(messages);
+
+      toast({ title: "Report generato", description: "Le note sono state salvate nella memoria." });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Errore", description: "Errore nella generazione del report." });
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  // VOICE MODE
   if (inputMode === "voice") {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-3rem)] relative">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="animate-subtle-float"
-        >
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1, ease: "easeOut" }} className="animate-subtle-float">
           <GradientOrb size="lg" />
         </motion.div>
-        <motion.h2
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-foreground text-lg font-bold tracking-[0.15em] uppercase mt-8 text-center leading-relaxed"
-        >
+        <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-foreground text-lg font-bold tracking-[0.15em] uppercase mt-8 text-center leading-relaxed">
           SPEAK WITH<br />ME
         </motion.h2>
-
-        {/* Mic button at bottom */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="absolute bottom-8 left-8"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="absolute bottom-8 left-8">
           <button className="w-10 h-10 bg-secondary border border-border rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
             <Mic className="w-4 h-4" />
           </button>
@@ -180,14 +274,40 @@ export default function SocratePage() {
     );
   }
 
-  // TEXT MODE — chat with orb avatar
+  // TEXT MODE
   return (
     <div className="flex flex-col h-[calc(100vh-3rem)]">
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
         <GradientOrb size="sm" />
         <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">TEXT ME</h1>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {/* Generate Report button */}
+          {messages.length >= 3 && (
+            <button
+              onClick={generateReport}
+              disabled={isStreaming || isGeneratingReport}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30"
+            >
+              {isGeneratingReport ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FileText className="w-3.5 h-3.5" />
+              )}
+              Report
+            </button>
+          )}
+          {/* Save to memory button */}
+          {messages.length >= 5 && (
+            <button
+              onClick={() => extractMemory(messages)}
+              disabled={isStreaming}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30"
+            >
+              <Brain className="w-3.5 h-3.5" />
+              Memoria
+            </button>
+          )}
           {profile?.socrate_done && (
             <button
               onClick={() => setActiveSection("dashboard")}
@@ -213,7 +333,7 @@ export default function SocratePage() {
                 ? "bg-card border border-border rounded-lg"
                 : "bg-secondary border border-border rounded-lg"
             }`}>
-              {msg.content === "" && isStreaming ? (
+              {msg.content === "" && (isStreaming || isGeneratingReport) ? (
                 <div className="flex gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.3s" }} />
