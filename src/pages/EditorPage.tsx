@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FileText, Eye } from "lucide-react";
+import { FileText, Eye, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useApp } from "@/contexts/AppContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const SAMPLE_LATEX = `\\documentclass[12pt,a4paper]{article}
 \\usepackage[utf8]{inputenc}
@@ -66,11 +68,9 @@ La funzione obiettivo è definita come:
 
 function latexToPreview(latex: string): string {
   let html = latex;
-  // Extract content between \begin{document} and \end{document}
   const docMatch = html.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/);
   if (docMatch) html = docMatch[1];
 
-  // Title
   const titleMatch = latex.match(/\\title\{([\s\S]*?)\}/);
   const authorMatch = latex.match(/\\author\{([\s\S]*?)\}/);
 
@@ -85,7 +85,6 @@ function latexToPreview(latex: string): string {
     preview += `<p style="text-align:center;font-size:0.85rem;color:#64748b;margin-bottom:2rem;">${author}</p>`;
   }
 
-  // Process sections
   html = html.replace(/\\maketitle/g, '');
   html = html.replace(/\\begin\{abstract\}([\s\S]*?)\\end\{abstract\}/g,
     '<div style="margin:1.5rem 2rem;padding:1rem;border-left:3px solid #3B82F6;background:#f8fafc;font-style:italic;font-size:0.9rem;">$1</div>');
@@ -107,14 +106,25 @@ function latexToPreview(latex: string): string {
   return preview;
 }
 
+interface ThesisFeedback { id: string; title: string; detail: string; reason: string; }
+
 export default function EditorPage() {
+  const { user } = useApp();
   const [latex, setLatex] = useState(() => {
     return localStorage.getItem("thesis-latex-content") || SAMPLE_LATEX;
   });
+  const [feedback, setFeedback] = useState<ThesisFeedback[]>([]);
 
   useEffect(() => {
     localStorage.setItem("thesis-latex-content", latex);
   }, [latex]);
+
+  // Load Socrate thesis feedback
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "thesis_feedback").order("created_at", { ascending: false }).limit(10)
+      .then(({ data }: any) => { if (data) setFeedback(data); });
+  }, [user]);
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
@@ -128,9 +138,27 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* Mobile tabs / Desktop split */}
+      {/* Socrate Feedback Panel */}
+      {feedback.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="mt-3 bg-gradient-to-r from-ai/5 to-warning/5 border border-ai/20 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-ai" />
+            <p className="text-sm font-semibold text-foreground">Feedback di Socrate sulla tesi</p>
+          </div>
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {feedback.map(fb => (
+              <div key={fb.id} className="text-xs">
+                <span className="font-medium text-foreground">{fb.title}</span>
+                <span className="text-muted-foreground"> — {fb.detail}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Editor */}
       <div className="flex-1 mt-4 overflow-hidden">
-        {/* Desktop: split pane */}
         <div className="hidden md:grid grid-cols-2 gap-4 h-full">
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
@@ -154,7 +182,6 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* Mobile: tabs */}
         <Tabs defaultValue="source" className="md:hidden h-full flex flex-col">
           <TabsList>
             <TabsTrigger value="source">Sorgente</TabsTrigger>

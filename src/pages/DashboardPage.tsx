@@ -1,48 +1,51 @@
 import { useApp } from "@/contexts/AppContext";
 import { motion } from "framer-motion";
-import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight } from "lucide-react";
+import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; }
+
 export default function DashboardPage() {
   const { roadmap, toggleTask, profile, overallProgress, setActiveSection, user } = useApp();
   const [memoryCount, setMemoryCount] = useState(0);
   const [suggestionCount, setSuggestionCount] = useState(0);
+  const [nextSteps, setNextSteps] = useState<AISuggestion[]>([]);
+  const [thesisFeedback, setThesisFeedback] = useState<AISuggestion[]>([]);
 
   const totalTasks = roadmap.flatMap(p => p.tasks).length;
   const completedTasks = roadmap.flatMap(p => p.tasks).filter(t => t.completed).length;
   const name = profile?.first_name || "Studente";
 
-  // Find current stage
   const currentPhase = roadmap.find(p => p.progress < 100) || roadmap[roadmap.length - 1];
   const currentPhaseIndex = roadmap.indexOf(currentPhase);
 
-  // Next upcoming tasks (uncompleted, sorted by date)
   const nextTasks = roadmap.flatMap(p => p.tasks.filter(t => !t.completed).map(t => ({ ...t, phase: p.title, phaseId: p.id })))
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 4);
 
-  // Nearest deadline
   const nextDeadline = nextTasks[0];
   const daysUntilDeadline = nextDeadline
     ? Math.max(0, Math.ceil((new Date(nextDeadline.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0;
 
-  // Estimated end date
   const endDate = roadmap[roadmap.length - 1]?.endDate;
 
-  // Load counts
   useEffect(() => {
     if (!user) return;
     Promise.all([
       supabase.from("memory_entries").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("socrate_suggestions" as any).select("id", { count: "exact", head: true }).eq("user_id", user.id),
-    ]).then(([mem, sug]) => {
+      supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "next_step").order("created_at", { ascending: false }).limit(5),
+      supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "thesis_feedback").order("created_at", { ascending: false }).limit(3),
+    ]).then(([mem, sug, steps, feedback]) => {
       setMemoryCount(mem.count || 0);
       setSuggestionCount((sug as any).count || 0);
+      if ((steps as any).data) setNextSteps((steps as any).data);
+      if ((feedback as any).data) setThesisFeedback((feedback as any).data);
     });
   }, [user]);
 
@@ -62,13 +65,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-bold font-display text-foreground">Ciao, {name}</h1>
         <p className="text-muted-foreground text-xs mt-1">
-          {profile?.thesis_topic
-            ? `Stai lavorando su "${profile.thesis_topic}"`
-            : "Ecco il punto sulla tua tesi"}
+          {profile?.thesis_topic ? `Stai lavorando su "${profile.thesis_topic}"` : "Ecco il punto sulla tua tesi"}
         </p>
       </div>
 
@@ -100,19 +100,77 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Socrate Insights Banner */}
+      {/* Socrate Hub Banner */}
       {(memoryCount > 0 || suggestionCount > 0) && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="bg-gradient-to-r from-accent/5 to-ai/5 border border-accent/20 rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Insights di Socrate</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{memoryCount} memorie · {suggestionCount} suggerimenti personalizzati</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setActiveSection("memory")} className="text-xs px-3 py-1.5 rounded-md bg-card border border-border hover:bg-secondary transition-colors">Memoria</button>
-            <button onClick={() => setActiveSection("suggestions")} className="text-xs px-3 py-1.5 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors">Suggerimenti</button>
+          className="bg-gradient-to-r from-ai/5 via-accent/5 to-success/5 border border-ai/20 rounded-xl p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-ai/10 flex items-center justify-center shrink-0">
+              <Brain className="w-5 h-5 text-ai" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Hub Centrale di Socrate</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {memoryCount} memorie · {suggestionCount} suggerimenti distribuiti nelle sezioni del sito
+              </p>
+              <div className="flex gap-2 mt-3">
+                <button onClick={() => setActiveSection("memory")} className="text-xs px-3 py-1.5 rounded-md bg-card border border-border hover:bg-secondary transition-colors">
+                  <Brain className="w-3 h-3 inline mr-1" /> Memoria
+                </button>
+                <button onClick={() => setActiveSection("suggestions")} className="text-xs px-3 py-1.5 rounded-md bg-card border border-border hover:bg-secondary transition-colors">
+                  <Sparkles className="w-3 h-3 inline mr-1" /> Suggerimenti
+                </button>
+                <button onClick={() => setActiveSection("socrate")} className="text-xs px-3 py-1.5 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors">
+                  <MessageCircle className="w-3 h-3 inline mr-1" /> Socrate
+                </button>
+              </div>
+            </div>
           </div>
         </motion.div>
+      )}
+
+      {/* Socrate Next Steps */}
+      {nextSteps.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-ai" />
+            <h2 className="text-sm font-bold font-display text-foreground">Prossimi Passi da Socrate</h2>
+          </div>
+          <div className="space-y-2">
+            {nextSteps.map((step, i) => (
+              <motion.div key={step.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
+                className="flex items-start gap-3 p-3 bg-card border border-ai/10 rounded-lg">
+                <Target className="w-4 h-4 text-ai mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-foreground">{step.title}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{step.detail}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Thesis Feedback */}
+      {thesisFeedback.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-warning" />
+              <h2 className="text-sm font-bold font-display text-foreground">Feedback sulla Tesi</h2>
+            </div>
+            <button onClick={() => setActiveSection("editor")} className="text-xs text-accent hover:underline">Apri Editor →</button>
+          </div>
+          <div className="space-y-2">
+            {thesisFeedback.map((fb, i) => (
+              <motion.div key={fb.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.05 }}
+                className="p-3 bg-card border border-warning/10 rounded-lg">
+                <p className="text-xs font-medium text-foreground">{fb.title}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{fb.detail}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Next Tasks */}
