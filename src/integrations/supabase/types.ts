@@ -41,6 +41,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_snapshots: {
+        Row: {
+          created_at: string | null
+          id: string
+          profile_data: Json
+          trigger_event: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          profile_data: Json
+          trigger_event?: string
+          user_id: string
+          version: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          profile_data?: Json
+          trigger_event?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -146,6 +173,78 @@ export type Database = {
           reason?: string | null
           title?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      student_profiles: {
+        Row: {
+          career_interests: Json | null
+          created_at: string | null
+          critical_thinking: string | null
+          deep_interests: Json | null
+          id: string
+          industry_fit: Json | null
+          last_extraction_at: string | null
+          latex_sections_analyzed: Json | null
+          methodology_awareness: string | null
+          reasoning_style: string | null
+          research_maturity: string | null
+          strengths: Json | null
+          thesis_quality_score: number | null
+          thesis_stage: string | null
+          total_exchanges: number | null
+          total_extractions: number | null
+          updated_at: string | null
+          user_id: string
+          version: number | null
+          weaknesses: Json | null
+          writing_quality: string | null
+        }
+        Insert: {
+          career_interests?: Json | null
+          created_at?: string | null
+          critical_thinking?: string | null
+          deep_interests?: Json | null
+          id?: string
+          industry_fit?: Json | null
+          last_extraction_at?: string | null
+          latex_sections_analyzed?: Json | null
+          methodology_awareness?: string | null
+          reasoning_style?: string | null
+          research_maturity?: string | null
+          strengths?: Json | null
+          thesis_quality_score?: number | null
+          thesis_stage?: string | null
+          total_exchanges?: number | null
+          total_extractions?: number | null
+          updated_at?: string | null
+          user_id: string
+          version?: number | null
+          weaknesses?: Json | null
+          writing_quality?: string | null
+        }
+        Update: {
+          career_interests?: Json | null
+          created_at?: string | null
+          critical_thinking?: string | null
+          deep_interests?: Json | null
+          id?: string
+          industry_fit?: Json | null
+          last_extraction_at?: string | null
+          latex_sections_analyzed?: Json | null
+          methodology_awareness?: string | null
+          reasoning_style?: string | null
+          research_maturity?: string | null
+          strengths?: Json | null
+          thesis_quality_score?: number | null
+          thesis_stage?: string | null
+          total_exchanges?: number | null
+          total_extractions?: number | null
+          updated_at?: string | null
+          user_id?: string
+          version?: number | null
+          weaknesses?: Json | null
+          writing_quality?: string | null
         }
         Relationships: []
       }
