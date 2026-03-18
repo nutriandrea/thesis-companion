@@ -12,28 +12,26 @@ interface ChatMsg {
   content: string;
 }
 
-// Gradient orb component
 function GradientOrb({ size = "lg" }: { size?: "sm" | "lg" }) {
   const dim = size === "lg" ? "w-64 h-64 md:w-80 md:h-80" : "w-10 h-10";
   return (
-    <div
-      className={`${dim} rounded-full shrink-0`}
-      style={{
-        background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)",
-      }}
-    />
+    <div className={`${dim} rounded-full shrink-0`} style={{
+      background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)",
+    }} />
   );
 }
 
-// Hook to get LaTeX content from EditorPage (shared via localStorage for now)
 function useLatexContent() {
-  const [latex, setLatex] = useState<string>("");
+  const [latex, setLatex] = useState("");
   useEffect(() => {
     const stored = localStorage.getItem("thesis-latex-content");
     if (stored) setLatex(stored);
   }, []);
   return latex;
 }
+
+const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
+const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
 
 export default function SocratePage() {
   const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
@@ -42,148 +40,152 @@ export default function SocratePage() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const latexContent = useLatexContent();
+  const extractionCountRef = useRef(0); // track messages since last extraction
 
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
     : "";
 
+  // Load chat history
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("socrate_messages")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
+    supabase.from("socrate_messages").select("*").eq("user_id", user.id).order("created_at", { ascending: true })
       .then(({ data }) => {
         if (data && data.length > 0) {
           setMessages(data.map((m) => ({ id: m.id, role: m.role as "user" | "assistant", content: m.content })));
         } else {
           const welcome: ChatMsg = {
-            id: "welcome",
-            role: "assistant",
+            id: "welcome", role: "assistant",
             content: profile?.first_name
               ? `**${profile.first_name}.** Finalmente ci incontriamo.\n\nSono Socrate. Non sono qui per darti risposte — sono qui per farti le domande che non vuoi farti.\n\nPrima di iniziare, dimmi: **a che punto sei con la tesi?**\n\n1. 🔍 **Ricerca** — sto ancora cercando un argomento\n2. 📐 **Struttura** — ho un topic ma devo organizzare i capitoli\n3. ✍️ **Scrittura** — sto scrivendo attivamente\n4. 🔄 **Revisione** — sto rivedendo e perfezionando`
               : `Benvenuto. Sono Socrate. Presentati: chi sei, cosa studi, e cosa ti porta qui.`,
           };
           setMessages([welcome]);
-          if (user) {
-            supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: welcome.content });
-          }
+          if (user) supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: welcome.content });
         }
-        setLoaded(true);
       });
   }, [user]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const sendMessage = useCallback(
-    async (text: string) => {
-      if (!text.trim() || isStreaming || !user) return;
-      const userMsg: ChatMsg = { id: `u-${Date.now()}`, role: "user", content: text };
-      setMessages((prev) => [...prev, userMsg]);
-      setInput("");
-      setIsStreaming(true);
-
-      await supabase.from("socrate_messages").insert({ user_id: user.id, role: "user", content: text });
-      const apiMessages = [...messages, userMsg].slice(-20).map((m) => ({ role: m.role, content: m.content }));
-
-      try {
-        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-          body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, mode: "chat" }),
-        });
-
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({ error: "Errore" }));
-          toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
-          setIsStreaming(false);
-          return;
-        }
-
-        const reader = resp.body!.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let assistantContent = "";
-        const assistantId = `a-${Date.now()}`;
-        setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          let idx: number;
-          while ((idx = buffer.indexOf("\n")) !== -1) {
-            let line = buffer.slice(0, idx);
-            buffer = buffer.slice(idx + 1);
-            if (line.endsWith("\r")) line = line.slice(0, -1);
-            if (!line.startsWith("data: ")) continue;
-            const jsonStr = line.slice(6).trim();
-            if (jsonStr === "[DONE]") break;
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                assistantContent += content;
-                setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: assistantContent } : m));
-              }
-            } catch {}
-          }
-        }
-
-        if (assistantContent) {
-          await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: assistantContent });
-        }
-        if (!profile?.socrate_done) {
-          await updateProfile({ socrate_done: true });
-        }
-
-        // Auto-extract memory entries after every 5 messages
-        const totalMessages = messages.length + 2; // +user +assistant
-        if (totalMessages % 10 === 0) {
-          extractMemory([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
-        }
-      } catch (e) {
-        console.error(e);
-        toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
-      } finally {
-        setIsStreaming(false);
-      }
-    },
-    [isStreaming, user, messages, studentContext, profile, updateProfile, toast, latexContent]
-  );
-
-  // Extract memory entries from conversation
-  const extractMemory = async (msgs: ChatMsg[]) => {
+  // Background extraction: memory + suggestions
+  const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
     if (!user) return;
+    const recentMsgs = msgs.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+
+    // Run both extractions in parallel
+    const [memResp, sugResp] = await Promise.allSettled([
+      fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, mode: "extract_memory" }) }),
+      fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent, mode: "extract_suggestions" }) }),
+    ]);
+
+    // Save memory entries
+    if (memResp.status === "fulfilled" && memResp.value.ok) {
+      try {
+        const data = await memResp.value.json();
+        if (data.entries?.length > 0) {
+          await supabase.from("memory_entries").insert(
+            data.entries.map((e: { type: string; title: string; detail: string }) => ({ user_id: user.id, type: e.type, title: e.title, detail: e.detail }))
+          );
+        }
+      } catch (e) { console.error("Memory save error:", e); }
+    }
+
+    // Save suggestions
+    if (sugResp.status === "fulfilled" && sugResp.value.ok) {
+      try {
+        const data = await sugResp.value.json();
+        if (data.suggestions?.length > 0) {
+          await supabase.from("socrate_suggestions" as any).insert(
+            data.suggestions.map((s: { category: string; title: string; detail: string; reason: string }) => ({
+              user_id: user.id, category: s.category, title: s.title, detail: s.detail, reason: s.reason,
+            }))
+          );
+        }
+      } catch (e) { console.error("Suggestions save error:", e); }
+    }
+  }, [user, studentContext, latexContent]);
+
+  // Stream helper
+  const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
+    const reader = resp.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let content = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let idx: number;
+      while ((idx = buffer.indexOf("\n")) !== -1) {
+        let line = buffer.slice(0, idx);
+        buffer = buffer.slice(idx + 1);
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (!line.startsWith("data: ")) continue;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") break;
+        try {
+          const delta = JSON.parse(jsonStr).choices?.[0]?.delta?.content;
+          if (delta) {
+            content += delta;
+            setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, content } : m));
+          }
+        } catch {}
+      }
+    }
+    return content;
+  }, []);
+
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isStreaming || !user) return;
+    const userMsg: ChatMsg = { id: `u-${Date.now()}`, role: "user", content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsStreaming(true);
+
+    await supabase.from("socrate_messages").insert({ user_id: user.id, role: "user", content: text });
+    const apiMessages = [...messages, userMsg].slice(-20).map((m) => ({ role: m.role, content: m.content }));
+
     try {
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-        body: JSON.stringify({
-          messages: msgs.slice(-10).map((m) => ({ role: m.role, content: m.content })),
-          mode: "extract_memory",
-        }),
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, mode: "chat" }),
       });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (data.entries && data.entries.length > 0) {
-        const inserts = data.entries.map((e: { type: string; title: string; detail: string }) => ({
-          user_id: user.id, type: e.type, title: e.title, detail: e.detail,
-        }));
-        await supabase.from("memory_entries").insert(inserts);
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: "Errore" }));
+        toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
+        setIsStreaming(false);
+        return;
+      }
+
+      const assistantId = `a-${Date.now()}`;
+      setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+      const assistantContent = await streamResponse(resp, assistantId);
+
+      if (assistantContent) {
+        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: assistantContent });
+      }
+      if (!profile?.socrate_done) await updateProfile({ socrate_done: true });
+
+      // Background extraction every 5 exchanges (10 messages)
+      extractionCountRef.current += 2;
+      if (extractionCountRef.current >= 10) {
+        extractionCountRef.current = 0;
+        runBackgroundExtraction([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
       }
     } catch (e) {
-      console.error("Memory extraction error:", e);
+      console.error(e);
+      toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
+    } finally {
+      setIsStreaming(false);
     }
-  };
+  }, [isStreaming, user, messages, studentContext, profile, updateProfile, toast, latexContent, streamResponse, runBackgroundExtraction]);
 
-  // Generate session report
+  // Generate report + trigger extraction
   const generateReport = async () => {
     if (isStreaming || isGeneratingReport || !user || messages.length < 3) return;
     setIsGeneratingReport(true);
@@ -191,9 +193,8 @@ export default function SocratePage() {
     const apiMessages = messages.slice(-20).map((m) => ({ role: m.role, content: m.content }));
 
     try {
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
         body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, mode: "report" }),
       });
 
@@ -203,50 +204,22 @@ export default function SocratePage() {
         return;
       }
 
-      const reader = resp.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let reportContent = "";
       const reportId = `report-${Date.now()}`;
-
-      // Add a separator message
       setMessages((prev) => [
         ...prev,
         { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## 📋 Report di Sessione\n" },
         { id: reportId, role: "assistant", content: "" },
       ]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        let idx: number;
-        while ((idx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, idx);
-          buffer = buffer.slice(idx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              reportContent += content;
-              setMessages((prev) => prev.map((m) => m.id === reportId ? { ...m, content: reportContent } : m));
-            }
-          } catch {}
-        }
-      }
+      const reportContent = await streamResponse(resp, reportId);
 
       if (reportContent) {
         await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `📋 REPORT:\n${reportContent}` });
       }
 
-      // Also extract memory from the full session
-      await extractMemory(messages);
-
-      toast({ title: "Report generato", description: "Le note sono state salvate nella memoria." });
+      // Always extract on report generation
+      await runBackgroundExtraction(messages);
+      toast({ title: "Report generato", description: "Suggerimenti e memoria aggiornati." });
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Errore", description: "Errore nella generazione del report." });
@@ -282,37 +255,22 @@ export default function SocratePage() {
         <GradientOrb size="sm" />
         <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">TEXT ME</h1>
         <div className="ml-auto flex items-center gap-2">
-          {/* Generate Report button */}
           {messages.length >= 3 && (
-            <button
-              onClick={generateReport}
-              disabled={isStreaming || isGeneratingReport}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30"
-            >
-              {isGeneratingReport ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <FileText className="w-3.5 h-3.5" />
-              )}
+            <button onClick={generateReport} disabled={isStreaming || isGeneratingReport}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
+              {isGeneratingReport ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
               Report
             </button>
           )}
-          {/* Save to memory button */}
           {messages.length >= 5 && (
-            <button
-              onClick={() => extractMemory(messages)}
-              disabled={isStreaming}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30"
-            >
-              <Brain className="w-3.5 h-3.5" />
-              Memoria
+            <button onClick={() => runBackgroundExtraction(messages)} disabled={isStreaming}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
+              <Brain className="w-3.5 h-3.5" /> Analizza
             </button>
           )}
           {profile?.socrate_done && (
-            <button
-              onClick={() => setActiveSection("dashboard")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
+            <button onClick={() => setActiveSection("dashboard")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               <CheckCircle className="w-3.5 h-3.5 text-success" /> Dashboard
             </button>
           )}
@@ -322,17 +280,9 @@ export default function SocratePage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-6 space-y-5">
         {messages.map((msg) => (
-          <motion.div
-            key={msg.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div className={`max-w-[75%] px-4 py-3 text-sm ${
-              msg.role === "assistant"
-                ? "bg-card border border-border rounded-lg"
-                : "bg-secondary border border-border rounded-lg"
-            }`}>
+          <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[75%] px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-card border border-border rounded-lg" : "bg-secondary border border-border rounded-lg"}`}>
               {msg.content === "" && (isStreaming || isGeneratingReport) ? (
                 <div className="flex gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
@@ -340,9 +290,7 @@ export default function SocratePage() {
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.6s" }} />
                 </div>
               ) : (
-                <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                </div>
+                <div className="prose prose-sm max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
               )}
             </div>
           </motion.div>
@@ -350,25 +298,18 @@ export default function SocratePage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input bar */}
+      {/* Input */}
       <div className="border-t border-border pt-4 flex items-center gap-3">
         <div className="w-8 h-8 rounded bg-secondary border border-border flex items-center justify-center shrink-0">
           <span className="text-[10px] font-bold text-foreground">{profile?.first_name?.[0] || "U"}</span>
         </div>
         <div className="flex-1 flex gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+          <input value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-            placeholder="Rispondi a Socrate..."
-            className="flex-1 bg-card border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-            disabled={isStreaming}
-          />
-          <button
-            onClick={() => sendMessage(input)}
-            disabled={!input.trim() || isStreaming}
-            className="px-4 py-3 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30"
-          >
+            placeholder="Rispondi a Socrate..." disabled={isStreaming}
+            className="flex-1 bg-card border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
+            className="px-4 py-3 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30">
             <Send className="w-4 h-4" />
           </button>
         </div>
