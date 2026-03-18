@@ -391,6 +391,346 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       });
     }
 
+    // ─── GENERATE TASKS: Socrate's personalized tasks ───
+    if (currentMode === "generate_tasks") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Gather all context
+      const [profileRes, studentRes, memRes, msgRes, existingTasksRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("memory_entries").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(30),
+        supabase.from("socrate_messages").select("role, content").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("socrate_tasks").select("title, status, section, priority").eq("user_id", userId).order("created_at", { ascending: false }).limit(30),
+      ]);
+
+      const profile = profileRes.data;
+      const studentProfile = studentRes.data;
+      const memories = memRes.data || [];
+      const recentMessages = (msgRes.data || []).reverse();
+      const existingTasks = existingTasksRes.data || [];
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei il TASK MANAGER di Socrate. Genera compiti concreti, personalizzati e azionabili per lo studente.
+
+CONTESTO STUDENTE:
+- Nome: ${profile?.first_name} ${profile?.last_name}
+- Corso: ${profile?.degree || "N/A"}
+- Università: ${profile?.university || "N/A"}
+- Topic tesi: ${profile?.thesis_topic || "Non definito"}
+- Stato journey: ${profile?.journey_state || "N/A"}
+
+PROFILO INTELLETTUALE:
+${studentProfile ? JSON.stringify({
+  reasoning_style: studentProfile.reasoning_style,
+  strengths: studentProfile.strengths,
+  weaknesses: studentProfile.weaknesses,
+  deep_interests: studentProfile.deep_interests,
+  research_maturity: studentProfile.research_maturity,
+  writing_quality: studentProfile.writing_quality,
+  critical_thinking: studentProfile.critical_thinking,
+  thesis_stage: studentProfile.thesis_stage,
+  thesis_quality_score: studentProfile.thesis_quality_score,
+  sections_progress: studentProfile.sections_progress,
+  overall_completion: studentProfile.overall_completion,
+  estimated_days_remaining: studentProfile.estimated_days_remaining,
+}) : "Non ancora profilato"}
+
+MEMORIA (ultimi eventi):
+${JSON.stringify(memories.slice(0, 15).map((m: any) => ({ type: m.type, title: m.title, detail: m.detail })))}
+
+CONVERSAZIONE RECENTE:
+${JSON.stringify(recentMessages.slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 200) })))}
+
+CONTENUTO LATEX:
+${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto LaTeX."}
+
+COMPITI GIÀ ASSEGNATI (evita duplicati):
+${JSON.stringify(existingTasks.map((t: any) => ({ title: t.title, status: t.status, section: t.section })))}
+
+ISTRUZIONI:
+- Genera 5-8 compiti concreti e personalizzati
+- Ogni compito deve mirare a un miglioramento specifico della tesi o della preparazione
+- Assegna priorità realistiche basate sullo stato attuale
+- Stima il tempo in minuti (15, 30, 45, 60, 90, 120, 180)
+- Indica la sezione della tesi o l'area tematica
+- I compiti devono essere NUOVI (non ripetere quelli già assegnati)
+- Adatta i compiti al livello di maturità dello studente`,
+            },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "assign_tasks",
+                description: "Assign personalized tasks to the student",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    tasks: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string", description: "Short task title" },
+                          description: { type: "string", description: "Detailed action description" },
+                          section: { type: "string", description: "Thesis section or topic area (e.g. Abstract, Metodologia, Literature Review, Ricerca, Bibliografia)" },
+                          priority: { type: "string", enum: ["critical", "high", "medium", "low"] },
+                          estimated_minutes: { type: "integer", description: "Estimated time in minutes" },
+                        },
+                        required: ["title", "description", "section", "priority", "estimated_minutes"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["tasks"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "assign_tasks" } },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Task generation error:", response.status, await response.text());
+        return new Response(JSON.stringify({ error: "Errore generazione compiti" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCalls = data.choices?.[0]?.message?.tool_calls || [];
+      let tasks: any[] = [];
+
+      for (const tc of toolCalls) {
+        if (tc.function?.name === "assign_tasks") {
+          try { tasks = JSON.parse(tc.function.arguments).tasks || []; } catch { tasks = []; }
+        }
+      }
+
+      // Persist tasks
+      if (tasks.length > 0) {
+        await supabase.from("socrate_tasks").insert(
+          tasks.map((t: any) => ({
+            user_id: userId,
+            title: t.title,
+            description: t.description,
+            section: t.section,
+            priority: t.priority,
+            estimated_minutes: t.estimated_minutes,
+            source: "socrate",
+          }))
+        );
+      }
+
+      await logEvent("tasks_generated", { count: tasks.length }, "tasks");
+
+      return new Response(JSON.stringify({ tasks, count: tasks.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── DEEP PROFILE: Comprehensive student profiling ───
+    if (currentMode === "deep_profile") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Gather ALL available data
+      const [profileRes, studentRes, memRes, msgRes, sugRes, taskRes, eventRes, affinityRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("memory_entries").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50),
+        supabase.from("socrate_messages").select("role, content, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(40),
+        supabase.from("socrate_suggestions").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(30),
+        supabase.from("socrate_tasks").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(30),
+        supabase.from("session_events").select("event_type, event_data, section, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(50),
+        supabase.from("affinity_scores").select("*").eq("user_id", userId).order("score", { ascending: false }).limit(20),
+      ]);
+
+      const profile = profileRes.data;
+      const studentProfile = studentRes.data;
+      const memories = memRes.data || [];
+      const recentMessages = (msgRes.data || []).reverse();
+      const suggestions = sugRes.data || [];
+      const tasks = taskRes.data || [];
+      const events = eventRes.data || [];
+      const affinities = affinityRes.data || [];
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei il MOTORE DI PROFILAZIONE PROFONDA di Socrate. Analizza TUTTE le fonti dati disponibili per costruire il profilo più completo e accurato possibile dello studente.
+
+DATI DISPONIBILI:
+
+A) PROFILO BASE:
+- Nome: ${profile?.first_name} ${profile?.last_name}
+- Email: ${profile?.email}
+- Corso: ${profile?.degree || "N/A"}
+- Università: ${profile?.university || "N/A"}
+- Competenze: ${profile?.skills?.join(", ") || "N/A"}
+- Topic: ${profile?.thesis_topic || "Non definito"}
+- Stato: ${profile?.journey_state}
+
+B) PROFILO INTELLETTUALE ATTUALE:
+${studentProfile ? JSON.stringify(studentProfile) : "Non ancora creato"}
+
+C) MEMORIA (${memories.length} entries):
+${JSON.stringify(memories.slice(0, 30).map((m: any) => ({ type: m.type, title: m.title, detail: m.detail })))}
+
+D) CONVERSAZIONE (${recentMessages.length} messaggi):
+${JSON.stringify(recentMessages.slice(-20).map((m: any) => ({ role: m.role, content: m.content.substring(0, 300) })))}
+
+E) SUGGERIMENTI GENERATI (${suggestions.length}):
+${JSON.stringify(suggestions.slice(0, 15).map((s: any) => ({ category: s.category, title: s.title })))}
+
+F) COMPITI ASSEGNATI (${tasks.length}):
+${JSON.stringify(tasks.slice(0, 15).map((t: any) => ({ title: t.title, status: t.status, section: t.section, priority: t.priority })))}
+
+G) ATTIVITÀ (${events.length} eventi):
+${JSON.stringify(events.slice(0, 20).map((e: any) => ({ type: e.event_type, section: e.section, date: e.created_at })))}
+
+H) AFFINITÀ CALCOLATE (${affinities.length}):
+${JSON.stringify(affinities.slice(0, 10).map((a: any) => ({ entity: a.entity_name, type: a.entity_type, score: a.score })))}
+
+I) CONTENUTO LATEX:
+${latexContent ? latexContent.substring(0, 4000) : "Nessun contenuto LaTeX."}
+
+ISTRUZIONI:
+1. Analizza TUTTE le fonti per costruire un profilo unificato e profondo
+2. Valuta: stile di ragionamento, punti di forza, debolezze, interessi, maturità, qualità scrittura, pensiero critico
+3. Identifica pattern comportamentali dalle interazioni
+4. Valuta affinità professionali e accademiche
+5. Determina lo stage della tesi e la qualità complessiva
+6. Genera un summary narrativo del profilo`,
+            },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "update_deep_profile",
+                description: "Update the comprehensive student profile",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    reasoning_style: { type: "string", description: "How the student thinks and argues" },
+                    strengths: { type: "array", items: { type: "string" }, description: "Academic and intellectual strengths" },
+                    weaknesses: { type: "array", items: { type: "string" }, description: "Areas needing improvement" },
+                    deep_interests: { type: "array", items: { type: "string" }, description: "Core intellectual interests" },
+                    research_maturity: { type: "string", enum: ["beginner", "developing", "intermediate", "advanced"] },
+                    methodology_awareness: { type: "string", description: "Understanding of research methods" },
+                    writing_quality: { type: "string", description: "Assessment of thesis writing quality" },
+                    critical_thinking: { type: "string", description: "Critical thinking assessment" },
+                    career_interests: { type: "array", items: { type: "string" } },
+                    industry_fit: { type: "array", items: { type: "string" } },
+                    thesis_stage: { type: "string", enum: ["exploration", "topic_chosen", "structuring", "writing", "revision"] },
+                    thesis_quality_score: { type: "integer", description: "0-100 quality score" },
+                    profile_summary: { type: "string", description: "Narrative summary of the student's profile (3-5 sentences)" },
+                    recommended_focus_areas: { type: "array", items: { type: "string" }, description: "Top areas the student should focus on" },
+                    learning_patterns: { type: "string", description: "How the student learns and interacts" },
+                  },
+                  required: ["reasoning_style", "strengths", "weaknesses", "deep_interests", "research_maturity", "thesis_stage", "thesis_quality_score", "profile_summary", "recommended_focus_areas"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "update_deep_profile" } },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Deep profile error:", response.status, await response.text());
+        return new Response(JSON.stringify({ error: "Errore profilazione" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCalls = data.choices?.[0]?.message?.tool_calls || [];
+      let profileUpdate: any = null;
+
+      for (const tc of toolCalls) {
+        if (tc.function?.name === "update_deep_profile") {
+          try { profileUpdate = JSON.parse(tc.function.arguments); } catch { profileUpdate = null; }
+        }
+      }
+
+      if (profileUpdate) {
+        const profileSummary = profileUpdate.profile_summary;
+        const recommendedFocusAreas = profileUpdate.recommended_focus_areas;
+        const learningPatterns = profileUpdate.learning_patterns;
+
+        // Remove non-DB fields before update
+        delete profileUpdate.profile_summary;
+        delete profileUpdate.recommended_focus_areas;
+        delete profileUpdate.learning_patterns;
+
+        if (studentProfile) {
+          // Snapshot before update
+          await supabase.from("profile_snapshots").insert({
+            user_id: userId,
+            profile_data: studentProfile,
+            trigger_event: "deep_profile",
+            version: studentProfile.version || 1,
+          });
+          await supabase.from("student_profiles").update({
+            ...profileUpdate,
+            total_extractions: (studentProfile.total_extractions || 0) + 1,
+            last_extraction_at: new Date().toISOString(),
+            version: (studentProfile.version || 1) + 1,
+          }).eq("user_id", userId);
+        } else {
+          await supabase.from("student_profiles").insert({
+            user_id: userId,
+            ...profileUpdate,
+            total_extractions: 1,
+            last_extraction_at: new Date().toISOString(),
+            version: 1,
+          });
+        }
+
+        // Store summary and focus areas as memory entries
+        await supabase.from("memory_entries").insert([
+          { user_id: userId, type: "profile_summary", title: "Profilo aggiornato", detail: profileSummary || "" },
+          { user_id: userId, type: "focus_areas", title: "Aree di focus", detail: (recommendedFocusAreas || []).join(", ") },
+        ]);
+
+        // Restore fields for response
+        profileUpdate.profile_summary = profileSummary;
+        profileUpdate.recommended_focus_areas = recommendedFocusAreas;
+        profileUpdate.learning_patterns = learningPatterns;
+      }
+
+      await logEvent("deep_profile", { updated: !!profileUpdate }, "profile");
+
+      return new Response(JSON.stringify({ profile: profileUpdate }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ─── ANALYZE FULL: Fusion Engine ───
     if (currentMode === "analyze_full") {
       if (!userId) {
