@@ -879,15 +879,36 @@ Chiama TUTTE le funzioni disponibili.`,
         await supabase.from("socrate_suggestions").insert(suggestions);
       }
 
+      // Log event + update progress
+      const overallScore = sectionAnalysis?.overall_score || 0;
+      const detectedStage = sectionAnalysis?.detected_stage || "writing";
+      const sectionsProgress: any = {};
+      if (sectionAnalysis?.sections) {
+        sectionAnalysis.sections.forEach((s: any) => {
+          sectionsProgress[s.name] = { completeness: s.completeness, status: s.status };
+        });
+      }
+      const avgCompletion = sectionAnalysis?.sections?.length
+        ? Math.round(sectionAnalysis.sections.reduce((sum: number, s: any) => sum + s.completeness, 0) / sectionAnalysis.sections.length)
+        : 0;
+      const estimatedDays = Math.max(1, Math.round((100 - avgCompletion) * 0.5));
+
+      await Promise.all([
+        logEvent("latex_analysis", { overallScore, tasksGenerated: editorTasks.length, sectionsCount: sectionAnalysis?.sections?.length || 0 }, "editor"),
+        updateProgress(sectionsProgress, avgCompletion, estimatedDays),
+      ]);
+
       return new Response(JSON.stringify({
         sectionAnalysis,
         editorTasks,
         thesisProfileUpdate,
         summary: {
           sectionsAnalyzed: sectionAnalysis?.sections?.length || 0,
-          overallScore: sectionAnalysis?.overall_score || 0,
+          overallScore,
           tasksGenerated: editorTasks.length,
-          stage: sectionAnalysis?.detected_stage || "unknown",
+          stage: detectedStage,
+          overallCompletion: avgCompletion,
+          estimatedDaysRemaining: estimatedDays,
         },
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
