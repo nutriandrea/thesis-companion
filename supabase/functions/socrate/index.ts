@@ -323,8 +323,7 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       const allSuggestions = sugRes.data || [];
       const recentMessages = (msgRes.data || []).reverse();
 
-      // Dataset summaries (passed from frontend)
-      const { datasetSummary } = await req.json().catch(() => ({ datasetSummary: "" }));
+      // Dataset summaries (from request body)
 
       const response = await fetch(AI_URL, {
         method: "POST",
