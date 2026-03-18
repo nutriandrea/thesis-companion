@@ -35,6 +35,26 @@ serve(async (req) => {
     const aiHeaders = { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" };
     const currentMode = mode || "chat";
 
+    // Helper: log session event
+    const logEvent = async (eventType: string, eventData: any = {}, section?: string) => {
+      if (!userId) return;
+      try {
+        await supabase.from("session_events").insert({
+          user_id: userId, event_type: eventType, event_data: eventData, section: section || currentMode,
+        });
+      } catch (e) { console.error("Event log error:", e); }
+    };
+
+    // Helper: update progress on student_profiles
+    const updateProgress = async (sectionProgress?: any, overallCompletion?: number, estimatedDays?: number) => {
+      if (!userId) return;
+      const update: any = { last_active_at: new Date().toISOString() };
+      if (sectionProgress !== undefined) update.sections_progress = sectionProgress;
+      if (overallCompletion !== undefined) update.overall_completion = overallCompletion;
+      if (estimatedDays !== undefined) update.estimated_days_remaining = estimatedDays;
+      await supabase.from("student_profiles").update(update).eq("user_id", userId);
+    };
+
     // ─── EXTRACT MEMORY ───
     if (currentMode === "extract_memory") {
       const response = await fetch(AI_URL, {
