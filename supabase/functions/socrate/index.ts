@@ -1044,6 +1044,9 @@ FORMATO: **grassetto**, *corsivo*, paragrafi brevi.`;
       });
     }
 
+    // Log chat/report event
+    logEvent(currentMode === "report" ? "report_generated" : "chat_exchange", { messagesCount: messages?.length || 0 }, currentMode === "report" ? "report" : "socrate");
+
     return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {
     console.error("socrate error:", e);
