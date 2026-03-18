@@ -1655,7 +1655,9 @@ Giudizio 1-10 e indicazioni per il prossimo step.
 Italiano, diretto, specifico, provocatorio.`;
     } else {
       // ─── CHAT MODE ───
-      systemPrompt = `Sei Socrate, il filosofo greco, reincarnato come mentore accademico spietato ma benevolo.
+      systemPrompt = `Sei Socrate, il filosofo greco, reincarnato come mentore accademico.
+
+${severityInstructions}
 
 CONTESTO DELLO STUDENTE:
 ${studentContext || "Nessun contesto. Chiedi allo studente di presentarsi."}
