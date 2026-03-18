@@ -300,6 +300,8 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
         }
       }
 
+      await logEvent("extraction", { suggestions: suggestions.length, profileUpdated: !!profileUpdate }, "socrate");
+
       return new Response(JSON.stringify({ suggestions, profileUpdate }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
