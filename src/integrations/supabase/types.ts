@@ -14,7 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      memory_entries: {
+        Row: {
+          created_at: string
+          detail: string
+          id: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string
+          id?: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string
+          id?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          degree: string | null
+          email: string
+          field_ids: string[] | null
+          first_name: string
+          id: string
+          journey_state: string
+          last_name: string
+          onboarding_done: boolean
+          skills: string[] | null
+          socrate_done: boolean
+          thesis_topic: string | null
+          university: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          degree?: string | null
+          email?: string
+          field_ids?: string[] | null
+          first_name?: string
+          id?: string
+          journey_state?: string
+          last_name?: string
+          onboarding_done?: boolean
+          skills?: string[] | null
+          socrate_done?: boolean
+          thesis_topic?: string | null
+          university?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          degree?: string | null
+          email?: string
+          field_ids?: string[] | null
+          first_name?: string
+          id?: string
+          journey_state?: string
+          last_name?: string
+          onboarding_done?: boolean
+          skills?: string[] | null
+          socrate_done?: boolean
+          thesis_topic?: string | null
+          university?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      socrate_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
