@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles } from "lucide-react";
+import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles, Zap } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import companiesData from "@/data/companies.json";
+import supervisorsData from "@/data/supervisors.json";
+import topicsData from "@/data/topics.json";
+import type { Company, Supervisor, Topic } from "@/types/data";
 
 interface ChatMsg {
   id: string;
@@ -292,6 +296,48 @@ export default function SocratePage() {
     }
   };
 
+  // Build dataset summary for fusion engine
+  const buildDatasetSummary = useCallback(() => {
+    const companies = (companiesData as Company[]).map(c => `${c.id}: ${c.name} (${c.domains.join(", ")})`).join("\n");
+    const sups = (supervisorsData as Supervisor[]).map(s => `${s.id}: ${s.title} ${s.firstName} ${s.lastName} — ${s.researchInterests.slice(0, 3).join(", ")}`).join("\n");
+    const tops = (topicsData as Topic[]).slice(0, 30).map(t => `${t.id}: ${t.title} (${t.type}, fields: ${t.fieldIds.join(",")})`).join("\n");
+    return `AZIENDE:\n${companies}\n\nPROFESSORI:\n${sups}\n\nTOPIC (primi 30):\n${tops}`;
+  }, []);
+
+  // Full fusion analysis
+  const runFusionAnalysis = async () => {
+    if (isStreaming || isExtracting || !user) return;
+    setIsExtracting(true);
+    try {
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({
+          studentContext,
+          latexContent,
+          datasetSummary: buildDatasetSummary(),
+          mode: "analyze_full",
+        }),
+      });
+
+      if (!resp.ok) {
+        toast({ variant: "destructive", title: "Errore", description: "Fusione fallita." });
+        setIsExtracting(false);
+        return;
+      }
+
+      const result = await resp.json();
+      toast({
+        title: "🧬 Fusione completata",
+        description: `Profilo aggiornato · ${result.summary?.affinitiesComputed || 0} affinità calcolate · ${result.summary?.newSuggestionsGenerated || 0} nuovi suggerimenti`,
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Errore", description: "Errore nella fusione dati." });
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
   // VOICE MODE
   if (inputMode === "voice") {
     return (
@@ -338,6 +384,13 @@ export default function SocratePage() {
             <button onClick={() => runBackgroundExtraction(messages)} disabled={isStreaming || isExtracting}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
               <Brain className="w-3.5 h-3.5" /> Analizza
+            </button>
+          )}
+          {messages.length >= 5 && (
+            <button onClick={runFusionAnalysis} disabled={isStreaming || isExtracting}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-ai/10 border border-ai/20 text-xs text-ai hover:bg-ai/20 transition-colors disabled:opacity-30">
+              {isExtracting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+              Fusione
             </button>
           )}
           {profile?.socrate_done && (

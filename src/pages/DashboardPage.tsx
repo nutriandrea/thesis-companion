@@ -1,6 +1,6 @@
 import { useApp } from "@/contexts/AppContext";
 import { motion } from "framer-motion";
-import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText } from "lucide-react";
+import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText, Building2, GraduationCap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; }
+interface AffinityScore { id: string; entity_type: string; entity_id: string; entity_name: string; score: number; reasoning: string; matched_traits: string[]; }
 
 export default function DashboardPage() {
   const { roadmap, toggleTask, profile, overallProgress, setActiveSection, user } = useApp();
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const [suggestionCount, setSuggestionCount] = useState(0);
   const [nextSteps, setNextSteps] = useState<AISuggestion[]>([]);
   const [thesisFeedback, setThesisFeedback] = useState<AISuggestion[]>([]);
+  const [topAffinities, setTopAffinities] = useState<AffinityScore[]>([]);
 
   const totalTasks = roadmap.flatMap(p => p.tasks).length;
   const completedTasks = roadmap.flatMap(p => p.tasks).filter(t => t.completed).length;
@@ -41,11 +43,13 @@ export default function DashboardPage() {
       supabase.from("socrate_suggestions" as any).select("id", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "next_step").order("created_at", { ascending: false }).limit(5),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "thesis_feedback").order("created_at", { ascending: false }).limit(3),
-    ]).then(([mem, sug, steps, feedback]) => {
+      supabase.from("affinity_scores" as any).select("*").eq("user_id", user.id).order("score", { ascending: false }).limit(6),
+    ]).then(([mem, sug, steps, feedback, affinities]) => {
       setMemoryCount(mem.count || 0);
       setSuggestionCount((sug as any).count || 0);
       if ((steps as any).data) setNextSteps((steps as any).data);
       if ((feedback as any).data) setThesisFeedback((feedback as any).data);
+      if ((affinities as any).data) setTopAffinities((affinities as any).data);
     });
   }, [user]);
 
@@ -169,6 +173,42 @@ export default function DashboardPage() {
                 <p className="text-[10px] text-muted-foreground mt-0.5">{fb.detail}</p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top Affinities */}
+      {topAffinities.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-ai" />
+              <h2 className="text-sm font-bold font-display text-foreground">Affinità Calcolate</h2>
+            </div>
+            <button onClick={() => setActiveSection("market")} className="text-xs text-accent hover:underline">Vedi tutte →</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {topAffinities.slice(0, 6).map((aff, i) => {
+              const Icon = aff.entity_type === "company" ? Building2 : aff.entity_type === "supervisor" ? GraduationCap : Target;
+              const typeLabel = aff.entity_type === "company" ? "Azienda" : aff.entity_type === "supervisor" ? "Professore" : "Topic";
+              return (
+                <motion.div key={aff.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
+                  className="bg-card border rounded-lg p-3 hover:shadow-sm transition-shadow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">{typeLabel}</span>
+                    <span className="ml-auto text-sm font-bold text-accent">{aff.score}%</span>
+                  </div>
+                  <p className="text-xs font-medium text-foreground truncate">{aff.entity_name}</p>
+                  <Progress value={aff.score} className="h-1 mt-1.5" />
+                  {aff.matched_traits?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {aff.matched_traits.slice(0, 2).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       )}

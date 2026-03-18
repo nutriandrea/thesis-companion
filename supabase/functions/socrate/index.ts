@@ -291,13 +291,275 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
           status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { data: profile } = await supabase
-        .from("student_profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      const [profileRes, affinityRes] = await Promise.all([
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("affinity_scores").select("*").eq("user_id", userId).order("score", { ascending: false }),
+      ]);
 
-      return new Response(JSON.stringify({ profile }), {
+      return new Response(JSON.stringify({ profile: profileRes.data, affinities: affinityRes.data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── ANALYZE FULL: Fusion Engine ───
+    if (currentMode === "analyze_full") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Gather ALL data sources
+      const [profileRes, memRes, sugRes, msgRes] = await Promise.all([
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("memory_entries").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50),
+        supabase.from("socrate_suggestions").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50),
+        supabase.from("socrate_messages").select("role, content").eq("user_id", userId).order("created_at", { ascending: false }).limit(30),
+      ]);
+
+      const existingProfile = profileRes.data;
+      const allMemories = memRes.data || [];
+      const allSuggestions = sugRes.data || [];
+      const recentMessages = (msgRes.data || []).reverse();
+
+      // Dataset summaries (passed from frontend)
+      const { datasetSummary } = await req.json().catch(() => ({ datasetSummary: "" }));
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei il MOTORE DI FUSIONE CENTRALE di Socrate. Hai accesso a TUTTE le fonti dati dello studente. Il tuo compito è:
+
+1. FONDERE tutte le informazioni in un profilo unico e coerente
+2. CALCOLARE affinità con entità del dataset (aziende, professori, topic)
+3. AGGIORNARE il profilo intellettuale con una valutazione completa
+
+FONTI DATI DISPONIBILI:
+
+A) PROFILO BASE:
+${studentContext || "Non disponibile"}
+
+B) PROFILO INTELLETTUALE ATTUALE (dal database):
+${existingProfile ? JSON.stringify({
+  reasoning_style: existingProfile.reasoning_style,
+  strengths: existingProfile.strengths,
+  weaknesses: existingProfile.weaknesses,
+  deep_interests: existingProfile.deep_interests,
+  research_maturity: existingProfile.research_maturity,
+  career_interests: existingProfile.career_interests,
+  thesis_stage: existingProfile.thesis_stage,
+  thesis_quality_score: existingProfile.thesis_quality_score,
+}) : "Non ancora creato"}
+
+C) MEMORIA DELLE CONVERSAZIONI (ultimi 50 eventi):
+${JSON.stringify(allMemories.slice(0, 30).map((m: any) => ({ type: m.type, title: m.title, detail: m.detail })))}
+
+D) SUGGERIMENTI GIÀ GENERATI:
+${JSON.stringify(allSuggestions.slice(0, 20).map((s: any) => ({ category: s.category, title: s.title })))}
+
+E) CONVERSAZIONE RECENTE:
+${JSON.stringify(recentMessages.slice(-15).map((m: any) => ({ role: m.role, content: m.content.substring(0, 200) })))}
+
+F) CONTENUTO LATEX:
+${latexContent ? latexContent.substring(0, 4000) : "Nessun contenuto LaTeX presente."}
+
+G) DATASET DISPONIBILE (aziende, professori, topic):
+${datasetSummary || "Non fornito"}
+
+ISTRUZIONI:
+1. Analizza TUTTE le fonti per creare un profilo unificato
+2. Per ogni entità del dataset, calcola un punteggio di affinità 0-100 basato su:
+   - Corrispondenza con interessi e competenze dello studente
+   - Rilevanza per la tesi in corso
+   - Compatibilità con lo stile di ragionamento
+   - Potenziale di crescita professionale
+3. Aggiorna il profilo con nuove scoperte dalla fusione dei dati
+4. Genera suggerimenti NUOVI non ancora presenti
+
+Chiama TUTTE le funzioni disponibili.`,
+            },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "update_fused_profile",
+                description: "Update the centralized student profile with fused analysis from all data sources",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    reasoning_style: { type: "string" },
+                    strengths: { type: "array", items: { type: "string" } },
+                    weaknesses: { type: "array", items: { type: "string" } },
+                    deep_interests: { type: "array", items: { type: "string" } },
+                    research_maturity: { type: "string", enum: ["beginner", "developing", "intermediate", "advanced"] },
+                    methodology_awareness: { type: "string" },
+                    writing_quality: { type: "string" },
+                    critical_thinking: { type: "string" },
+                    career_interests: { type: "array", items: { type: "string" } },
+                    industry_fit: { type: "array", items: { type: "string" }, description: "Industries that best match the student" },
+                    thesis_stage: { type: "string", enum: ["exploration", "topic_chosen", "structuring", "writing", "revision"] },
+                    thesis_quality_score: { type: "integer" },
+                  },
+                  required: ["reasoning_style", "strengths", "weaknesses", "deep_interests", "research_maturity"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            {
+              type: "function",
+              function: {
+                name: "compute_affinities",
+                description: "Compute affinity scores between the student and dataset entities (companies, supervisors, topics)",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    affinities: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          entity_type: { type: "string", enum: ["company", "supervisor", "topic"] },
+                          entity_id: { type: "string", description: "ID from the dataset e.g. company-01, supervisor-03, topic-12" },
+                          entity_name: { type: "string" },
+                          score: { type: "integer", description: "Affinity score 0-100" },
+                          reasoning: { type: "string", description: "Why this score based on the student's profile" },
+                          matched_traits: { type: "array", items: { type: "string" }, description: "Which student traits match this entity" },
+                        },
+                        required: ["entity_type", "entity_id", "entity_name", "score", "reasoning", "matched_traits"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["affinities"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            {
+              type: "function",
+              function: {
+                name: "save_new_suggestions",
+                description: "Save NEW suggestions not already present",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    suggestions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          category: { type: "string", enum: ["company", "professor", "book", "topic", "source", "career", "skill", "thesis_feedback", "next_step"] },
+                          title: { type: "string" },
+                          detail: { type: "string" },
+                          reason: { type: "string" },
+                        },
+                        required: ["category", "title", "detail", "reason"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["suggestions"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Fusion error:", response.status, await response.text());
+        return new Response(JSON.stringify({ error: "Errore analisi fusione" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCalls = data.choices?.[0]?.message?.tool_calls || [];
+
+      let profileUpdate: any = null;
+      let affinities: any[] = [];
+      let newSuggestions: any[] = [];
+
+      for (const tc of toolCalls) {
+        try {
+          const args = JSON.parse(tc.function.arguments);
+          if (tc.function.name === "update_fused_profile") profileUpdate = args;
+          if (tc.function.name === "compute_affinities") affinities = args.affinities || [];
+          if (tc.function.name === "save_new_suggestions") newSuggestions = args.suggestions || [];
+        } catch { /* skip malformed */ }
+      }
+
+      // Persist fused profile
+      if (profileUpdate) {
+        if (existingProfile) {
+          await supabase.from("profile_snapshots").insert({
+            user_id: userId,
+            profile_data: existingProfile,
+            trigger_event: "fusion_analysis",
+            version: existingProfile.version || 1,
+          });
+          await supabase.from("student_profiles").update({
+            ...profileUpdate,
+            total_extractions: (existingProfile.total_extractions || 0) + 1,
+            last_extraction_at: new Date().toISOString(),
+          }).eq("user_id", userId);
+        } else {
+          await supabase.from("student_profiles").insert({
+            user_id: userId,
+            ...profileUpdate,
+            total_extractions: 1,
+            last_extraction_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      // Persist affinity scores (upsert)
+      if (affinities.length > 0) {
+        // Delete old scores and insert new ones
+        await supabase.from("affinity_scores").delete().eq("user_id", userId);
+        await supabase.from("affinity_scores").insert(
+          affinities.map((a: any) => ({
+            user_id: userId,
+            entity_type: a.entity_type,
+            entity_id: a.entity_id,
+            entity_name: a.entity_name,
+            score: a.score,
+            reasoning: a.reasoning,
+            matched_traits: a.matched_traits,
+          }))
+        );
+      }
+
+      // Persist new suggestions
+      if (newSuggestions.length > 0) {
+        await supabase.from("socrate_suggestions").insert(
+          newSuggestions.map((s: any) => ({
+            user_id: userId,
+            category: s.category,
+            title: s.title,
+            detail: s.detail,
+            reason: s.reason,
+          }))
+        );
+      }
+
+      return new Response(JSON.stringify({
+        profileUpdate,
+        affinities,
+        newSuggestions,
+        summary: {
+          profileUpdated: !!profileUpdate,
+          affinitiesComputed: affinities.length,
+          newSuggestionsGenerated: newSuggestions.length,
+        },
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
