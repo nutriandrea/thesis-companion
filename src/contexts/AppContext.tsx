@@ -1,7 +1,27 @@
-import React, { createContext, useContext, useState } from "react";
-import type { Student, RoadmapPhase, RoadmapTask } from "@/types/data";
+import React, { createContext, useContext, useState, useCallback } from "react";
+import type { Student, RoadmapPhase } from "@/types/data";
 import { mockRoadmap } from "@/data/mock-roadmap";
 import studentsData from "@/data/students.json";
+
+// Student journey states
+export type JourneyState = "lost" | "vague_idea" | "topic_chosen" | "finding_contacts" | "writing";
+
+export interface MemoryEntry {
+  id: string;
+  type: "exploration" | "decision" | "contact" | "action" | "feedback";
+  title: string;
+  detail: string;
+  timestamp: Date;
+}
+
+export interface GeneratedAction {
+  id: string;
+  type: "email_draft" | "proposal" | "roadmap" | "contact_search";
+  title: string;
+  content: string;
+  status: "pending" | "done";
+  timestamp: Date;
+}
 
 interface AppState {
   currentStudent: Student;
@@ -9,6 +29,20 @@ interface AppState {
   toggleTask: (phaseId: string, taskId: string) => void;
   activeSection: string;
   setActiveSection: (s: string) => void;
+  // Journey
+  journeyState: JourneyState;
+  setJourneyState: (s: JourneyState) => void;
+  onboardingDone: boolean;
+  setOnboardingDone: (v: boolean) => void;
+  thesisTopic: string;
+  setThesisTopic: (t: string) => void;
+  // Memory
+  memory: MemoryEntry[];
+  addMemory: (entry: Omit<MemoryEntry, "id" | "timestamp">) => void;
+  // Actions
+  actions: GeneratedAction[];
+  addAction: (action: Omit<GeneratedAction, "id" | "timestamp" | "status">) => void;
+  markActionDone: (id: string) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -22,7 +56,14 @@ export const useApp = () => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentStudent] = useState<Student>((studentsData as Student[])[0]);
   const [roadmap, setRoadmap] = useState<RoadmapPhase[]>(mockRoadmap);
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState("journey");
+  const [journeyState, setJourneyState] = useState<JourneyState>("lost");
+  const [onboardingDone, setOnboardingDone] = useState(false);
+  const [thesisTopic, setThesisTopic] = useState("");
+  const [memory, setMemory] = useState<MemoryEntry[]>([
+    { id: "m0", type: "exploration", title: "Prima sessione avviata", detail: "Lo studente ha iniziato il percorso sulla piattaforma.", timestamp: new Date("2026-03-15") },
+  ]);
+  const [actions, setActions] = useState<GeneratedAction[]>([]);
 
   const toggleTask = (phaseId: string, taskId: string) => {
     setRoadmap(prev =>
@@ -37,8 +78,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const addMemory = useCallback((entry: Omit<MemoryEntry, "id" | "timestamp">) => {
+    setMemory(prev => [...prev, { ...entry, id: `m-${Date.now()}`, timestamp: new Date() }]);
+  }, []);
+
+  const addAction = useCallback((action: Omit<GeneratedAction, "id" | "timestamp" | "status">) => {
+    setActions(prev => [...prev, { ...action, id: `a-${Date.now()}`, timestamp: new Date(), status: "pending" }]);
+  }, []);
+
+  const markActionDone = useCallback((id: string) => {
+    setActions(prev => prev.map(a => a.id === id ? { ...a, status: "done" } : a));
+  }, []);
+
   return (
-    <AppContext.Provider value={{ currentStudent, roadmap, toggleTask, activeSection, setActiveSection }}>
+    <AppContext.Provider value={{
+      currentStudent, roadmap, toggleTask, activeSection, setActiveSection,
+      journeyState, setJourneyState, onboardingDone, setOnboardingDone,
+      thesisTopic, setThesisTopic,
+      memory, addMemory, actions, addAction, markActionDone,
+    }}>
       {children}
     </AppContext.Provider>
   );
