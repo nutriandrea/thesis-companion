@@ -731,6 +731,276 @@ ISTRUZIONI:
       });
     }
 
+    // ─── FILTER DATABASE: Intelligent filtering based on student profile ───
+    if (currentMode === "filter_database") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Gather student context
+      const [profileRes, studentRes, memRes, msgRes, existingAffinityRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("memory_entries").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(30),
+        supabase.from("socrate_messages").select("role, content").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("affinity_scores").select("entity_id, entity_type, score").eq("user_id", userId),
+      ]);
+
+      const profile = profileRes.data;
+      const studentProfile = studentRes.data;
+      const memories = memRes.data || [];
+      const recentMessages = (msgRes.data || []).reverse();
+      const existingAffinities = existingAffinityRes.data || [];
+
+      // Dataset comes from the request body
+      const { supervisorsData, topicsData, companiesData } = reqBody;
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei SOCRATE, la mente centrale del sistema di filtraggio intelligente del database.
+
+OBIETTIVO: Filtra e ordina il database in base al profilo completo dello studente, alla fase della tesi, al contenuto LaTeX e alle interazioni passate.
+
+PROFILO STUDENTE:
+- Nome: ${profile?.first_name} ${profile?.last_name}
+- Corso: ${profile?.degree || "N/A"}
+- Università: ${profile?.university || "N/A"}
+- Competenze: ${profile?.skills?.join(", ") || "N/A"}
+- Topic tesi: ${profile?.thesis_topic || "Non definito"}
+- Stato: ${profile?.journey_state || "N/A"}
+
+PROFILO INTELLETTUALE:
+${studentProfile ? JSON.stringify({
+  reasoning_style: studentProfile.reasoning_style,
+  strengths: studentProfile.strengths,
+  weaknesses: studentProfile.weaknesses,
+  deep_interests: studentProfile.deep_interests,
+  research_maturity: studentProfile.research_maturity,
+  writing_quality: studentProfile.writing_quality,
+  critical_thinking: studentProfile.critical_thinking,
+  career_interests: studentProfile.career_interests,
+  industry_fit: studentProfile.industry_fit,
+  thesis_stage: studentProfile.thesis_stage,
+  thesis_quality_score: studentProfile.thesis_quality_score,
+  sections_progress: studentProfile.sections_progress,
+}) : "Non ancora profilato"}
+
+MEMORIA RILEVANTE:
+${JSON.stringify(memories.slice(0, 15).map((m: any) => ({ type: m.type, title: m.title, detail: m.detail })))}
+
+CONVERSAZIONE RECENTE:
+${JSON.stringify(recentMessages.slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 200) })))}
+
+CONTENUTO LATEX:
+${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto LaTeX."}
+
+DATABASE DISPONIBILE:
+
+PROFESSORI (${supervisorsData?.length || 0}):
+${JSON.stringify(supervisorsData?.slice(0, 25).map((s: any) => ({
+  id: s.id, name: s.firstName + " " + s.lastName, title: s.title,
+  interests: s.researchInterests, fields: s.fieldIds, about: s.about?.substring(0, 150),
+})) || [])}
+
+TOPIC/TESI (${topicsData?.length || 0}):
+${JSON.stringify(topicsData?.slice(0, 30).map((t: any) => ({
+  id: t.id, title: t.title, desc: t.description?.substring(0, 100),
+  type: t.type, fields: t.fieldIds, employment: t.employment,
+})) || [])}
+
+AZIENDE (${companiesData?.length || 0}):
+${JSON.stringify(companiesData?.slice(0, 15).map((c: any) => ({
+  id: c.id, name: c.name, domains: c.domains, about: c.about?.substring(0, 150),
+})) || [])}
+
+AFFINITÀ ESISTENTI (per confronto):
+${JSON.stringify(existingAffinities.slice(0, 10).map((a: any) => ({ id: a.entity_id, type: a.entity_type, score: a.score })))}
+
+REGOLE DI FILTRAGGIO:
+1. Considera SOLO entry rilevanti per il profilo centralizzato
+2. Filtra dinamicamente in base al progresso della tesi e risposte alle domande provocatorie
+3. Ordina per rilevanza rispetto alla FASE ATTUALE della tesi e obiettivi di carriera
+4. Mantieni un margine di esplorazione: suggerisci 1-2 alternative o percorsi non ancora considerati
+5. Per i libri/fonti: suggerisci in base ai topic trattati nella tesi e alle lacune rilevate
+
+OUTPUT RICHIESTO:
+- Lista PROFESSORI filtrati con punteggio di rilevanza e motivazione
+- Lista TOPIC filtrati con punteggio e motivazione
+- Lista AZIENDE filtrate con punteggio e motivazione
+- Lista LIBRI/FONTI suggeriti (basati sul profilo, non dal database)
+- Ogni entry deve avere: relevance_score (0-100), reason (breve), exploration_flag (true se è un'alternativa esplorativa)`,
+            },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "filter_results",
+                description: "Return filtered and ranked database results",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    professors: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          entity_id: { type: "string" },
+                          entity_name: { type: "string" },
+                          relevance_score: { type: "integer" },
+                          reason: { type: "string" },
+                          matched_traits: { type: "array", items: { type: "string" } },
+                          exploration_flag: { type: "boolean" },
+                        },
+                        required: ["entity_id", "entity_name", "relevance_score", "reason", "matched_traits"],
+                        additionalProperties: false,
+                      },
+                    },
+                    topics: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          entity_id: { type: "string" },
+                          entity_name: { type: "string" },
+                          relevance_score: { type: "integer" },
+                          reason: { type: "string" },
+                          matched_traits: { type: "array", items: { type: "string" } },
+                          exploration_flag: { type: "boolean" },
+                        },
+                        required: ["entity_id", "entity_name", "relevance_score", "reason", "matched_traits"],
+                        additionalProperties: false,
+                      },
+                    },
+                    companies: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          entity_id: { type: "string" },
+                          entity_name: { type: "string" },
+                          relevance_score: { type: "integer" },
+                          reason: { type: "string" },
+                          matched_traits: { type: "array", items: { type: "string" } },
+                          exploration_flag: { type: "boolean" },
+                        },
+                        required: ["entity_id", "entity_name", "relevance_score", "reason", "matched_traits"],
+                        additionalProperties: false,
+                      },
+                    },
+                    books: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string" },
+                          author: { type: "string" },
+                          relevance_score: { type: "integer" },
+                          reason: { type: "string" },
+                          category: { type: "string", enum: ["textbook", "reference", "methodology", "domain_specific"] },
+                          exploration_flag: { type: "boolean" },
+                        },
+                        required: ["title", "author", "relevance_score", "reason", "category"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["professors", "topics", "companies", "books"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "filter_results" } },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Filter DB error:", response.status, await response.text());
+        return new Response(JSON.stringify({ error: "Errore filtraggio database" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCalls = data.choices?.[0]?.message?.tool_calls || [];
+      let filterResult: any = null;
+
+      for (const tc of toolCalls) {
+        if (tc.function?.name === "filter_results") {
+          try { filterResult = JSON.parse(tc.function.arguments); } catch { filterResult = null; }
+        }
+      }
+
+      if (filterResult) {
+        // Update affinity_scores with filtered results
+        const allAffinities = [
+          ...(filterResult.professors || []).map((p: any) => ({
+            user_id: userId, entity_type: "supervisor", entity_id: p.entity_id,
+            entity_name: p.entity_name, score: p.relevance_score,
+            reasoning: p.reason, matched_traits: p.matched_traits,
+          })),
+          ...(filterResult.topics || []).map((t: any) => ({
+            user_id: userId, entity_type: "topic", entity_id: t.entity_id,
+            entity_name: t.entity_name, score: t.relevance_score,
+            reasoning: t.reason, matched_traits: t.matched_traits,
+          })),
+          ...(filterResult.companies || []).map((c: any) => ({
+            user_id: userId, entity_type: "company", entity_id: c.entity_id,
+            entity_name: c.entity_name, score: c.relevance_score,
+            reasoning: c.reason, matched_traits: c.matched_traits,
+          })),
+        ];
+
+        if (allAffinities.length > 0) {
+          await supabase.from("affinity_scores").delete().eq("user_id", userId);
+          await supabase.from("affinity_scores").insert(allAffinities);
+        }
+
+        // Save books as suggestions
+        if (filterResult.books?.length > 0) {
+          // Remove old book suggestions first
+          await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "book");
+          await supabase.from("socrate_suggestions").insert(
+            filterResult.books.map((b: any) => ({
+              user_id: userId,
+              category: "book",
+              title: `${b.title} — ${b.author}`,
+              detail: `Categoria: ${b.category}${b.exploration_flag ? " · 🔍 Esplorazione" : ""}`,
+              reason: b.reason,
+            }))
+          );
+        }
+      }
+
+      await logEvent("filter_database", {
+        professors: filterResult?.professors?.length || 0,
+        topics: filterResult?.topics?.length || 0,
+        companies: filterResult?.companies?.length || 0,
+        books: filterResult?.books?.length || 0,
+      }, "filter");
+
+      return new Response(JSON.stringify({
+        ...filterResult,
+        summary: {
+          professors: filterResult?.professors?.length || 0,
+          topics: filterResult?.topics?.length || 0,
+          companies: filterResult?.companies?.length || 0,
+          books: filterResult?.books?.length || 0,
+        },
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ─── ANALYZE FULL: Fusion Engine ───
     if (currentMode === "analyze_full") {
       if (!userId) {
