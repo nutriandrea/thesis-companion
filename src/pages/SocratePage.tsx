@@ -370,6 +370,18 @@ export default function SocratePage() {
           <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">Socrate</h1>
           <p className="text-[10px] text-muted-foreground">Hub centrale · Profiler silenzioso</p>
         </div>
+        {severita !== null && (
+          <div className="flex items-center gap-1.5 ml-2" title={`Severità: ${severita} — ${severita >= 0.8 ? "Spietato" : severita >= 0.6 ? "Critico" : severita >= 0.4 ? "Collaborativo" : "Supportivo"}`}>
+            <div className="flex gap-0.5">
+              {[0.2, 0.4, 0.6, 0.8, 1.0].map((threshold, i) => (
+                <div key={i} className={`w-1.5 h-3 rounded-sm ${severita >= threshold ? (severita >= 0.8 ? "bg-destructive" : severita >= 0.6 ? "bg-warning" : "bg-accent") : "bg-border"}`} />
+              ))}
+            </div>
+            <span className="text-[9px] text-muted-foreground">
+              {severita >= 0.8 ? "🔥" : severita >= 0.6 ? "⚡" : severita >= 0.4 ? "🤝" : "💡"}
+            </span>
+          </div>
+        )}
         <div className="ml-auto flex items-center gap-2">
           {isExtracting && (
             <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
