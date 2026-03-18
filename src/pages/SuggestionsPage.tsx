@@ -43,6 +43,7 @@ export default function SuggestionsPage() {
   // Realtime suggestions & affinities
   const { suggestions: aiSuggestions, loading, refresh } = useSocrateSuggestions(user?.id);
   const { affinities } = useAffinityScores(user?.id, "topic");
+  const { filterDatabase, loading: filterLoading } = useDatabaseFilter();
 
   const tabFilters: Record<TabFilter, string[]> = {
     all: [],
