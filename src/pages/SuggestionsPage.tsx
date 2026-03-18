@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Lightbulb, GraduationCap, Building2, Search, BookOpen, Globe, Sparkles } from "lucide-react";
+import { Lightbulb, GraduationCap, Building2, Search, BookOpen, Globe, Sparkles, Target, Briefcase, Zap, FileText } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -26,84 +26,145 @@ interface AISuggestion {
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
-  company: Building2, professor: GraduationCap, book: BookOpen, topic: Lightbulb, source: Globe,
+  company: Building2, professor: GraduationCap, book: BookOpen, topic: Lightbulb,
+  source: Globe, career: Briefcase, skill: Zap, thesis_feedback: FileText, next_step: Target,
 };
 const categoryLabels: Record<string, string> = {
-  company: "Azienda", professor: "Professore", book: "Libro", topic: "Tema", source: "Fonte",
+  company: "Azienda", professor: "Professore", book: "Libro", topic: "Tema",
+  source: "Fonte", career: "Carriera", skill: "Competenza", thesis_feedback: "Feedback Tesi", next_step: "Prossimo Passo",
+};
+const categoryColors: Record<string, string> = {
+  company: "bg-success/10 text-success", professor: "bg-accent/10 text-accent",
+  book: "bg-warning/10 text-warning", topic: "bg-primary/10 text-primary",
+  source: "bg-ai/10 text-ai", career: "bg-success/10 text-success",
+  skill: "bg-accent/10 text-accent", thesis_feedback: "bg-warning/10 text-warning",
+  next_step: "bg-destructive/10 text-destructive",
 };
 
+type TabFilter = "all" | "books" | "topics_sources" | "career_skills" | "thesis" | "dataset";
+
 export default function SuggestionsPage() {
-  const { profile, user } = useApp();
+  const { profile, user, setActiveSection } = useApp();
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"ai" | "topics" | "supervisors">("ai");
+  const [tab, setTab] = useState<TabFilter>("all");
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
   const studentFields = profile?.field_ids || ["field-01", "field-03"];
 
-  // Load AI suggestions
   useEffect(() => {
     if (!user) return;
     supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false })
       .then(({ data }: any) => { if (data) setAiSuggestions(data); });
   }, [user]);
 
+  const tabFilters: Record<TabFilter, string[]> = {
+    all: [],
+    books: ["book", "source"],
+    topics_sources: ["topic", "source"],
+    career_skills: ["career", "skill", "company"],
+    thesis: ["thesis_feedback", "next_step"],
+    dataset: [],
+  };
+
+  const filtered = useMemo(() => {
+    let items = aiSuggestions;
+    if (tab !== "all" && tab !== "dataset") {
+      items = items.filter(s => tabFilters[tab].includes(s.category));
+    }
+    if (search) {
+      items = items.filter(s => s.title.toLowerCase().includes(search.toLowerCase()) || s.detail.toLowerCase().includes(search.toLowerCase()));
+    }
+    return items;
+  }, [search, aiSuggestions, tab]);
+
   const matchedTopics = useMemo(() => topics
     .filter(t => t.fieldIds.some(f => studentFields.includes(f)))
     .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
     .slice(0, 12), [search, studentFields]);
 
-  const matchedSupervisors = useMemo(() => supervisors
-    .filter(s => s.fieldIds.some(f => studentFields.includes(f)))
-    .filter(s => !search || `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()))
-    .slice(0, 12), [search, studentFields]);
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    aiSuggestions.forEach(s => { counts[s.category] = (counts[s.category] || 0) + 1; });
+    return counts;
+  }, [aiSuggestions]);
 
-  const filteredAI = useMemo(() => aiSuggestions
-    .filter(s => !search || s.title.toLowerCase().includes(search.toLowerCase()) || s.detail.toLowerCase().includes(search.toLowerCase())),
-    [search, aiSuggestions]);
+  const tabs: { id: TabFilter; label: string; icon: React.ElementType; count: number }[] = [
+    { id: "all", label: "Tutti", icon: Sparkles, count: aiSuggestions.length },
+    { id: "books", label: "Bibliografia", icon: BookOpen, count: (categoryCounts.book || 0) + (categoryCounts.source || 0) },
+    { id: "topics_sources", label: "Temi", icon: Lightbulb, count: (categoryCounts.topic || 0) },
+    { id: "career_skills", label: "Carriera", icon: Briefcase, count: (categoryCounts.career || 0) + (categoryCounts.skill || 0) + (categoryCounts.company || 0) },
+    { id: "thesis", label: "Tesi", icon: FileText, count: (categoryCounts.thesis_feedback || 0) + (categoryCounts.next_step || 0) },
+    { id: "dataset", label: "Match Dataset", icon: GraduationCap, count: matchedTopics.length },
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-ai/10"><Lightbulb className="w-5 h-5 text-ai" /></div>
-        <div><h1 className="text-xl font-bold font-display">Suggerimenti</h1><p className="text-sm text-muted-foreground">Consigli di Socrate e match per te</p></div>
+        <div className="p-2 rounded-lg bg-ai/10"><Sparkles className="w-5 h-5 text-ai" /></div>
+        <div>
+          <h1 className="text-xl font-bold font-display">Suggerimenti di Socrate</h1>
+          <p className="text-sm text-muted-foreground">Consigli personalizzati estratti dal tuo profilo e dalla chat</p>
+        </div>
       </div>
+
+      {/* Stats Banner */}
+      {aiSuggestions.length > 0 && (
+        <div className="bg-gradient-to-r from-ai/5 to-accent/5 border border-ai/20 rounded-xl p-4">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 text-center">
+            {Object.entries(categoryCounts).map(([cat, count]) => {
+              const Icon = categoryIcons[cat] || Sparkles;
+              return (
+                <div key={cat} className="flex flex-col items-center gap-1">
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-lg font-bold text-foreground">{count}</span>
+                  <span className="text-[10px] text-muted-foreground">{categoryLabels[cat] || cat}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cerca..."
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cerca suggerimenti..."
           className="w-full bg-card border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setTab("ai")} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "ai" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
-          <Sparkles className="w-4 h-4 inline mr-2" />Socrate ({filteredAI.length})
-        </button>
-        <button onClick={() => setTab("topics")} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "topics" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
-          <GraduationCap className="w-4 h-4 inline mr-2" />Temi ({matchedTopics.length})
-        </button>
-        <button onClick={() => setTab("supervisors")} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === "supervisors" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
-          <Building2 className="w-4 h-4 inline mr-2" />Supervisori ({matchedSupervisors.length})
-        </button>
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === t.id ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
+            <t.icon className="w-3.5 h-3.5" /> {t.label} ({t.count})
+          </button>
+        ))}
       </div>
 
-      {/* AI Suggestions from Socrate */}
-      {tab === "ai" && (
+      {/* AI Suggestions */}
+      {tab !== "dataset" && (
         <div className="space-y-4">
-          {filteredAI.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="bg-card border border-dashed rounded-xl p-8 text-center">
               <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Nessun suggerimento ancora.</p>
-              <p className="text-xs text-muted-foreground mt-1">Parla con Socrate e clicca "Analizza" per ricevere consigli personalizzati su aziende, professori, libri e fonti.</p>
+              <p className="text-sm text-muted-foreground">
+                {aiSuggestions.length === 0 ? "Nessun suggerimento ancora." : "Nessun risultato per questa categoria."}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Parla con Socrate per ricevere consigli personalizzati.</p>
+              <button onClick={() => setActiveSection("socrate")}
+                className="mt-3 px-4 py-2 bg-accent text-accent-foreground rounded-lg text-xs font-medium hover:bg-accent/90 transition-colors">
+                Vai a Socrate
+              </button>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {filteredAI.map((sug, i) => {
+              {filtered.map((sug, i) => {
                 const Icon = categoryIcons[sug.category] || Lightbulb;
+                const colorClass = categoryColors[sug.category] || "bg-muted text-muted-foreground";
                 return (
-                  <motion.div key={sug.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  <motion.div key={sug.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                     className="bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-full bg-ai/10 flex items-center justify-center shrink-0">
-                        <Icon className="w-4 h-4 text-ai" />
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                        <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -113,7 +174,7 @@ export default function SuggestionsPage() {
                         <h3 className="font-semibold text-sm">{sug.title}</h3>
                         <p className="text-xs text-muted-foreground mt-1">{sug.detail}</p>
                         {sug.reason && (
-                          <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">{sug.reason}</p>
+                          <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">💡 {sug.reason}</p>
                         )}
                       </div>
                     </div>
@@ -125,8 +186,8 @@ export default function SuggestionsPage() {
         </div>
       )}
 
-      {/* Static topics */}
-      {tab === "topics" && (
+      {/* Dataset Match */}
+      {tab === "dataset" && (
         <div className="grid gap-4 md:grid-cols-2">
           {matchedTopics.map((topic, i) => {
             const company = companies.find(c => c.id === topic.companyId);
@@ -145,30 +206,6 @@ export default function SuggestionsPage() {
               </motion.div>
             );
           })}
-        </div>
-      )}
-
-      {/* Static supervisors */}
-      {tab === "supervisors" && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {matchedSupervisors.map((sup, i) => (
-            <motion.div key={sup.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              className="bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-semibold text-sm">
-                  {sup.firstName[0]}{sup.lastName[0]}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">{sup.title} {sup.firstName} {sup.lastName}</h3>
-                  <p className="text-xs text-muted-foreground">{sup.email}</p>
-                </div>
-              </div>
-              {sup.about && <p className="text-sm text-muted-foreground mt-3 line-clamp-2">{sup.about}</p>}
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {sup.researchInterests.slice(0, 3).map(r => <Badge key={r} variant="secondary" className="text-xs">{r}</Badge>)}
-              </div>
-            </motion.div>
-          ))}
         </div>
       )}
     </div>

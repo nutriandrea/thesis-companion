@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Search, Building2, GraduationCap, Briefcase, MapPin, Filter } from "lucide-react";
+import { TrendingUp, Search, Building2, GraduationCap, Briefcase, MapPin, Filter, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/contexts/AppContext";
+import { supabase } from "@/integrations/supabase/client";
 import topicsData from "@/data/topics.json";
 import companiesData from "@/data/companies.json";
 import supervisorsData from "@/data/supervisors.json";
@@ -18,22 +19,32 @@ const supervisors = supervisorsData as Supervisor[];
 const experts = expertsData as Expert[];
 const fields = fieldsData as Field[];
 function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
-function getCompanyName(id: string) { return companies.find(c => c.id === id)?.name || ""; }
 
-type TabType = "topics" | "companies" | "careers";
+interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; created_at: string; }
+
+type TabType = "topics" | "companies" | "careers" | "socrate";
 type TopicFilter = "all" | "topic" | "job";
 type EmploymentFilter = "all" | "yes" | "open" | "no";
 
 export default function MarketPage() {
-  const { profile } = useApp();
+  const { profile, user, setActiveSection } = useApp();
   const [tab, setTab] = useState<TabType>("topics");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TopicFilter>("all");
   const [empFilter, setEmpFilter] = useState<EmploymentFilter>("all");
   const [fieldFilter, setFieldFilter] = useState<string>("all");
+  const [marketSuggestions, setMarketSuggestions] = useState<AISuggestion[]>([]);
   const studentFields = profile?.field_ids || [];
 
-  // Filtered topics
+  // Load Socrate's company + career suggestions
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+      .then(({ data }: any) => {
+        if (data) setMarketSuggestions(data.filter((s: any) => ["company", "career"].includes(s.category)));
+      });
+  }, [user]);
+
   const filteredTopics = useMemo(() => topics
     .filter(t => typeFilter === "all" || t.type === typeFilter)
     .filter(t => empFilter === "all" || t.employment === empFilter)
@@ -46,7 +57,6 @@ export default function MarketPage() {
     }),
     [search, typeFilter, empFilter, fieldFilter, studentFields]);
 
-  // Companies with topic counts
   const companiesWithTopics = useMemo(() => companies.map(c => ({
     ...c,
     topicCount: topics.filter(t => t.companyId === c.id).length,
@@ -55,7 +65,6 @@ export default function MarketPage() {
     .sort((a, b) => b.topicCount - a.topicCount),
     [search]);
 
-  // Active fields for filter
   const activeFields = useMemo(() => {
     const ids = new Set(topics.flatMap(t => t.fieldIds));
     return fields.filter(f => ids.has(f.id));
@@ -70,23 +79,42 @@ export default function MarketPage() {
         <div className="p-2 rounded-lg bg-success/10"><TrendingUp className="w-5 h-5 text-success" /></div>
         <div>
           <h1 className="text-xl font-bold font-display">Mercato</h1>
-          <p className="text-sm text-muted-foreground">{topics.length} topic · {companies.length} aziende · {mockCareers.length} carriere</p>
+          <p className="text-sm text-muted-foreground">{topics.length} topic · {companies.length} aziende · {marketSuggestions.length} suggeriti da Socrate</p>
         </div>
       </div>
 
-      {/* Search */}
+      {/* Socrate Banner */}
+      {marketSuggestions.length > 0 && tab !== "socrate" && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-ai/5 to-success/5 border border-ai/20 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-ai" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">{marketSuggestions.length} opportunità suggerite da Socrate</p>
+                <p className="text-xs text-muted-foreground">Aziende e carriere basate sul tuo profilo</p>
+              </div>
+            </div>
+            <button onClick={() => setTab("socrate")}
+              className="px-3 py-1.5 bg-ai/10 text-ai rounded-lg text-xs font-medium hover:bg-ai/20 transition-colors">
+              Mostra
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cerca topic, aziende, carriere..."
           className="w-full bg-card border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {([
           { id: "topics" as TabType, label: "Topic", icon: GraduationCap, count: filteredTopics.length },
           { id: "companies" as TabType, label: "Aziende", icon: Building2, count: companiesWithTopics.length },
           { id: "careers" as TabType, label: "Carriere", icon: Briefcase, count: mockCareers.length },
+          { id: "socrate" as TabType, label: "🧠 Socrate", icon: Sparkles, count: marketSuggestions.length },
         ]).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === t.id ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
@@ -95,10 +123,40 @@ export default function MarketPage() {
         ))}
       </div>
 
+      {/* SOCRATE TAB */}
+      {tab === "socrate" && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {marketSuggestions.length === 0 ? (
+            <div className="col-span-2 bg-card border border-dashed rounded-xl p-8 text-center">
+              <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Parla con Socrate per ricevere suggerimenti su aziende e carriere.</p>
+            </div>
+          ) : marketSuggestions.map((sug, i) => (
+            <motion.div key={sug.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              className="bg-card border border-ai/20 rounded-xl p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${sug.category === "company" ? "bg-success/10 text-success" : "bg-accent/10 text-accent"}`}>
+                  {sug.category === "company" ? <Building2 className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-sm">{sug.title}</h3>
+                    <Badge variant="secondary" className="text-[10px] bg-ai/10 text-ai">
+                      {sug.category === "company" ? "Azienda" : "Carriera"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{sug.detail}</p>
+                  <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">💡 {sug.reason}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {/* TOPICS TAB */}
       {tab === "topics" && (
         <>
-          {/* Filters */}
           <div className="flex gap-2 flex-wrap items-center">
             <Filter className="w-3.5 h-3.5 text-muted-foreground" />
             <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as TopicFilter)}
@@ -120,14 +178,12 @@ export default function MarketPage() {
               {activeFields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
           </div>
-
           <div className="grid gap-4 md:grid-cols-2">
             {filteredTopics.slice(0, 20).map((topic, i) => {
               const company = companies.find(c => c.id === topic.companyId);
               const topicSupervisors = topic.supervisorIds.map(id => supervisors.find(s => s.id === id)).filter(Boolean) as Supervisor[];
               const topicExperts = topic.expertIds.map(id => experts.find(e => e.id === id)).filter(Boolean) as Expert[];
               const isMatch = topic.fieldIds.some(f => studentFields.includes(f));
-
               return (
                 <motion.div key={topic.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                   className={`bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow ${isMatch ? "border-accent/30" : ""}`}>
@@ -151,16 +207,13 @@ export default function MarketPage() {
                       {topic.degrees.map(d => <span key={d} className="text-[9px] uppercase font-bold text-muted-foreground bg-muted px-1 py-0.5 rounded">{d}</span>)}
                     </div>
                   </div>
-
                   <h3 className="font-semibold text-sm mb-1.5 leading-tight">{topic.title}</h3>
                   <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{topic.description}</p>
-
                   <div className="flex flex-wrap gap-1 mb-3">
                     {topic.fieldIds.map(f => (
                       <Badge key={f} variant={studentFields.includes(f) ? "default" : "secondary"} className="text-[10px]">{getFieldName(f)}</Badge>
                     ))}
                   </div>
-
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
                     <div className="flex items-center gap-1.5">
                       {company ? (
@@ -169,16 +222,14 @@ export default function MarketPage() {
                         <><GraduationCap className="w-3 h-3" /> <span className="font-medium">{topicSupervisors[0].title} {topicSupervisors[0].lastName}</span></>
                       ) : null}
                     </div>
-                    {topicExperts.length > 0 && (
-                      <span className="text-[10px]">{topicExperts.length} esperto/i</span>
-                    )}
+                    {topicExperts.length > 0 && <span className="text-[10px]">{topicExperts.length} esperto/i</span>}
                   </div>
                 </motion.div>
               );
             })}
           </div>
           {filteredTopics.length > 20 && (
-            <p className="text-xs text-muted-foreground text-center">Mostrati 20 di {filteredTopics.length} risultati. Usa i filtri per restringere.</p>
+            <p className="text-xs text-muted-foreground text-center">Mostrati 20 di {filteredTopics.length}.</p>
           )}
         </>
       )}
@@ -219,9 +270,7 @@ export default function MarketPage() {
         <div className="space-y-4">
           <div className="bg-card border rounded-xl p-5 shadow-sm">
             <h2 className="font-semibold font-display mb-2">Compatibilità Carriera</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              In base al tuo profilo e le tue competenze, ecco le carriere più promettenti.
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">In base al tuo profilo e le tue competenze.</p>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div><p className="text-2xl font-bold font-display text-accent">{mockCareers.length}</p><p className="text-xs text-muted-foreground">Percorsi</p></div>
               <div><p className="text-2xl font-bold font-display text-success">{Math.max(...mockCareers.map(c => c.matchPercentage))}%</p><p className="text-xs text-muted-foreground">Match max</p></div>
