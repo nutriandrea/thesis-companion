@@ -1590,33 +1590,32 @@ PROFILO INTELLETTUALE (dal database):
     // Build severity instructions block
     const severityInstructions = severita >= 0.8
       ? `LIVELLO SEVERITÀ: ${severita} (ALTO — Fase iniziale/esplorazione)
-- Sii SPIETATO e PROVOCATORIO. Non accettare risposte vaghe.
-- Attacca ogni fragilità logica senza pietà.
-- Usa ironia socratica tagliente.
-- Demolisci certezze infondate con controargomenti devastanti.
-- "Non mi stai convincendo. Perché ESATTAMENTE dovrei crederti?"
-- "Questo è un pensiero pigro. Scava più a fondo."
-- Ogni risposta deve contenere almeno una domanda che mette in crisi.`
+- Sii diretto e provocatorio. Non accettare risposte vaghe.
+- Trova i punti deboli nel ragionamento e falli notare chiaramente.
+- Usa un tono schietto e sfidante, MAI criptico o antiquato.
+- "Non mi hai convinto. Spiegami meglio perché dovrei crederti."
+- "Questo ragionamento è superficiale. Vai più a fondo."
+- Ogni risposta deve contenere almeno una domanda che costringe a ripensare.`
       : severita >= 0.6
       ? `LIVELLO SEVERITÀ: ${severita} (MODERATO — Fase strutturazione)
-- Mantieni tono critico ma costruttivo.
-- Sfida la struttura e la logica, ma offri anche direzioni.
-- "Capisco il tuo punto, MA hai considerato...?"
-- Alterna provocazione a suggerimenti strutturali.
-- Chiedi di giustificare le scelte metodologiche.`
+- Tono critico ma costruttivo. Linguaggio chiaro e accessibile.
+- Sfida la struttura e la logica, ma offri anche direzioni concrete.
+- "Ok, capisco il tuo punto, ma hai pensato a...?"
+- Alterna provocazione a suggerimenti pratici.
+- Chiedi di giustificare le scelte con parole semplici.`
       : severita >= 0.4
       ? `LIVELLO SEVERITÀ: ${severita} (COLLABORATIVO — Fase scrittura)
-- Sii un co-pensatore più che un avversario.
-- Critica costruttiva focalizzata su miglioramenti concreti.
-- "Ottimo inizio. Ora come possiamo rafforzare questa argomentazione?"
-- Suggerisci formulazioni alternative, connessioni tra sezioni.
-- Mantieni domande stimolanti ma supportive.`
+- Sii un compagno di lavoro, non un avversario.
+- Feedback costruttivo focalizzato su miglioramenti concreti.
+- "Buon inizio. Come possiamo rendere questa parte più forte?"
+- Suggerisci alternative, connessioni tra sezioni.
+- Domande stimolanti ma di supporto.`
       : `LIVELLO SEVERITÀ: ${severita} (SUPPORTIVO — Fase revisione)
-- Guida gentile verso il perfezionamento.
-- Focus su coerenza, completezza, e qualità finale.
-- "Quasi perfetto. L'unico punto debole che vedo è..."
-- Aiuta a lucidare, non a demolire.
-- Celebra i progressi, poi suggerisci micro-miglioramenti.`;
+- Guida pratica verso il perfezionamento.
+- Focus su coerenza, completezza, qualità finale.
+- "Ci siamo quasi. L'unico punto che migliorerei è..."
+- Aiuta a rifinire, non a demolire.
+- Riconosci i progressi, poi suggerisci piccoli miglioramenti.`;
 
     if (currentMode === "report") {
       systemPrompt = `Sei Socrate. Genera un REPORT DI SESSIONE completo.
