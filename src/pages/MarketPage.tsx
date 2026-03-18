@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Search, Building2, GraduationCap, Briefcase, MapPin, Filter, Sparkles } from "lucide-react";
+import { TrendingUp, Search, Building2, GraduationCap, Briefcase, MapPin, Filter, Sparkles, Loader2, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
+import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
 import topicsData from "@/data/topics.json";
 import companiesData from "@/data/companies.json";
 import supervisorsData from "@/data/supervisors.json";
