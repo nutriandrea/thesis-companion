@@ -1,5 +1,5 @@
 export interface University {
-  id: string; name: string; country: string; domains: string[]; about: string;
+  id: string; name: string; country: string; domains: string[]; about: string | null;
 }
 export interface StudyProgram {
   id: string; name: string; degree: string; universityId: string; about: string | null;
@@ -18,7 +18,7 @@ export interface Supervisor {
   about: string | null; objectives: string[]; fieldIds: string[];
 }
 export interface Company {
-  id: string; name: string; description: string; about: string; size: string; domains: string[];
+  id: string; name: string; description: string; about: string | null; size: string; domains: string[];
 }
 export interface Expert {
   id: string; firstName: string; lastName: string; email: string; title: string;
