@@ -119,6 +119,36 @@ export type Database = {
         }
         Relationships: []
       }
+      socrate_suggestions: {
+        Row: {
+          category: string
+          created_at: string
+          detail: string | null
+          id: string
+          reason: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          reason?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          reason?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
