@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { GraduationCap, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
@@ -11,6 +10,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -22,7 +22,6 @@ export default function AuthPage() {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        // Update profile with name
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("profiles").update({
@@ -42,79 +41,119 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex flex-1 bg-primary items-center justify-center p-12">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="max-w-md text-primary-foreground">
-          <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mb-8">
-            <GraduationCap className="w-7 h-7 text-accent-foreground" />
-          </div>
-          <h1 className="text-4xl font-bold font-display leading-tight mb-4">
-            La tua tesi,<br />guidata da Socrate.
-          </h1>
-          <p className="text-primary-foreground/70 text-lg leading-relaxed">
-            Un dialogo socratico che sfida il tuo ragionamento, trova le fragilità 
-            e ti guida verso una tesi più solida. Non un motore di ricerca: 
-            un sistema di decisione e azione.
-          </p>
-        </motion.div>
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden">
+      {/* Subtle ambient glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/[0.02] blur-[100px]" />
       </div>
 
-      {/* Right panel - form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-accent-foreground" />
-            </div>
-            <h1 className="text-xl font-bold font-display">Thesis AI</h1>
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="w-full max-w-sm px-6"
+      >
+        {/* Header */}
+        <div className="text-center mb-10">
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-white text-2xl font-bold tracking-[0.15em] uppercase"
+          >
+            CHI SEI?
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-white/40 text-sm mt-3"
+          >
+            {isSignUp ? "Crea il tuo account per iniziare" : "Bentornato. Continua il duello."}
+          </motion.p>
+        </div>
 
-          <h2 className="text-2xl font-bold font-display mb-1">
-            {isSignUp ? "Crea il tuo account" : "Bentornato"}
-          </h2>
-          <p className="text-muted-foreground text-sm mb-6">
-            {isSignUp ? "Inizia il tuo percorso di tesi con Socrate" : "Continua il tuo duello socratico"}
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignUp && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Nome"
-                    required className="w-full bg-card border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
-                </div>
-                <div>
-                  <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Cognome"
-                    required className="w-full bg-card border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
-                </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="grid grid-cols-2 gap-3"
+            >
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  placeholder="Nome"
+                  required
+                  className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+                />
               </div>
-            )}
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email"
-                required className="w-full bg-card border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password (min 6 caratteri)"
-                required minLength={6} className="w-full bg-card border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
-            </div>
-            <Button type="submit" variant="accent" className="w-full gap-2" disabled={loading}>
-              {loading ? "Caricamento..." : isSignUp ? "Registrati" : "Accedi"}
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </form>
+              <div>
+                <input
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  placeholder="Cognome"
+                  required
+                  className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+                />
+              </div>
+            </motion.div>
+          )}
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            {isSignUp ? "Hai già un account?" : "Non hai un account?"}{" "}
-            <button onClick={() => setIsSignUp(!isSignUp)} className="text-accent font-medium hover:underline">
-              {isSignUp ? "Accedi" : "Registrati"}
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="Email"
+              required
+              className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+            />
+          </div>
+
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Password"
+              required
+              minLength={6}
+              className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 pr-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/50"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
-          </p>
-        </motion.div>
-      </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-colors disabled:opacity-30 flex items-center justify-center gap-2 mt-6"
+          >
+            {loading ? "..." : isSignUp ? "Registrati" : "Accedi"}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-white/30 mt-8">
+          {isSignUp ? "Hai già un account?" : "Non hai un account?"}{" "}
+          <button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-white/60 hover:text-white transition-colors underline underline-offset-4"
+          >
+            {isSignUp ? "Accedi" : "Registrati"}
+          </button>
+        </p>
+      </motion.div>
     </div>
   );
 }
