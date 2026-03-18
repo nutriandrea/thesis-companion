@@ -1,48 +1,35 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
-import type { Student, RoadmapPhase } from "@/types/data";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
+import type { RoadmapPhase } from "@/types/data";
 import { mockRoadmap } from "@/data/mock-roadmap";
-import studentsData from "@/data/students.json";
 
-// Student journey states
 export type JourneyState = "lost" | "vague_idea" | "topic_chosen" | "finding_contacts" | "writing";
 
-export interface MemoryEntry {
-  id: string;
-  type: "exploration" | "decision" | "contact" | "action" | "feedback";
-  title: string;
-  detail: string;
-  timestamp: Date;
-}
-
-export interface GeneratedAction {
-  id: string;
-  type: "email_draft" | "proposal" | "roadmap" | "contact_search";
-  title: string;
-  content: string;
-  status: "pending" | "done";
-  timestamp: Date;
+export interface Profile {
+  first_name: string;
+  last_name: string;
+  email: string;
+  degree: string;
+  university: string;
+  skills: string[];
+  field_ids: string[];
+  thesis_topic: string;
+  journey_state: JourneyState;
+  onboarding_done: boolean;
+  socrate_done: boolean;
 }
 
 interface AppState {
-  currentStudent: Student;
-  roadmap: RoadmapPhase[];
-  toggleTask: (phaseId: string, taskId: string) => void;
+  user: User | null;
+  profile: Profile | null;
+  loading: boolean;
   activeSection: string;
   setActiveSection: (s: string) => void;
-  // Journey
-  journeyState: JourneyState;
-  setJourneyState: (s: JourneyState) => void;
-  onboardingDone: boolean;
-  setOnboardingDone: (v: boolean) => void;
-  thesisTopic: string;
-  setThesisTopic: (t: string) => void;
-  // Memory
-  memory: MemoryEntry[];
-  addMemory: (entry: Omit<MemoryEntry, "id" | "timestamp">) => void;
-  // Actions
-  actions: GeneratedAction[];
-  addAction: (action: Omit<GeneratedAction, "id" | "timestamp" | "status">) => void;
-  markActionDone: (id: string) => void;
+  roadmap: RoadmapPhase[];
+  toggleTask: (phaseId: string, taskId: string) => void;
+  updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -54,16 +41,80 @@ export const useApp = () => {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentStudent] = useState<Student>((studentsData as Student[])[0]);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState("socrate");
   const [roadmap, setRoadmap] = useState<RoadmapPhase[]>(mockRoadmap);
-  const [activeSection, setActiveSection] = useState("journey");
-  const [journeyState, setJourneyState] = useState<JourneyState>("lost");
-  const [onboardingDone, setOnboardingDone] = useState(false);
-  const [thesisTopic, setThesisTopic] = useState("");
-  const [memory, setMemory] = useState<MemoryEntry[]>([
-    { id: "m0", type: "exploration", title: "Prima sessione avviata", detail: "Lo studente ha iniziato il percorso sulla piattaforma.", timestamp: new Date("2026-03-15") },
-  ]);
-  const [actions, setActions] = useState<GeneratedAction[]>([]);
+
+  // Auth listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        // Defer profile fetch to avoid deadlock
+        setTimeout(() => fetchProfile(session.user.id), 0);
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (data) {
+      setProfile({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        degree: data.degree || "",
+        university: data.university || "",
+        skills: data.skills || [],
+        field_ids: data.field_ids || [],
+        thesis_topic: data.thesis_topic || "",
+        journey_state: data.journey_state as JourneyState,
+        onboarding_done: data.onboarding_done,
+        socrate_done: data.socrate_done,
+      });
+
+      // Navigate based on state
+      if (!data.onboarding_done) {
+        setActiveSection("onboarding");
+      } else if (!data.socrate_done) {
+        setActiveSection("socrate");
+      }
+    }
+    setLoading(false);
+  };
+
+  const updateProfile = useCallback(async (updates: Partial<Profile>) => {
+    if (!user) return;
+    await supabase.from("profiles").update(updates).eq("user_id", user.id);
+    setProfile(prev => prev ? { ...prev, ...updates } : null);
+  }, [user]);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
+  }, []);
 
   const toggleTask = (phaseId: string, taskId: string) => {
     setRoadmap(prev =>
@@ -78,24 +129,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const addMemory = useCallback((entry: Omit<MemoryEntry, "id" | "timestamp">) => {
-    setMemory(prev => [...prev, { ...entry, id: `m-${Date.now()}`, timestamp: new Date() }]);
-  }, []);
-
-  const addAction = useCallback((action: Omit<GeneratedAction, "id" | "timestamp" | "status">) => {
-    setActions(prev => [...prev, { ...action, id: `a-${Date.now()}`, timestamp: new Date(), status: "pending" }]);
-  }, []);
-
-  const markActionDone = useCallback((id: string) => {
-    setActions(prev => prev.map(a => a.id === id ? { ...a, status: "done" } : a));
-  }, []);
-
   return (
     <AppContext.Provider value={{
-      currentStudent, roadmap, toggleTask, activeSection, setActiveSection,
-      journeyState, setJourneyState, onboardingDone, setOnboardingDone,
-      thesisTopic, setThesisTopic,
-      memory, addMemory, actions, addAction, markActionDone,
+      user, profile, loading, activeSection, setActiveSection,
+      roadmap, toggleTask, updateProfile, signOut,
     }}>
       {children}
     </AppContext.Provider>
