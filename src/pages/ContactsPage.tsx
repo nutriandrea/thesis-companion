@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Contact, Search, Mail, Building2, GraduationCap, Filter, Sparkles } from "lucide-react";
+import { Contact, Search, Mail, Building2, GraduationCap, Filter, Sparkles, Loader2, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
+import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
 import supervisorsData from "@/data/supervisors.json";
 import expertsData from "@/data/experts.json";
 import companiesData from "@/data/companies.json";
