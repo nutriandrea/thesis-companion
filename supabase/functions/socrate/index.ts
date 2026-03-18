@@ -13,7 +13,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, studentContext, latexContent, mode, memoryEntries, existingSuggestions } = await req.json();
+    const reqBody = await req.json();
+    const { messages, studentContext, latexContent, mode, memoryEntries, existingSuggestions, datasetSummary } = reqBody;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -322,8 +323,7 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       const allSuggestions = sugRes.data || [];
       const recentMessages = (msgRes.data || []).reverse();
 
-      // Dataset summaries (passed from frontend)
-      const { datasetSummary } = await req.json().catch(() => ({ datasetSummary: "" }));
+      // Dataset summaries (from request body)
 
       const response = await fetch(AI_URL, {
         method: "POST",

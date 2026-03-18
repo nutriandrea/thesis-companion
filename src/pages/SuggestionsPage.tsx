@@ -1,29 +1,18 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Lightbulb, GraduationCap, Building2, Search, BookOpen, Globe, Sparkles, Target, Briefcase, Zap, FileText } from "lucide-react";
+import { Lightbulb, GraduationCap, Building2, Search, BookOpen, Globe, Sparkles, Target, Briefcase, Zap, FileText, RefreshCw } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import topicsData from "@/data/topics.json";
-import supervisorsData from "@/data/supervisors.json";
 import companiesData from "@/data/companies.json";
 import fieldsData from "@/data/fields.json";
-import type { Topic, Supervisor, Company, Field } from "@/types/data";
+import type { Topic, Company, Field } from "@/types/data";
 
 const topics = topicsData as Topic[];
-const supervisors = supervisorsData as Supervisor[];
 const companies = companiesData as Company[];
 const fields = fieldsData as Field[];
 function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
-
-interface AISuggestion {
-  id: string;
-  category: string;
-  title: string;
-  detail: string;
-  reason: string;
-  created_at: string;
-}
 
 const categoryIcons: Record<string, React.ElementType> = {
   company: Building2, professor: GraduationCap, book: BookOpen, topic: Lightbulb,
@@ -47,14 +36,11 @@ export default function SuggestionsPage() {
   const { profile, user, setActiveSection } = useApp();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<TabFilter>("all");
-  const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
   const studentFields = profile?.field_ids || ["field-01", "field-03"];
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false })
-      .then(({ data }: any) => { if (data) setAiSuggestions(data); });
-  }, [user]);
+  // Realtime suggestions & affinities
+  const { suggestions: aiSuggestions, loading, refresh } = useSocrateSuggestions(user?.id);
+  const { affinities } = useAffinityScores(user?.id, "topic");
 
   const tabFilters: Record<TabFilter, string[]> = {
     all: [],
@@ -76,10 +62,19 @@ export default function SuggestionsPage() {
     return items;
   }, [search, aiSuggestions, tab]);
 
-  const matchedTopics = useMemo(() => topics
-    .filter(t => t.fieldIds.some(f => studentFields.includes(f)))
-    .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
-    .slice(0, 12), [search, studentFields]);
+  // Sort matched topics by affinity score
+  const matchedTopics = useMemo(() => {
+    const affinityMap = new Map(affinities.map(a => [a.entity_id, a]));
+    return topics
+      .filter(t => t.fieldIds.some(f => studentFields.includes(f)))
+      .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => {
+        const aScore = affinityMap.get(a.id)?.score || 0;
+        const bScore = affinityMap.get(b.id)?.score || 0;
+        return bScore - aScore;
+      })
+      .slice(0, 12);
+  }, [search, studentFields, affinities]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -102,8 +97,11 @@ export default function SuggestionsPage() {
         <div className="p-2 rounded-lg bg-ai/10"><Sparkles className="w-5 h-5 text-ai" /></div>
         <div>
           <h1 className="text-xl font-bold font-display">Suggerimenti di Socrate</h1>
-          <p className="text-sm text-muted-foreground">Consigli personalizzati estratti dal tuo profilo e dalla chat</p>
+          <p className="text-sm text-muted-foreground">Consigli personalizzati · aggiornamento in tempo reale</p>
         </div>
+        <button onClick={refresh} className="ml-auto p-2 rounded-lg hover:bg-muted transition-colors" title="Aggiorna">
+          <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? "animate-spin" : ""}`} />
+        </button>
       </div>
 
       {/* Stats Banner */}
@@ -186,18 +184,28 @@ export default function SuggestionsPage() {
         </div>
       )}
 
-      {/* Dataset Match */}
+      {/* Dataset Match — sorted by affinity */}
       {tab === "dataset" && (
         <div className="grid gap-4 md:grid-cols-2">
           {matchedTopics.map((topic, i) => {
             const company = companies.find(c => c.id === topic.companyId);
+            const affinity = affinities.find(a => a.entity_id === topic.id);
             return (
               <motion.div key={topic.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                <h3 className="font-semibold font-display text-base mb-2">{topic.title}</h3>
+                className={`bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow ${affinity ? "border-ai/30" : ""}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-semibold font-display text-base">{topic.title}</h3>
+                  {affinity && (
+                    <span className="text-sm font-bold text-ai shrink-0 ml-2">{affinity.score}%</span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{topic.description}</p>
+                {affinity && (
+                  <p className="text-xs text-ai/70 italic mb-2 border-l-2 border-ai/20 pl-2">{affinity.reasoning}</p>
+                )}
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {topic.fieldIds.map(f => <Badge key={f} variant={studentFields.includes(f) ? "default" : "secondary"} className="text-xs">{getFieldName(f)}</Badge>)}
+                  {affinity?.matched_traits?.slice(0, 2).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   {company && <span className="font-medium">{company.name}</span>}
