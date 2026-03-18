@@ -1,0 +1,4 @@
+project_id = "icxjkijvlhkcsjymckfw"
+
+[functions.socrate]
+verify_jwt = false

@@ -1,7 +1,7 @@
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import AppLayout from "@/components/layout/AppLayout";
+import AuthPage from "@/pages/AuthPage";
 import OnboardingFlow from "@/components/journey/OnboardingFlow";
-import JourneyIndicator from "@/components/journey/JourneyIndicator";
 import DashboardPage from "@/pages/DashboardPage";
 import SocratePage from "@/pages/SocratePage";
 import EditorPage from "@/pages/EditorPage";
@@ -14,11 +14,27 @@ import ActionsPage from "@/pages/ActionsPage";
 import MemoryPage from "@/pages/MemoryPage";
 import PathPage from "@/pages/PathPage";
 
-function PageRouter() {
-  const { activeSection, onboardingDone } = useApp();
+function AppContent() {
+  const { user, profile, loading, activeSection } = useApp();
 
-  if (!onboardingDone) return <OnboardingFlow />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-muted-foreground">Caricamento...</p>
+        </div>
+      </div>
+    );
+  }
 
+  // Not logged in
+  if (!user) return <AuthPage />;
+
+  // Logged in but no onboarding
+  if (profile && !profile.onboarding_done) return <OnboardingFlow />;
+
+  // Main app
   const pages: Record<string, React.ReactNode> = {
     dashboard: <DashboardPage />,
     socrate: <SocratePage />,
@@ -33,21 +49,13 @@ function PageRouter() {
     paths: <PathPage />,
   };
 
-  // Pages that should NOT show the journey indicator
-  const noIndicator = ["socrate", "editor"];
-
-  return (
-    <AppLayout>
-      {!noIndicator.includes(activeSection) && <JourneyIndicator />}
-      {pages[activeSection] || <DashboardPage />}
-    </AppLayout>
-  );
+  return <AppLayout>{pages[activeSection] || <SocratePage />}</AppLayout>;
 }
 
 export default function Index() {
   return (
     <AppProvider>
-      <PageRouter />
+      <AppContent />
     </AppProvider>
   );
 }
