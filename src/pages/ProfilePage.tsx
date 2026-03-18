@@ -197,6 +197,22 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Severity */}
+            <div className="bg-card/50 rounded-lg p-4">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Severità Socrate</p>
+              <div className="flex items-center gap-2">
+                <span className={`text-2xl font-bold ${studentProfile.severita >= 0.8 ? "text-destructive" : studentProfile.severita >= 0.6 ? "text-warning" : "text-accent"}`}>
+                  {studentProfile.severita != null ? studentProfile.severita.toFixed(2) : "1.00"}
+                </span>
+                <div className="flex-1">
+                  <Progress value={(studentProfile.severita ?? 1) * 100} className="h-1.5" />
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {(studentProfile.severita ?? 1) >= 0.8 ? "🔥 Spietato" : (studentProfile.severita ?? 1) >= 0.6 ? "⚡ Critico" : (studentProfile.severita ?? 1) >= 0.4 ? "🤝 Collaborativo" : "💡 Supportivo"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Sessions */}
             <div className="bg-card/50 rounded-lg p-4">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Sessioni con Socrate</p>
