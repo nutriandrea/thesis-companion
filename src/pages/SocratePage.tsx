@@ -1,16 +1,28 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mic, MicOff } from "lucide-react";
+import { Send, CheckCircle, Mic } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
-import socrateImg from "@/assets/socrate.png";
 
 interface ChatMsg {
   id: string;
   role: "user" | "assistant";
   content: string;
+}
+
+// Gradient orb component
+function GradientOrb({ size = "lg" }: { size?: "sm" | "lg" }) {
+  const dim = size === "lg" ? "w-64 h-64 md:w-80 md:h-80" : "w-10 h-10";
+  return (
+    <div
+      className={`${dim} rounded-full shrink-0`}
+      style={{
+        background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)",
+      }}
+    />
+  );
 }
 
 export default function SocratePage() {
@@ -70,7 +82,6 @@ export default function SocratePage() {
       setIsStreaming(true);
 
       await supabase.from("socrate_messages").insert({ user_id: user.id, role: "user", content: text });
-
       const apiMessages = [...messages, userMsg].slice(-20).map((m) => ({ role: m.role, content: m.content }));
 
       try {
@@ -125,7 +136,7 @@ export default function SocratePage() {
         }
       } catch (e) {
         console.error(e);
-        toast({ variant: "destructive", title: "Errore di connessione", description: "Impossibile contattare Socrate." });
+        toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
       } finally {
         setIsStreaming(false);
       }
@@ -133,63 +144,77 @@ export default function SocratePage() {
     [isStreaming, user, messages, studentContext, profile, updateProfile, toast]
   );
 
-  const canAccessOtherPages = profile?.socrate_done;
+  // VOICE MODE — full screen orb
+  if (inputMode === "voice") {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-3rem)] relative">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="animate-subtle-float"
+        >
+          <GradientOrb size="lg" />
+        </motion.div>
+        <motion.h2
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-foreground text-lg font-bold tracking-[0.15em] uppercase mt-8 text-center leading-relaxed"
+        >
+          SPEAK WITH<br />ME
+        </motion.h2>
 
+        {/* Mic button at bottom */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="absolute bottom-8 left-8"
+        >
+          <button className="w-10 h-10 bg-secondary border border-border rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+            <Mic className="w-4 h-4" />
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // TEXT MODE — chat with orb avatar
   return (
     <div className="flex flex-col h-[calc(100vh-3rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-accent/20 animate-subtle-float">
-            <img src={socrateImg} alt="Socrate" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold font-display text-foreground">Socrate Duello</h1>
-            <p className="text-xs text-muted-foreground">
-              {canAccessOtherPages ? "Continua il dialogo" : "Parla con Socrate per sbloccare la piattaforma"}
-            </p>
-          </div>
+      <div className="flex items-center gap-3 pb-4 border-b border-border">
+        <GradientOrb size="sm" />
+        <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">TEXT ME</h1>
+        <div className="ml-auto">
+          {profile?.socrate_done && (
+            <button
+              onClick={() => setActiveSection("dashboard")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <CheckCircle className="w-3.5 h-3.5 text-success" /> Dashboard
+            </button>
+          )}
         </div>
-        {!canAccessOtherPages && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-accent/10 text-accent text-xs font-medium">
-            <span className="animate-pulse">●</span> Sblocca parlando
-          </div>
-        )}
-        {canAccessOtherPages && (
-          <button
-            onClick={() => setActiveSection("dashboard")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-          >
-            <CheckCircle className="w-3.5 h-3.5 text-success" /> Dashboard
-          </button>
-        )}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto py-6 space-y-5">
         {messages.map((msg) => (
           <motion.div
             key={msg.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${
-              msg.role === "assistant" ? "ring-1 ring-accent/20" : "bg-secondary"
-            }`}>
-              {msg.role === "assistant" ? (
-                <img src={socrateImg} alt="S" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[10px] font-semibold text-foreground">{profile?.first_name?.[0] || "U"}</span>
-              )}
-            </div>
-            <div className={`max-w-[75%] rounded-lg px-4 py-3 text-sm ${
+            <div className={`max-w-[75%] px-4 py-3 text-sm ${
               msg.role === "assistant"
-                ? "bg-card border border-border"
-                : "bg-accent/10 border border-accent/20 text-foreground"
+                ? "bg-card border border-border rounded-lg"
+                : "bg-secondary border border-border rounded-lg"
             }`}>
               {msg.content === "" && isStreaming ? (
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.3s" }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.6s" }} />
@@ -205,34 +230,28 @@ export default function SocratePage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-border pt-4">
-        {inputMode === "text" ? (
-          <div className="flex gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-              placeholder="Rispondi a Socrate..."
-              className="flex-1 bg-card border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-              disabled={isStreaming}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isStreaming}
-              className="px-4 py-3 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center py-4">
-            <button className="w-16 h-16 rounded-full bg-accent/10 border-2 border-accent/30 flex items-center justify-center hover:bg-accent/20 transition-all animate-glow-pulse">
-              <Mic className="w-6 h-6 text-accent" />
-            </button>
-            <p className="ml-4 text-xs text-muted-foreground">Premi per parlare con Socrate</p>
-          </div>
-        )}
+      {/* Input bar */}
+      <div className="border-t border-border pt-4 flex items-center gap-3">
+        <div className="w-8 h-8 rounded bg-secondary border border-border flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-bold text-foreground">{profile?.first_name?.[0] || "U"}</span>
+        </div>
+        <div className="flex-1 flex gap-2">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
+            placeholder="Rispondi a Socrate..."
+            className="flex-1 bg-card border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+            disabled={isStreaming}
+          />
+          <button
+            onClick={() => sendMessage(input)}
+            disabled={!input.trim() || isStreaming}
+            className="px-4 py-3 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
