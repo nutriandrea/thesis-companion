@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Contact, Search, Mail, Building2, GraduationCap, Filter, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useApp } from "@/contexts/AppContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import supervisorsData from "@/data/supervisors.json";
 import expertsData from "@/data/experts.json";
 import companiesData from "@/data/companies.json";
@@ -25,10 +26,7 @@ type ContactType = {
   name: string; title: string; email: string; org: string;
   fieldIds: string[]; about: string | null;
   interests?: string[]; offerInterviews?: boolean;
-  socrateReason?: string;
 };
-
-interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; created_at: string; }
 
 export default function ContactsPage() {
   const { profile, user, setActiveSection } = useApp();
@@ -36,15 +34,11 @@ export default function ContactsPage() {
   const [filter, setFilter] = useState<"all" | "supervisor" | "expert" | "socrate">("all");
   const [fieldFilter, setFieldFilter] = useState<string>("all");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [professorSuggestions, setProfessorSuggestions] = useState<AISuggestion[]>([]);
   const studentFields = profile?.field_ids || [];
 
-  // Load Socrate's professor suggestions
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "professor").order("created_at", { ascending: false })
-      .then(({ data }: any) => { if (data) setProfessorSuggestions(data); });
-  }, [user]);
+  // Realtime suggestions & affinities
+  const { suggestions: professorSuggestions } = useSocrateSuggestions(user?.id, ["professor"]);
+  const { affinities: supervisorAffinities } = useAffinityScores(user?.id, "supervisor");
 
   const allContacts: ContactType[] = useMemo(() => {
     const sups = supervisors.map(s => ({
@@ -66,18 +60,25 @@ export default function ContactsPage() {
     return [...sups, ...exps];
   }, []);
 
+  // Sort by affinity score when available
+  const affinityMap = useMemo(() => new Map(supervisorAffinities.map(a => [a.entity_id, a])), [supervisorAffinities]);
+
   const filtered = useMemo(() => {
-    if (filter === "socrate") return []; // handled separately
+    if (filter === "socrate") return [];
     return allContacts
       .filter(c => filter === "all" || c.type === filter)
       .filter(c => fieldFilter === "all" || c.fieldIds.includes(fieldFilter))
       .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.org.toLowerCase().includes(search.toLowerCase()) || c.title.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => {
+        // Affinity score first, then field match
+        const aAff = affinityMap.get(a.id)?.score || 0;
+        const bAff = affinityMap.get(b.id)?.score || 0;
+        if (aAff !== bAff) return bAff - aAff;
         const aM = a.fieldIds.filter(f => studentFields.includes(f)).length;
         const bM = b.fieldIds.filter(f => studentFields.includes(f)).length;
         return bM - aM;
       });
-  }, [search, filter, fieldFilter, allContacts, studentFields]);
+  }, [search, filter, fieldFilter, allContacts, studentFields, affinityMap]);
 
   const activeFields = useMemo(() => {
     const ids = new Set(allContacts.flatMap(c => c.fieldIds));
@@ -90,7 +91,7 @@ export default function ContactsPage() {
         <div className="p-2 rounded-lg bg-accent/10"><Contact className="w-5 h-5 text-accent" /></div>
         <div>
           <h1 className="text-xl font-bold font-display">Rubrica Contatti</h1>
-          <p className="text-sm text-muted-foreground">{supervisors.length} professori · {experts.length} esperti · {professorSuggestions.length} suggeriti da Socrate</p>
+          <p className="text-sm text-muted-foreground">{supervisors.length} professori · {experts.length} esperti · {professorSuggestions.length} suggeriti · {supervisorAffinities.length} affinità</p>
         </div>
       </div>
 
@@ -173,15 +174,16 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {/* Regular Contacts */}
+      {/* Regular Contacts — with affinity badges */}
       {filter !== "socrate" && (
         <div className="grid gap-3">
           {filtered.slice(0, 30).map((contact, i) => {
             const isMatch = contact.fieldIds.some(f => studentFields.includes(f));
             const isExpanded = expanded === contact.id;
+            const affinity = affinityMap.get(contact.id);
             return (
               <motion.div key={contact.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
-                className={`bg-card border rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer ${isMatch ? "border-accent/20" : ""}`}
+                className={`bg-card border rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer ${affinity ? "border-ai/20" : isMatch ? "border-accent/20" : ""}`}
                 onClick={() => setExpanded(isExpanded ? null : contact.id)}>
                 <div className="flex items-center gap-4 p-4">
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${contact.type === "supervisor" ? "bg-accent/10 text-accent" : "bg-ai/10 text-ai"}`}>
@@ -190,7 +192,8 @@ export default function ContactsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-sm truncate">{contact.name}</h3>
-                      {isMatch && <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="Match" />}
+                      {affinity && <span className="text-xs font-bold text-ai shrink-0">{affinity.score}%</span>}
+                      {isMatch && !affinity && <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" title="Match" />}
                       <Badge variant={contact.type === "supervisor" ? "default" : "secondary"} className="text-[10px] shrink-0">
                         {contact.type === "supervisor" ? "Prof" : "Expert"}
                       </Badge>
@@ -206,6 +209,21 @@ export default function ContactsPage() {
                 {isExpanded && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                     className="px-4 pb-4 border-t border-border pt-3 space-y-2">
+                    {affinity && (
+                      <div className="bg-ai/5 border border-ai/10 rounded-lg p-3 mb-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-medium text-ai">Affinità Socrate</span>
+                          <span className="text-sm font-bold text-ai">{affinity.score}%</span>
+                        </div>
+                        <Progress value={affinity.score} className="h-1 mb-2" />
+                        <p className="text-xs text-muted-foreground italic">{affinity.reasoning}</p>
+                        {affinity.matched_traits?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {affinity.matched_traits.map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {contact.about && <p className="text-xs text-muted-foreground">{contact.about}</p>}
                     {contact.interests && contact.interests.length > 0 && (
                       <div>

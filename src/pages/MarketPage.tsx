@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, Search, Building2, GraduationCap, Briefcase, MapPin, Filter, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/contexts/AppContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import topicsData from "@/data/topics.json";
 import companiesData from "@/data/companies.json";
 import supervisorsData from "@/data/supervisors.json";
@@ -20,8 +20,6 @@ const experts = expertsData as Expert[];
 const fields = fieldsData as Field[];
 function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
 
-interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; created_at: string; }
-
 type TabType = "topics" | "companies" | "careers" | "socrate";
 type TopicFilter = "all" | "topic" | "job";
 type EmploymentFilter = "all" | "yes" | "open" | "no";
@@ -33,17 +31,15 @@ export default function MarketPage() {
   const [typeFilter, setTypeFilter] = useState<TopicFilter>("all");
   const [empFilter, setEmpFilter] = useState<EmploymentFilter>("all");
   const [fieldFilter, setFieldFilter] = useState<string>("all");
-  const [marketSuggestions, setMarketSuggestions] = useState<AISuggestion[]>([]);
   const studentFields = profile?.field_ids || [];
 
-  // Load Socrate's company + career suggestions
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false })
-      .then(({ data }: any) => {
-        if (data) setMarketSuggestions(data.filter((s: any) => ["company", "career"].includes(s.category)));
-      });
-  }, [user]);
+  // Realtime suggestions & affinities
+  const { suggestions: marketSuggestions } = useSocrateSuggestions(user?.id, ["company", "career"]);
+  const { affinities: topicAffinities } = useAffinityScores(user?.id, "topic");
+  const { affinities: companyAffinities } = useAffinityScores(user?.id, "company");
+
+  const topicAffinityMap = useMemo(() => new Map(topicAffinities.map(a => [a.entity_id, a])), [topicAffinities]);
+  const companyAffinityMap = useMemo(() => new Map(companyAffinities.map(a => [a.entity_id, a])), [companyAffinities]);
 
   const filteredTopics = useMemo(() => topics
     .filter(t => typeFilter === "all" || t.type === typeFilter)
@@ -51,19 +47,29 @@ export default function MarketPage() {
     .filter(t => fieldFilter === "all" || t.fieldIds.includes(fieldFilter))
     .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.description.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
+      // Sort by affinity first, then field match
+      const aAff = topicAffinityMap.get(a.id)?.score || 0;
+      const bAff = topicAffinityMap.get(b.id)?.score || 0;
+      if (aAff !== bAff) return bAff - aAff;
       const aM = a.fieldIds.filter(f => studentFields.includes(f)).length;
       const bM = b.fieldIds.filter(f => studentFields.includes(f)).length;
       return bM - aM;
     }),
-    [search, typeFilter, empFilter, fieldFilter, studentFields]);
+    [search, typeFilter, empFilter, fieldFilter, studentFields, topicAffinityMap]);
 
   const companiesWithTopics = useMemo(() => companies.map(c => ({
     ...c,
     topicCount: topics.filter(t => t.companyId === c.id).length,
     expertCount: experts.filter(e => e.companyId === c.id).length,
+    affinity: companyAffinityMap.get(c.id),
   })).filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => b.topicCount - a.topicCount),
-    [search]);
+    .sort((a, b) => {
+      const aAff = a.affinity?.score || 0;
+      const bAff = b.affinity?.score || 0;
+      if (aAff !== bAff) return bAff - aAff;
+      return b.topicCount - a.topicCount;
+    }),
+    [search, companyAffinityMap]);
 
   const activeFields = useMemo(() => {
     const ids = new Set(topics.flatMap(t => t.fieldIds));
@@ -79,7 +85,7 @@ export default function MarketPage() {
         <div className="p-2 rounded-lg bg-success/10"><TrendingUp className="w-5 h-5 text-success" /></div>
         <div>
           <h1 className="text-xl font-bold font-display">Mercato</h1>
-          <p className="text-sm text-muted-foreground">{topics.length} topic · {companies.length} aziende · {marketSuggestions.length} suggeriti da Socrate</p>
+          <p className="text-sm text-muted-foreground">{topics.length} topic · {companies.length} aziende · {marketSuggestions.length} suggeriti · {topicAffinities.length + companyAffinities.length} affinità</p>
         </div>
       </div>
 
@@ -154,7 +160,7 @@ export default function MarketPage() {
         </div>
       )}
 
-      {/* TOPICS TAB */}
+      {/* TOPICS TAB — with affinity indicators */}
       {tab === "topics" && (
         <>
           <div className="flex gap-2 flex-wrap items-center">
@@ -184,9 +190,10 @@ export default function MarketPage() {
               const topicSupervisors = topic.supervisorIds.map(id => supervisors.find(s => s.id === id)).filter(Boolean) as Supervisor[];
               const topicExperts = topic.expertIds.map(id => experts.find(e => e.id === id)).filter(Boolean) as Expert[];
               const isMatch = topic.fieldIds.some(f => studentFields.includes(f));
+              const affinity = topicAffinityMap.get(topic.id);
               return (
                 <motion.div key={topic.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                  className={`bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow ${isMatch ? "border-accent/30" : ""}`}>
+                  className={`bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow ${affinity ? "border-ai/30" : isMatch ? "border-accent/30" : ""}`}>
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex gap-1.5">
                       <Badge variant={topic.type === "job" ? "default" : "secondary"} className="text-[10px]">
@@ -203,16 +210,24 @@ export default function MarketPage() {
                         </span>
                       )}
                     </div>
-                    <div className="flex gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                      {affinity && <span className="text-sm font-bold text-ai">{affinity.score}%</span>}
                       {topic.degrees.map(d => <span key={d} className="text-[9px] uppercase font-bold text-muted-foreground bg-muted px-1 py-0.5 rounded">{d}</span>)}
                     </div>
                   </div>
                   <h3 className="font-semibold text-sm mb-1.5 leading-tight">{topic.title}</h3>
                   <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{topic.description}</p>
+                  {affinity && (
+                    <div className="mb-3">
+                      <Progress value={affinity.score} className="h-1 mb-1" />
+                      <p className="text-[10px] text-ai/70 italic">{affinity.reasoning}</p>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-1 mb-3">
                     {topic.fieldIds.map(f => (
                       <Badge key={f} variant={studentFields.includes(f) ? "default" : "secondary"} className="text-[10px]">{getFieldName(f)}</Badge>
                     ))}
+                    {affinity?.matched_traits?.slice(0, 2).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
                     <div className="flex items-center gap-1.5">
@@ -234,18 +249,21 @@ export default function MarketPage() {
         </>
       )}
 
-      {/* COMPANIES TAB */}
+      {/* COMPANIES TAB — with affinity */}
       {tab === "companies" && (
         <div className="grid gap-4 md:grid-cols-2">
           {companiesWithTopics.map((company, i) => (
             <motion.div key={company.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-              className="bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              className={`bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow ${company.affinity ? "border-ai/30" : ""}`}>
               <div className="flex items-start gap-3 mb-3">
                 <div className="w-11 h-11 rounded-lg bg-accent/10 flex items-center justify-center text-accent font-bold text-sm shrink-0">
                   {company.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold font-display">{company.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold font-display">{company.name}</h3>
+                    {company.affinity && <span className="text-sm font-bold text-ai">{company.affinity.score}%</span>}
+                  </div>
                   <p className="text-xs text-muted-foreground">{company.size} dipendenti</p>
                 </div>
                 <div className="text-right shrink-0">
@@ -253,6 +271,17 @@ export default function MarketPage() {
                   <p className="text-[10px] text-muted-foreground">topic</p>
                 </div>
               </div>
+              {company.affinity && (
+                <div className="mb-3">
+                  <Progress value={company.affinity.score} className="h-1 mb-1" />
+                  <p className="text-[10px] text-ai/70 italic">{company.affinity.reasoning}</p>
+                  {company.affinity.matched_traits?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {company.affinity.matched_traits.slice(0, 3).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
+                    </div>
+                  )}
+                </div>
+              )}
               <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{company.about || company.description}</p>
               <div className="flex items-center justify-between">
                 <div className="flex flex-wrap gap-1">
