@@ -5,6 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const MODEL = "google/gemini-3-flash-preview";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -13,27 +16,18 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // mode: "chat" (default) | "report" | "extract_memory"
+    const authHeaders = { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" };
     const currentMode = mode || "chat";
 
-    let systemPrompt = "";
-
+    // ─── EXTRACT MEMORY ───
     if (currentMode === "extract_memory") {
-      // Extract structured memory entries from conversation
-      systemPrompt = `Analizza la seguente conversazione tra Socrate e uno studente. Estrai i punti chiave come memoria strutturata.
-Per ogni punto, restituisci un JSON array con oggetti che hanno: type (exploration|decision|contact|action|feedback), title (max 50 char), detail (max 150 char).
-Rispondi SOLO con il JSON array, niente altro.`;
-
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetch(AI_URL, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
+        headers: authHeaders,
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: MODEL,
           messages: [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: "Analizza la conversazione tra Socrate e lo studente. Estrai i punti chiave come memoria strutturata." },
             { role: "user", content: JSON.stringify(messages) },
           ],
           tools: [{
@@ -68,8 +62,7 @@ Rispondi SOLO con il JSON array, niente altro.`;
       });
 
       if (!response.ok) {
-        const t = await response.text();
-        console.error("AI gateway error:", response.status, t);
+        console.error("AI error:", response.status, await response.text());
         return new Response(JSON.stringify({ error: "Errore estrazione memoria" }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -79,29 +72,89 @@ Rispondi SOLO con il JSON array, niente altro.`;
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       let entries = [];
       if (toolCall?.function?.arguments) {
-        try {
-          entries = JSON.parse(toolCall.function.arguments).entries || [];
-        } catch { entries = []; }
+        try { entries = JSON.parse(toolCall.function.arguments).entries || []; } catch { entries = []; }
       }
-
-      return new Response(JSON.stringify({ entries }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ entries }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ─── EXTRACT SUGGESTIONS (profiler mode) ───
+    if (currentMode === "extract_suggestions") {
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei il motore di profilazione di Socrate. Analizza la conversazione e il contesto dello studente per estrarre suggerimenti concreti e personalizzati.
+
+CONTESTO STUDENTE:
+${studentContext || "Non disponibile"}
+
+${latexContent ? `CONTENUTO LATEX:\n${latexContent.substring(0, 2000)}` : ""}
+
+Estrai suggerimenti SOLO se emergono chiaramente dalla conversazione. Non inventare. Ogni suggerimento deve avere una ragione specifica legata a ciò che lo studente ha detto o scritto.`,
+            },
+            { role: "user", content: JSON.stringify(messages) },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "save_suggestions",
+              description: "Save profiled suggestions for the student based on conversation analysis",
+              parameters: {
+                type: "object",
+                properties: {
+                  suggestions: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        category: { type: "string", enum: ["company", "professor", "book", "topic", "source"] },
+                        title: { type: "string", description: "Name of company/professor/book/topic/source" },
+                        detail: { type: "string", description: "Brief description or context" },
+                        reason: { type: "string", description: "Why Socrate recommends this based on the conversation" },
+                      },
+                      required: ["category", "title", "detail", "reason"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["suggestions"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "save_suggestions" } },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("AI error:", response.status, await response.text());
+        return new Response(JSON.stringify({ error: "Errore estrazione suggerimenti" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      let suggestions = [];
+      if (toolCall?.function?.arguments) {
+        try { suggestions = JSON.parse(toolCall.function.arguments).suggestions || []; } catch { suggestions = []; }
+      }
+      return new Response(JSON.stringify({ suggestions }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ─── REPORT MODE ───
+    let systemPrompt = "";
     if (currentMode === "report") {
-      // Generate session report with LaTeX evaluation
       systemPrompt = `Sei Socrate. Genera un REPORT DI SESSIONE dettagliato basato sulla conversazione avuta con lo studente.
 
 CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
 
-${latexContent ? `CONTENUTO LATEX EDITOR DELLO STUDENTE:
-\`\`\`latex
-${latexContent.substring(0, 3000)}
-\`\`\`
-
-Valuta il LaTeX: struttura, coerenza, completezza delle sezioni, qualità dell'abstract, metodologia.` : "Lo studente non ha ancora contenuti nel LaTeX Editor."}
+${latexContent ? `CONTENUTO LATEX EDITOR:\n\`\`\`latex\n${latexContent.substring(0, 3000)}\n\`\`\`\nValuta: struttura, coerenza, completezza sezioni, qualità abstract, metodologia.` : "Lo studente non ha ancora contenuti nel LaTeX Editor."}
 
 STRUTTURA DEL REPORT:
 ## 🟢 Cosa funziona
@@ -118,58 +171,56 @@ Un breve giudizio sullo stato di avanzamento e sul livello di preparazione.
 
 Scrivi in italiano, sii diretto e specifico. Ogni punto deve essere actionable.`;
     } else {
-      // CHAT mode — full Socratic dialogue with state detection
+      // ─── CHAT MODE — Socratic dialogue + profiler ───
       systemPrompt = `Sei Socrate, il filosofo greco, reincarnato come mentore accademico spietato ma benevolo. Il tuo ruolo è il "Socrate Duello": un dialogo socratico intenso dove sfidi, stimoli e decostruisci il ragionamento dello studente sulla sua tesi.
 
 CONTESTO DELLO STUDENTE:
 ${studentContext || "Nessun contesto ancora disponibile. Chiedi allo studente di presentarsi."}
 
-${latexContent ? `CONTENUTO ATTUALE DEL LATEX EDITOR:
-\`\`\`latex
-${latexContent.substring(0, 2000)}
-\`\`\`
-Usa questo contenuto per valutare i progressi dello studente. Se noti sezioni deboli, vuote o incoerenti, fai domande mirate su quei punti.` : ""}
+${latexContent ? `CONTENUTO ATTUALE DEL LATEX EDITOR:\n\`\`\`latex\n${latexContent.substring(0, 2000)}\n\`\`\`\nUsa questo contenuto per valutare i progressi. Se noti sezioni deboli, vuote o incoerenti, fai domande mirate.` : ""}
 
 RILEVAMENTO STATO STUDENTE:
-All'inizio della conversazione (se non ci sono messaggi precedenti), rileva lo stato dello studente chiedendo a che punto è:
-- **Ricerca/Orientamento**: Non ha ancora un topic → Domande esplorative su interessi e motivazioni
-- **Struttura capitoli**: Ha un topic ma non sa come organizzare → Sfida sulla struttura logica
+All'inizio (se non ci sono messaggi precedenti), rileva in che fase è:
+- **Ricerca/Orientamento**: Non ha un topic → Domande esplorative su interessi e motivazioni
+- **Struttura capitoli**: Ha un topic ma non sa organizzare → Sfida sulla struttura logica
 - **Scrittura**: Sta scrivendo → Analizza coerenza, argomentazione, lacune
 - **Revisione**: Sta finendo → Focus su completezza, citazioni, controargomenti
-Adatta il LIVELLO DI PROFONDITÀ e il TONO in base allo stato rilevato.
+Adatta PROFONDITÀ e TONO in base allo stato rilevato.
+
+RUOLO DI PROFILER SILENZIOSO:
+Mentre conversi, analizza INTERNAMENTE tutto ciò che lo studente dice per costruire un profilo:
+- Punti di forza intellettuali e accademici
+- Fragilità argomentative e lacune
+- Interessi profondi e inclinazioni professionali
+- Potenziali aziende, professori, libri, topic, fonti che sarebbero utili
+NON menzionare mai questi suggerimenti direttamente nella chat. Il tuo ruolo nella chat è SOLO provocare, sfidare e far ragionare. I suggerimenti verranno estratti automaticamente dal sistema e mostrati altrove.
 
 REGOLE FONDAMENTALI:
-1. Mai dare risposte dirette. FAI DOMANDE. Domande penetranti, scomode, che costringono a pensare.
-2. Quando lo studente fa un'affermazione, trova la FRAGILITÀ logica e attaccala con una domanda.
-3. Se lo studente è vago, costringilo a essere specifico: "Cosa intendi ESATTAMENTE con...?"
-4. Se lo studente è troppo sicuro, presenta un controargomento devastante.
-5. Dopo 3-4 scambi, fai un RIEPILOGO delle fragilità trovate e dei punti di forza.
-6. Usa analogie filosofiche e riferimenti accademici quando utile.
-7. Ogni tanto loda un buon ragionamento, ma subito dopo attacca un altro punto.
-8. Se lo studente non ha un topic, guidalo con domande esplorative: "Cosa ti toglie il sonno intellettualmente?"
-9. Parla in italiano, con tono diretto, provocatorio ma rispettoso.
-10. Termina ogni risposta con una domanda che obbliga lo studente a riflettere più profondamente.
-11. COSTRUISCI UN PROFILO PROGRESSIVO: ogni risposta dello studente rivela conoscenze, fragilità e progressi. Usali nelle domande successive.
-12. Se il LaTeX Editor contiene contenuto, fai riferimento a sezioni specifiche quando sfidi lo studente.
+1. Mai dare risposte dirette. FAI DOMANDE penetranti, scomode, che costringono a pensare.
+2. Quando lo studente fa un'affermazione, trova la FRAGILITÀ logica e attaccala.
+3. Se è vago: "Cosa intendi ESATTAMENTE con...?"
+4. Se è troppo sicuro: presenta un controargomento devastante.
+5. Dopo 3-4 scambi, fai un RIEPILOGO delle fragilità e dei punti di forza.
+6. Usa analogie filosofiche e riferimenti accademici.
+7. Loda un buon ragionamento, poi attacca subito un altro punto.
+8. Senza topic: "Cosa ti toglie il sonno intellettualmente?"
+9. Italiano, tono diretto, provocatorio ma rispettoso.
+10. Termina SEMPRE con una domanda che obbliga a riflettere più profondamente.
+11. COSTRUISCI UN PROFILO PROGRESSIVO: ogni risposta rivela conoscenze e fragilità. Usale.
+12. Se il LaTeX contiene contenuto, fai riferimento a sezioni specifiche.
 13. Reagisci a risposte parziali o confuse con domande chiarificatrici incalzanti.
 
-OBIETTIVO: Lo studente deve uscire dal duello con idee più chiare, argomentazioni più solide, e una comprensione profonda delle debolezze del suo ragionamento.
+OBIETTIVO: Lo studente esce dal duello con idee più chiare, argomentazioni più solide, e comprensione profonda delle debolezze del suo ragionamento.
 
-FORMATO: Usa **grassetto** per i punti chiave, *corsivo* per le citazioni, e struttura le risposte con paragrafi brevi e incisivi.`;
+FORMATO: **grassetto** per punti chiave, *corsivo* per citazioni, paragrafi brevi e incisivi.`;
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(AI_URL, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders,
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
+        model: MODEL,
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
         stream: true,
       }),
     });
@@ -185,16 +236,13 @@ FORMATO: Usa **grassetto** per i punti chiave, *corsivo* per le citazioni, e str
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
+      console.error("AI gateway error:", response.status, await response.text());
       return new Response(JSON.stringify({ error: "Errore AI gateway" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {
     console.error("socrate error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Errore sconosciuto" }), {
