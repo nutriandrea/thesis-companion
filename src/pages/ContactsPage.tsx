@@ -41,6 +41,7 @@ export default function ContactsPage() {
   // Realtime suggestions & affinities
   const { suggestions: professorSuggestions } = useSocrateSuggestions(user?.id, ["professor"]);
   const { affinities: supervisorAffinities } = useAffinityScores(user?.id, "supervisor");
+  const { filterDatabase, loading: filterLoading } = useDatabaseFilter();
 
   const allContacts: ContactType[] = useMemo(() => {
     const sups = supervisors.map(s => ({
