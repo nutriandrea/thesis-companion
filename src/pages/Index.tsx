@@ -1,16 +1,33 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { AppProvider, useApp } from "@/contexts/AppContext";
+import AppLayout from "@/components/layout/AppLayout";
+import DashboardPage from "@/pages/DashboardPage";
+import SocratePage from "@/pages/SocratePage";
+import EditorPage from "@/pages/EditorPage";
+import SuggestionsPage from "@/pages/SuggestionsPage";
+import ContactsPage from "@/pages/ContactsPage";
+import MarketPage from "@/pages/MarketPage";
+import ProfilePage from "@/pages/ProfilePage";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+function PageRouter() {
+  const { activeSection } = useApp();
+
+  const pages: Record<string, React.ReactNode> = {
+    dashboard: <DashboardPage />,
+    socrate: <SocratePage />,
+    editor: <EditorPage />,
+    suggestions: <SuggestionsPage />,
+    contacts: <ContactsPage />,
+    market: <MarketPage />,
+    profile: <ProfilePage />,
+  };
+
+  return <AppLayout>{pages[activeSection] || <DashboardPage />}</AppLayout>;
+}
+
+export default function Index() {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <AppProvider>
+      <PageRouter />
+    </AppProvider>
   );
-};
-
-const Index = PlaceholderIndex;
-
-export default Index;
+}
