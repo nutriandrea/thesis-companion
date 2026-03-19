@@ -859,6 +859,29 @@ export default function UnifiedDashboard() {
     } finally { setIsStreaming(false); }
   }, [isStreaming, user, messages, studentContext, thesisContent, profile, updateProfile, toast, streamResponse]);
 
+  // Generate report
+  const generateReport = useCallback(async () => {
+    if (isStreaming || isGeneratingReport || !user || messages.length < 3) return;
+    setIsGeneratingReport(true);
+    const apiMessages = messages.slice(-20).map(m => ({ role: m.role, content: m.content }));
+    try {
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-15), mode: "report" }),
+      });
+      if (!resp.ok) { toast({ variant: "destructive", title: "Errore" }); setIsGeneratingReport(false); return; }
+      const reportId = `report-${Date.now()}`;
+      setMessages(prev => [...prev,
+        { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## Report di Sessione\n" },
+        { id: reportId, role: "assistant", content: "" },
+      ]);
+      const reportContent = await streamResponse(resp, reportId);
+      if (reportContent) await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `REPORT:\n${reportContent}` });
+      toast({ title: "Report generato" });
+    } catch (e) { console.error(e); toast({ variant: "destructive", title: "Errore" }); }
+    finally { setIsGeneratingReport(false); }
+  }, [isStreaming, isGeneratingReport, user, messages, studentContext, thesisContent, toast, streamResponse]);
+
   const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
     if (!user) return;
     const recentMsgs = msgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
