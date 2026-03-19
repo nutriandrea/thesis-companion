@@ -533,12 +533,12 @@ export default function DemoPage() {
       </div>
 
       {/* Top: Identity */}
-      <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
+      <div className="flex flex-col items-center pt-5 pb-2 shrink-0 relative gap-3">
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
         </div>
 
-        <motion.div className="text-center space-y-1 px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-lg font-bold text-foreground font-display">{MOCK_THESIS}</h1>
             <Link2 className="w-4 h-4 text-muted-foreground" />
@@ -547,7 +547,7 @@ export default function DemoPage() {
 
         {/* Confirmed track for planning+ */}
         {(showPlanning || showExecution || showWriting) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 flex-wrap mt-1">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <GraduationCap className="w-3 h-3 text-accent" />
               <span className="text-[11px] text-muted-foreground">Prof. Marco Rossi</span>
@@ -560,11 +560,11 @@ export default function DemoPage() {
 
         <motion.button
           onClick={() => setShowChat(!showChat)}
-          className="mt-3 flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
+          className="flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Parla con Socrate
+          Talk to Socrate
         </motion.button>
       </div>
 
