@@ -66,7 +66,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => fetchProfile(session.user.id), 0);
+        // On SIGNED_IN after signup, the profile update may not have completed yet.
+        // Add a small delay for signup events to allow the profile update to finish.
+        const delay = event === "SIGNED_IN" ? 500 : 0;
+        setTimeout(() => fetchProfile(session.user.id), delay);
       } else {
         setProfile(null);
         setLoading(false);

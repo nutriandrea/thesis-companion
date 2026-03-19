@@ -31,17 +31,19 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error, data } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        const userId = data?.user?.id;
+        if (userId) {
+          // Wait for trigger to create the profile row, then update it
+          await new Promise(resolve => setTimeout(resolve, 300));
           await supabase.from("profiles").update({
             first_name: firstName,
             last_name: lastName,
             university,
             degree,
             expected_graduation: expectedGraduation,
-          }).eq("user_id", user.id);
+          }).eq("user_id", userId);
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
