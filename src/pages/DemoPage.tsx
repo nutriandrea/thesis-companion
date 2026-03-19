@@ -511,11 +511,9 @@ export default function DemoPage() {
   cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Rubrica"} icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
 
-  // References: pre-execution
-  if (!showExecution && !showWriting) {
-    cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
-    delay += 0.05;
-  }
+  // References: all phases
+  cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
+  delay += 0.05;
 
   // Vulnerabilities: execution+
   if (showExecution || showWriting) {
