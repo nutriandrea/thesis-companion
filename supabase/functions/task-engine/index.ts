@@ -245,7 +245,158 @@ Genera SOLO task NUOVI e non duplicati.`,
       });
     }
 
-    return new Response(JSON.stringify({ error: "Invalid mode. Use: generate, auto_generate" }), {
+    // ─── GENERATE / UPDATE ROADMAP ───
+    if (mode === "generate_roadmap") {
+      const [profileRes, studentRes, memRes, existingRoadmapRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("memory_entries").select("type, title, detail").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("roadmap_items").select("*").eq("user_id", userId).order("sort_order"),
+      ]);
+
+      const profile = profileRes.data;
+      const studentProfile = studentRes.data as any;
+      const memories = memRes.data || [];
+      const existingRoadmap = existingRoadmapRes.data || [];
+      const thesisContent = body.thesis_content || "";
+      const currentStage = studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state || "orientation";
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{
+            role: "system",
+            content: `Sei il ROADMAP ENGINE di Socrate. Genera una roadmap personalizzata per la tesi dello studente.
+
+STUDENTE:
+- Nome: ${profile?.first_name} ${profile?.last_name}
+- Corso: ${profile?.degree || "N/A"}, Università: ${profile?.university || "N/A"}
+- Topic tesi: ${profile?.thesis_topic || "Non definito"}
+- Fase attuale: ${currentStage}
+- Supervisore scelto: ${studentProfile?.selected_supervisor_id ? "Sì" : "No"}
+
+PROFILO INTELLETTUALE:
+${studentProfile ? JSON.stringify({
+  reasoning_style: studentProfile.reasoning_style,
+  strengths: studentProfile.strengths,
+  weaknesses: studentProfile.weaknesses,
+  research_maturity: studentProfile.research_maturity,
+}) : "Non ancora profilato"}
+
+MEMORIA RECENTE: ${JSON.stringify(memories.slice(0, 10).map((m: any) => `${m.type}: ${m.title}`))}
+${thesisContent ? `CONTENUTO TESI (estratto): ${thesisContent.substring(0, 2000)}` : ""}
+ROADMAP ESISTENTE: ${existingRoadmap.length > 0 ? JSON.stringify(existingRoadmap.map((r: any) => ({ phase: r.phase_key, task: r.task_title, completed: r.completed }))) : "Nessuna"}
+
+GENERA una roadmap con 3 fasi (pianificazione, esecuzione, scrittura), ognuna con 4-6 task concreti.
+- Ogni task deve essere SPECIFICO al topic dello studente
+- Le date devono partire da oggi e distribuirsi su ~5 mesi
+- Adatta complessità e contenuti alla maturità dello studente
+- Se esiste già una roadmap, AGGIORNALA mantenendo i task completati
+
+La data odierna è: ${new Date().toISOString().split("T")[0]}`,
+          }],
+          tools: [{
+            type: "function",
+            function: {
+              name: "set_roadmap",
+              description: "Set the thesis roadmap",
+              parameters: {
+                type: "object",
+                properties: {
+                  phases: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        phase_key: { type: "string", enum: ["planning", "execution", "writing"] },
+                        phase_title: { type: "string" },
+                        tasks: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              title: { type: "string" },
+                              due_date: { type: "string", description: "YYYY-MM-DD" },
+                            },
+                            required: ["title", "due_date"],
+                            additionalProperties: false,
+                          },
+                        },
+                      },
+                      required: ["phase_key", "phase_title", "tasks"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["phases"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "set_roadmap" } },
+        }),
+      });
+
+      if (!response.ok) throw new Error(`AI error: ${response.status}`);
+
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      let phases: any[] = [];
+      if (toolCall?.function?.arguments) {
+        try { phases = JSON.parse(toolCall.function.arguments).phases || []; } catch { phases = []; }
+      }
+
+      if (phases.length > 0) {
+        // Build a map of completed tasks to preserve
+        const completedMap = new Map<string, boolean>();
+        existingRoadmap.forEach((r: any) => {
+          if (r.completed) completedMap.set(`${r.phase_key}:${r.task_title}`, true);
+        });
+
+        // Delete existing and re-insert
+        await supabase.from("roadmap_items").delete().eq("user_id", userId);
+
+        const items: any[] = [];
+        for (const phase of phases) {
+          phase.tasks.forEach((task: any, idx: number) => {
+            items.push({
+              user_id: userId,
+              phase_key: phase.phase_key,
+              phase_title: phase.phase_title,
+              task_title: task.title,
+              completed: completedMap.get(`${phase.phase_key}:${task.title}`) || false,
+              due_date: task.due_date,
+              sort_order: idx,
+            });
+          });
+        }
+
+        await supabase.from("roadmap_items").insert(items);
+      }
+
+      return new Response(JSON.stringify({ phases, count: phases.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── TOGGLE ROADMAP TASK ───
+    if (mode === "toggle_roadmap_task") {
+      const { task_id, completed } = body;
+      if (!task_id) throw new Error("task_id required");
+
+      await supabase.from("roadmap_items")
+        .update({ completed: !!completed, updated_at: new Date().toISOString() })
+        .eq("id", task_id)
+        .eq("user_id", userId);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: "Invalid mode. Use: generate, auto_generate, generate_roadmap, toggle_roadmap_task" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
