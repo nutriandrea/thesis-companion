@@ -27,7 +27,9 @@ interface CareerSector { name: string; percentage: number; reasoning?: string; }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
 const CAREER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/career-engine`;
-const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
+const RAG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`;
+const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
+
 
 const PHASES = [
   { key: "exploration", label: "Esplorazione", icon: "🔍" },

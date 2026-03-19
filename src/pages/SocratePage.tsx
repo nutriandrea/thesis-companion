@@ -47,7 +47,7 @@ function useLatexContent() {
 }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
-const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
+
 
 export default function SocratePage({ explorationMode = false, onThesisConfirmed }: SocratePageProps = {}) {
   const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
