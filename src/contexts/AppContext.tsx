@@ -104,6 +104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         journey_state: data.journey_state as JourneyState,
         onboarding_done: data.onboarding_done,
         socrate_done: data.socrate_done,
+        google_doc_url: data.google_doc_url || "",
       });
 
       if (!data.onboarding_done) {
