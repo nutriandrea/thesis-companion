@@ -407,7 +407,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         <div className="ml-auto flex items-center gap-2">
           {isExtracting && (
             <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <Loader2 className="w-3 h-3 animate-spin" /> Analisi in corso...
+              <Loader2 className="w-3 h-3 animate-spin" /> Analyzing...
             </span>
           )}
           {messages.length >= 3 && (
