@@ -136,18 +136,35 @@ Massimo 6 settori.`,
 
     // ─── EVALUATE PHASE TRANSITION ───
     if (mode === "evaluate_phase") {
-      const [profileRes, studentRes, tasksRes, vulnsRes] = await Promise.all([
-        supabase.from("profiles").select("thesis_topic, journey_state").eq("user_id", userId).single(),
-        supabase.from("student_profiles").select("current_phase, phase_confidence, phase_history, overall_completion, thesis_quality_score, thesis_stage").eq("user_id", userId).single(),
+      const [profileRes, studentRes, tasksRes, vulnsRes, memRes, affinityRes] = await Promise.all([
+        supabase.from("profiles").select("thesis_topic, journey_state, skills").eq("user_id", userId).single(),
+        supabase.from("student_profiles").select("current_phase, phase_confidence, phase_history, overall_completion, thesis_quality_score, thesis_stage, selected_supervisor_id, supervisor_motivation").eq("user_id", userId).single(),
         supabase.from("socrate_tasks").select("title, status, section, priority").eq("user_id", userId).limit(30),
         supabase.from("vulnerabilities").select("title, severity").eq("user_id", userId).eq("resolved", false).limit(10),
+        supabase.from("memory_entries").select("type, title").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("affinity_scores").select("entity_type, entity_name, score").eq("user_id", userId).order("score", { ascending: false }).limit(10),
       ]);
 
       const profile = profileRes.data;
       const student = studentRes.data as any;
       const tasks = tasksRes.data || [];
       const vulns = vulnsRes.data || [];
-      const currentPhase = student?.current_phase || "exploration";
+      const memories = memRes.data || [];
+      const affinities = affinityRes.data || [];
+      const currentPhase = student?.current_phase || "orientation";
+
+      // Canonical phases used by the dashboard
+      // orientation → topic_supervisor → planning → execution → writing
+      const CANONICAL_PHASES = ["orientation", "topic_supervisor", "planning", "execution", "writing"];
+      const currentIndex = CANONICAL_PHASES.indexOf(currentPhase);
+      const nextPhase = currentIndex >= 0 && currentIndex < CANONICAL_PHASES.length - 1
+        ? CANONICAL_PHASES[currentIndex + 1]
+        : currentPhase;
+
+      const completedTasks = tasks.filter((t: any) => t.status === "completed").length;
+      const pendingTasks = tasks.filter((t: any) => t.status !== "completed").length;
+      const criticalVulns = vulns.filter((v: any) => v.severity === "critical").length;
+      const hasSupervisor = !!student?.selected_supervisor_id;
 
       const response = await fetch(AI_URL, {
         method: "POST",
@@ -156,29 +173,39 @@ Massimo 6 settori.`,
           model: MODEL,
           messages: [{
             role: "system",
-            content: `Sei il PHASE ENGINE di Socrate. Valuta se lo studente è pronto a passare alla fase successiva della tesi.
+            content: `Sei il PHASE ENGINE di Socrate. Valuta se lo studente è pronto a passare dalla fase "${currentPhase}" alla fase "${nextPhase}".
 
-FASI: exploration → convergence → thesis_defined → refinement → writing → revision
+LE 5 FASI CANONICHE (in ordine):
+1. orientation — lo studente esplora argomenti e cerca una direzione
+2. topic_supervisor — ha un topic definito, cerca/sceglie il supervisore
+3. planning — struttura la tesi, definisce capitoli e metodologia
+4. execution — esegue la ricerca, raccoglie dati, sviluppa il progetto
+5. writing — scrive, rivede e finalizza la tesi
 
 STATO ATTUALE:
-- Fase: ${currentPhase}
-- Confidence: ${student?.phase_confidence || 0}%
+- Fase corrente: ${currentPhase} (indice ${currentIndex} di ${CANONICAL_PHASES.length})
+- Prossima fase possibile: ${nextPhase}
 - Topic tesi: ${profile?.thesis_topic || "Non definito"}
+- Supervisore scelto: ${hasSupervisor ? "Sì" : "No"}
 - Completamento: ${student?.overall_completion || 0}%
-- Qualità: ${student?.thesis_quality_score || 0}/10
+- Qualità tesi: ${student?.thesis_quality_score || 0}/10
+- Task completati: ${completedTasks}/${completedTasks + pendingTasks}
+- Vulnerabilità critiche: ${criticalVulns}
 
-TASK: ${JSON.stringify(tasks.slice(0, 15).map(t => ({ title: t.title, status: t.status, priority: t.priority })))}
-VULNERABILITÀ NON RISOLTE: ${JSON.stringify(vulns.map(v => ({ title: v.title, severity: v.severity })))}
+MEMORIE RECENTI: ${JSON.stringify(memories.slice(0, 10).map((m: any) => m.title))}
+AFFINITÀ: ${JSON.stringify(affinities.slice(0, 5).map((a: any) => ({ type: a.entity_type, name: a.entity_name, score: a.score })))}
 
-REGOLE DI TRANSIZIONE:
-- exploration → convergence: ha esplorato almeno 3 aree, ha una direzione
-- convergence → thesis_defined: topic chiaro, obiettivo definito, problema articolato
-- thesis_defined → refinement: struttura base, capitoli identificati
-- refinement → writing: task chiave completati, nessuna vulnerabilità critica
-- writing → revision: bozza completa, qualità > 5/10
-- revision: fase finale, rifinitura
+REGOLE DI TRANSIZIONE RIGOROSE:
+- orientation → topic_supervisor: RICHIEDE topic tesi definito (thesis_topic non vuoto)
+- topic_supervisor → planning: RICHIEDE supervisore scelto (selected_supervisor_id presente) E topic solido
+- planning → execution: RICHIEDE struttura capitoli definita, nessuna vulnerabilità critica
+- execution → writing: RICHIEDE progresso significativo (>50%), task chiave completati
+- writing → (finale): non si avanza ulteriormente
 
-Valuta RIGOROSAMENTE. NON avanzare se le condizioni non sono soddisfatte.`,
+IMPORTANTE:
+- new_phase DEVE essere esattamente uno di: ${CANONICAL_PHASES.join(", ")}
+- Se non può avanzare, new_phase = "${currentPhase}" (fase corrente)
+- Sii RIGOROSO: non avanzare se le condizioni non sono chiaramente soddisfatte`,
           }],
           tools: [{
             type: "function",
@@ -189,7 +216,7 @@ Valuta RIGOROSAMENTE. NON avanzare se le condizioni non sono soddisfatte.`,
                 type: "object",
                 properties: {
                   can_advance: { type: "boolean" },
-                  new_phase: { type: "string" },
+                  new_phase: { type: "string", enum: CANONICAL_PHASES },
                   confidence: { type: "number" },
                   reasoning: { type: "string" },
                   blockers: {
@@ -197,8 +224,9 @@ Valuta RIGOROSAMENTE. NON avanzare se le condizioni non sono soddisfatte.`,
                     items: { type: "string" },
                   },
                   socrate_comment: { type: "string" },
+                  completion_estimate: { type: "number", description: "Overall completion % estimate (0-100)" },
                 },
-                required: ["can_advance", "new_phase", "confidence", "reasoning", "blockers", "socrate_comment"],
+                required: ["can_advance", "new_phase", "confidence", "reasoning", "blockers", "socrate_comment", "completion_estimate"],
                 additionalProperties: false,
               },
             },
@@ -209,11 +237,17 @@ Valuta RIGOROSAMENTE. NON avanzare se le condizioni non sono soddisfatte.`,
 
       if (!response.ok) throw new Error(`AI error: ${response.status}`);
 
-      const data = await response.json();
-      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      const aiData = await response.json();
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
       let result: any = {};
       if (toolCall?.function?.arguments) {
         try { result = JSON.parse(toolCall.function.arguments); } catch { result = {}; }
+      }
+
+      // Validate new_phase is canonical
+      if (!CANONICAL_PHASES.includes(result.new_phase)) {
+        result.new_phase = currentPhase;
+        result.can_advance = false;
       }
 
       // Update phase if advancing
@@ -226,21 +260,26 @@ Valuta RIGOROSAMENTE. NON avanzare se le condizioni non sono soddisfatte.`,
           reasoning: result.reasoning,
         });
 
+        const newCompletion = result.completion_estimate || Math.min(
+          (CANONICAL_PHASES.indexOf(result.new_phase) + 1) / CANONICAL_PHASES.length * 100,
+          100
+        );
+
         await supabase.from("student_profiles").update({
           current_phase: result.new_phase,
+          thesis_stage: result.new_phase,
           phase_confidence: result.confidence,
           phase_history: history,
-          thesis_stage: result.new_phase,
+          overall_completion: Math.round(newCompletion),
         }).eq("user_id", userId);
 
-        // Also update journey_state in profiles
+        // Map canonical phase to profiles.journey_state
         const stateMap: Record<string, string> = {
-          exploration: "lost",
-          convergence: "vague_idea",
-          thesis_defined: "topic_chosen",
-          refinement: "topic_chosen",
+          orientation: "lost",
+          topic_supervisor: "topic_chosen",
+          planning: "topic_chosen",
+          execution: "writing",
           writing: "writing",
-          revision: "writing",
         };
         if (stateMap[result.new_phase]) {
           await supabase.from("profiles").update({
@@ -248,9 +287,10 @@ Valuta RIGOROSAMENTE. NON avanzare se le condizioni non sono soddisfatte.`,
           }).eq("user_id", userId);
         }
       } else {
-        await supabase.from("student_profiles").update({
-          phase_confidence: result.confidence,
-        }).eq("user_id", userId);
+        // Just update confidence and completion estimate
+        const updates: any = { phase_confidence: result.confidence };
+        if (result.completion_estimate) updates.overall_completion = Math.round(result.completion_estimate);
+        await supabase.from("student_profiles").update(updates).eq("user_id", userId);
       }
 
       return new Response(JSON.stringify(result), {
