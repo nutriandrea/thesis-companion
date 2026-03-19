@@ -153,9 +153,11 @@ export default function VoiceConversation({
   }, [startListening]);
 
   const stopAudio = useCallback(() => {
+    if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; }
     if (audioUrlRef.current) { URL.revokeObjectURL(audioUrlRef.current); audioUrlRef.current = null; }
     isSpeakingRef.current = false;
+    setSpeechProgress(0);
   }, []);
 
   const speakText = useCallback(async (text: string) => {
