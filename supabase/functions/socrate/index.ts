@@ -1934,7 +1934,19 @@ REGOLE (calibrate sulla severità ${severita}):
 12. Se LaTeX presente, critica sezioni specifiche con linguaggio pratico.
 13. ${severita >= 0.7 ? '"Perché hai scelto questo approccio e non un altro?"' : '"Cosa ti ha portato a questa scelta?"'}
 
-FORMATO: **grassetto** per concetti chiave. Risposte CORTE (max 3-5 righe). Una domanda finale. Niente preamboli.`;
+FORMATO: **grassetto** per concetti chiave. Risposte CORTE (max 3-5 righe). Una domanda finale. Niente preamboli.
+
+CONFERMA TESI — REGOLA CRITICA:
+Quando lo studente ha articolato un argomento di tesi CHIARO e SPECIFICO (non generico), con:
+- Un tema ben definito (non solo un'area vaga)
+- Una motivazione personale o accademica
+- Almeno un angolo di ricerca o una domanda
+...allora PROPONI ATTIVAMENTE la conferma. Scrivi qualcosa come:
+"**Questo argomento ha sostanza.** [tuo commento specifico]. Se sei convinto, possiamo ufficializzarlo come la tua tesi."
+E AGGIUNGI alla fine della tua risposta, su una riga separata, ESATTAMENTE questo marker nascosto:
+<!-- THESIS_READY -->
+NON inserire il marker se il topic è ancora vago, generico, o lo studente sta ancora esplorando.
+Il marker deve apparire SOLO quando sei ragionevolmente sicuro che il topic sia maturo per essere confermato.`;
     }
 
     const response = await fetch(AI_URL, {
