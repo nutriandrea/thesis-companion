@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.dashboard-engine]
 verify_jwt = false
+
+[functions.career-engine]
+verify_jwt = false
