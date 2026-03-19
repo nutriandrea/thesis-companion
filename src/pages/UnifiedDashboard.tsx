@@ -133,7 +133,7 @@ function DashboardCard({
     if (closeRef) closeRef.current = () => setExpanded(false);
   }, [closeRef]);
 
-
+  useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
     const check = () => setIsOverflowing(el.scrollHeight > maxContentHeight + 8);
