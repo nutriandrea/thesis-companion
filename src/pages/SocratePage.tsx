@@ -310,7 +310,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       const reportId = `report-${Date.now()}`;
       setMessages((prev) => [
         ...prev,
-        { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## 📋 Report di Sessione\n" },
+        { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## Report di Sessione\n" },
         { id: reportId, role: "assistant", content: "" },
       ]);
 
