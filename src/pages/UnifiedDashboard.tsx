@@ -189,7 +189,8 @@ export default function UnifiedDashboard() {
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
     : "";
-  const latexContent = (() => { try { return localStorage.getItem("thesis-latex-content") || ""; } catch { return ""; } })();
+  // Google Docs will be the source of thesis content — no local LaTeX
+  const thesisContent = "";
 
   // Load initial data
   useEffect(() => {
