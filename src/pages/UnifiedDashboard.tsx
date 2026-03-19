@@ -18,6 +18,7 @@ import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import ReactMarkdown from "react-markdown";
 import supervisorsData from "@/data/supervisors.json";
 import companiesData from "@/data/companies.json";
+import expertsData from "@/data/experts.json";
 import fieldsData from "@/data/fields.json";
 import type { Supervisor, Company, Field } from "@/types/data";
 
