@@ -715,7 +715,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               {exp.offerInterviews && (
-                <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Interview</span>
+                <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Intervista</span>
               )}
               <span className="text-[10px] font-bold text-accent">{exp.score}%</span>
             </div>
