@@ -549,7 +549,7 @@ export default function UnifiedDashboard() {
       if (data.content && data.content.length > 100) {
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+          headers: AUTH_HEADERS,
           body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
         }).catch(console.error);
       }

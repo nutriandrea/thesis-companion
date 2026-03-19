@@ -76,7 +76,7 @@ export default function DashboardPage() {
       const latexContent = localStorage.getItem("thesis-latex-content") || "";
       const resp = await fetch(SOCRATE_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: AUTH_HEADERS,
         body: JSON.stringify({ messages: msgs.data || [], studentContext: studentCtx, latexContent, mode: "extract_vulnerabilities" }),
       });
       if (resp.ok) {
