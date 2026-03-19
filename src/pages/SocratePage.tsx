@@ -25,14 +25,7 @@ interface ChatMsg {
   content: string;
 }
 
-function SocrateIcon({ size = "sm" }: { size?: "sm" | "lg" }) {
-  const dim = size === "lg" ? "w-16 h-16" : "w-8 h-8";
-  return (
-    <div className={`${dim} rounded-full bg-foreground flex items-center justify-center shrink-0`}>
-      <span className={`font-display font-bold text-background ${size === "lg" ? "text-2xl" : "text-xs"}`}>S</span>
-    </div>
-  );
-}
+// SocrateIcon is now the shared SocrateCoin component
 
 function useLatexContent() {
   const [latex, setLatex] = useState("");
