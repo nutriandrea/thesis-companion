@@ -137,7 +137,7 @@ export default function ContactsPage() {
             { v: "all", l: `Tutti (${allContacts.length})` },
             { v: "supervisor", l: "Professori" },
             { v: "expert", l: "Esperti" },
-            { v: "socrate", l: `🧠 Socrate (${professorSuggestions.length})` },
+            { v: "socrate", l: `Socrate (${professorSuggestions.length})` },
           ] as const).map(opt => (
             <button key={opt.v} onClick={() => setFilter(opt.v)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filter === opt.v ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
