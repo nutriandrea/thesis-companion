@@ -1764,7 +1764,10 @@ function DemoDashboard() {
         )}
 
         <motion.button
-          onClick={() => setShowChat(!showChat)}
+          onClick={() => {
+            setChatMode("voice");
+            setShowChat(true);
+          }}
           className="flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
