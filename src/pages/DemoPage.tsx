@@ -826,6 +826,10 @@ function DemoDashboard() {
     cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
+  if (showTopicSupervisor || showPlanning || showExecution || showWriting) {
+    cards.push({ key: "invite-supervisor", delay, component: <DemoCard title="Invita il relatore" icon={UserPlus}><DemoInviteSupervisor confirmed={showPlanning || showExecution || showWriting} /></DemoCard> });
+    delay += 0.05;
+  }
   cards.push({ key: "tasks", delay, component: <DemoCard title="Task" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
   delay += 0.05;
   cards.push({ key: "rubrica", delay, component: <DemoCard title="Contatti" icon={Users}><DemoExperts /></DemoCard> });
