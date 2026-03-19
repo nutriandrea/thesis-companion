@@ -1104,7 +1104,6 @@ function DemoExperts() {
   if (loading) return <DemoLoadingSkeleton lines={3} />;
 
   return (
-  return (
     <div className="space-y-1.5">
       {exps.map(exp => (
         <div key={exp.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
