@@ -776,7 +776,9 @@ export default function UnifiedDashboard() {
   }, [user, toast]);
 
   // Progress
-  const currentPhase = studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state || "exploration";
+  const currentPhase = normalizePhase(
+    studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state
+  );
   const phaseConfidence = studentProfile?.phase_confidence || 0;
   const currentPhaseIndex = PHASES.findIndex(p => p.key === currentPhase);
   const selectedSupervisorId = studentProfile?.selected_supervisor_id || null;
