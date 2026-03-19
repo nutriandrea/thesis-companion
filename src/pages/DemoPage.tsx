@@ -1004,7 +1004,7 @@ function DemoDashboard() {
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Parla con Socrate
+          Talk to Socrates
         </motion.button>
       </div>
 
