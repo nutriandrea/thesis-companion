@@ -111,9 +111,9 @@ const MOCK_REFERENCES: MockReference[] = [
 ];
 
 const MOCK_VULNERABILITIES: MockVulnerability[] = [
-  { id: "v1", type: "methodology_flaw", title: "Dataset troppo piccolo per generalizzare", description: "Con solo 5000 campioni di training, il modello rischia overfitting.", severity: "critical" },
-  { id: "v2", type: "logic_gap", title: "Manca baseline non-ML", description: "Non si confronta con approcci SAST standard.", severity: "high" },
-  { id: "v3", type: "superficiality", title: "Related work troppo generica", description: "I lavori correlati elencano paper senza analisi critica.", severity: "medium" },
+  { id: "v1", type: "methodology_flaw", title: "Dataset too small to generalize", description: "With only 5000 training samples, the model risks overfitting.", severity: "critical" },
+  { id: "v2", type: "logic_gap", title: "Missing non-ML baseline", description: "No comparison with standard SAST approaches.", severity: "high" },
+  { id: "v3", type: "superficiality", title: "Related work too generic", description: "Related works list papers without critical analysis.", severity: "medium" },
 ];
 
 const MOCK_SOCRATE_MESSAGES = [
