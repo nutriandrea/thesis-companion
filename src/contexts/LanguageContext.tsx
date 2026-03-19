@@ -171,6 +171,7 @@ Preferirei condurre questo scambio con la voce piuttosto che per iscritto; credo
     "dashboard.blockers": "Ci sono blocchi da risolvere.",
     "dashboard.all_completed": "🎉 Tutte le task completate!",
     "dashboard.auto_eval": "Valutazione automatica dell'avanzamento in corso...",
+    "dashboard.invite_supervisor": "Invita relatore",
 
     // Roadmap
     "roadmap.none": "Nessuna roadmap ancora. Socrate può generarne una basata sulla tua tesi.",
