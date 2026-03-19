@@ -265,7 +265,7 @@ export default function VoiceConversation({
           {voiceState === "processing" ? (
             <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
           ) : voiceState === "listening" ? (
-            <Mic className="w-6 h-6 text-foreground" />
+            <VoiceWaveform active />
           ) : voiceState === "speaking" ? (
             <Volume2 className="w-6 h-6 text-foreground/80" />
           ) : (
