@@ -489,7 +489,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
             <Mic className="w-4 h-4" />
           </button>
           <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
-            className="px-4 py-3 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30">
+            className="px-4 py-3 bg-accent text-accent-foreground rounded-full hover:bg-accent/90 transition-colors disabled:opacity-30">
             <Send className="w-4 h-4" />
           </button>
         </div>
