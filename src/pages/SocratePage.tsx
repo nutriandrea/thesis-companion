@@ -419,7 +419,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
           )}
           {messages.length >= 5 && (
             <button onClick={() => runBackgroundExtraction(messages)} disabled={isStreaming || isExtracting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
               <Brain className="w-3.5 h-3.5" /> Analizza
             </button>
           )}
