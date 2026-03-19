@@ -211,9 +211,9 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
         </form>
 
         <p className="text-center text-sm text-white/30 mt-6">
-          {isSignUp ? "Hai già un account?" : "Non hai un account?"}{" "}
+          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button onClick={() => setIsSignUp(!isSignUp)} className="text-white/60 hover:text-white transition-colors underline underline-offset-4">
-            {isSignUp ? "Accedi" : "Registrati"}
+            {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
       </motion.div>
