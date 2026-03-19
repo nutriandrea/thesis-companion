@@ -1651,7 +1651,15 @@ export default function UnifiedDashboard() {
     if (messages.length > 2) {
       setTimeout(() => computeCareer(), 500);
     }
-  }, [messages.length, computeCareer]);
+  }, [messages.length, computeCareer, setInputMode]);
+
+  const switchChatToText = useCallback(() => {
+    setInputMode("text");
+  }, [setInputMode]);
+
+  const switchChatToVoice = useCallback(() => {
+    setInputMode("voice");
+  }, [setInputMode]);
 
   // Evaluate phase
   const evaluatePhase = useCallback(async () => {
@@ -1842,7 +1850,10 @@ export default function UnifiedDashboard() {
         )}
 
         <motion.button
-          onClick={() => setChatOpen(true)}
+          onClick={() => {
+            setInputMode("voice");
+            setChatOpen(true);
+          }}
           className="mt-3 flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
@@ -2075,21 +2086,34 @@ export default function UnifiedDashboard() {
               className="fixed inset-0 bg-foreground/10 z-40"
               onClick={closeChat}
             />
-            <motion.div
-              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-              className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
-            >
-              <VoiceConversation
-                onTranscript={(text) => sendMessage(text)}
-                onClose={closeChat}
-                isStreaming={isStreaming}
-                lastAssistantMessage={lastMessage}
-                severity={studentProfile?.severita ?? 0.5}
+            {inputMode === "voice" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+              >
+                <VoiceConversation
+                  onTranscript={(text) => sendMessage(text)}
+                  onClose={closeChat}
+                  onSwitchToText={switchChatToText}
+                  isStreaming={isStreaming}
+                  lastAssistantMessage={lastMessage}
+                  severity={studentProfile?.severita ?? 0.5}
+                  messages={messages}
+                  onGenerateReport={generateReport}
+                  isGeneratingReport={isGeneratingReport}
+                />
+              </motion.div>
+            ) : (
+              <ChatOverlay
                 messages={messages}
-                onGenerateReport={generateReport}
-                isGeneratingReport={isGeneratingReport}
+                input={input}
+                setInput={setInput}
+                sendMessage={sendMessage}
+                isStreaming={isStreaming}
+                onClose={closeChat}
+                onSwitchToVoice={switchChatToVoice}
               />
-            </motion.div>
+            )}
           </>
         )}
       </AnimatePresence>

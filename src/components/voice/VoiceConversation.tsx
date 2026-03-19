@@ -17,6 +17,7 @@ interface ChatMsg {
 interface VoiceConversationProps {
   onTranscript: (text: string) => void;
   onClose: () => void;
+  onSwitchToText?: () => void;
   isStreaming: boolean;
   lastAssistantMessage: string;
   severity: number;
@@ -68,6 +69,7 @@ function ListeningPulse({ active }: { active: boolean }) {
 export default function VoiceConversation({
   onTranscript,
   onClose,
+  onSwitchToText,
   isStreaming,
   lastAssistantMessage,
   severity,
@@ -225,6 +227,14 @@ export default function VoiceConversation({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const cleanupVoiceSession = useCallback(() => {
+    unmountedRef.current = true;
+    abortRef.current?.abort();
+    try { scribe.disconnect(); } catch (e) {}
+    stopAudio();
+    setVoiceState("idle");
+  }, [scribe, stopAudio]);
+
   const toggleMute = useCallback(() => {
     if (muted) { setMuted(false); if (!isSpeakingRef.current) setTimeout(() => startListening(), 100); }
     else { setMuted(true); scribe.disconnect(); setLiveTranscript(""); if (voiceState === "listening") setVoiceState("idle"); }
@@ -273,12 +283,8 @@ export default function VoiceConversation({
           </button>
           <button
             onClick={() => {
-              unmountedRef.current = true;
-              abortRef.current?.abort();
-              try { scribe.disconnect(); } catch(e) {}
-              stopAudio();
-              setVoiceState("idle");
-              onClose();
+              cleanupVoiceSession();
+              (onSwitchToText ?? onClose)();
             }}
             className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             title="Passa alla chat testuale">
@@ -291,14 +297,13 @@ export default function VoiceConversation({
               {isGeneratingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             </button>
           )}
-          <button onClick={() => {
-            unmountedRef.current = true;
-            abortRef.current?.abort();
-            try { scribe.disconnect(); } catch(e) {}
-            stopAudio();
-            setVoiceState("idle");
-            onClose();
-          }} className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+          <button
+            onClick={() => {
+              cleanupVoiceSession();
+              onClose();
+            }}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
