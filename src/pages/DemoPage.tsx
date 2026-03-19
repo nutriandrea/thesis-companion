@@ -158,9 +158,7 @@ function DemoCard({ title, icon: Icon, children, badge, action, className = "" }
   return (
     <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
-          <span className="text-[6px] font-bold text-background">S</span>
-        </div>
+        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
         {badge != null && badge > 0 && (
           <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
