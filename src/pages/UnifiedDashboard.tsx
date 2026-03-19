@@ -12,6 +12,7 @@ import VoiceConversation from "@/components/voice/VoiceConversation";
 import SocrateCoin from "@/components/shared/SocrateCoin";
 import SocrateTutor from "@/components/shared/SocrateTutor";
 import { supabase } from "@/integrations/supabase/client";
+import LanguageSwitch from "@/components/shared/LanguageSwitch";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks } from "@/hooks/useSocrateTasks";
@@ -1999,6 +2000,7 @@ export default function UnifiedDashboard() {
               Invita relatore
             </button>
           )}
+          <LanguageSwitch />
           <button onClick={signOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
             <LogOut className="w-3.5 h-3.5" />
           </button>
