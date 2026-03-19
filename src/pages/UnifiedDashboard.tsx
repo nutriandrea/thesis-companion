@@ -1378,7 +1378,7 @@ function ChatOverlay({
           </button>
         )}
         <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
-          className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30">
+          className="p-2.5 bg-accent text-accent-foreground rounded-full hover:bg-accent/90 transition-colors disabled:opacity-30">
           <Send className="w-4 h-4" />
         </button>
       </div>
