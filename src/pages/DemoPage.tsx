@@ -285,9 +285,9 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
   const [subtitle, setSubtitle] = useState("");
 
   const subtitles = [
-    { text: "\"La vera saggezza sta nel sapere di non sapere nulla.\"", delay: 0 },
-    { text: "\"Una tesi non esaminata non vale la pena di essere scritta.\"", delay: 2800 },
-    { text: "Sono Socrate.", delay: 5600 },
+    { text: "\"True wisdom lies in knowing you know nothing.\"", delay: 0 },
+    { text: "\"An unexamined thesis is not worth writing.\"", delay: 2800 },
+    { text: "I am Socrates.", delay: 5600 },
   ];
 
   useEffect(() => {
