@@ -442,133 +442,36 @@ export default function UnifiedDashboard() {
   const [phaseEvalLoading, setPhaseEvalLoading] = useState(false);
   const [supervisorResponse, setSupervisorResponse] = useState<string | null>(null);
 
-  // Google Docs state
-  const [googleDocUrl, setGoogleDocUrl] = useState("");
-  const [googleDocInput, setGoogleDocInput] = useState("");
+  // Google Docs state - auto-sync from profile
   const [thesisContent, setThesisContent] = useState("");
-  const [docLoading, setDocLoading] = useState(false);
-  const [docSynced, setDocSynced] = useState(false);
 
-  const studentContext = profile
-    ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
-    : "";
-
-  // Load data
-  useEffect(() => {
-    if (!user) return;
-    Promise.all([
-      supabase.from("socrate_messages").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
-      supabase.from("memory_entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
-      supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single(),
-      supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(8),
-    ]).then(([msgsRes, memRes, spRes, vulnRes]) => {
-      if (msgsRes.data?.length) {
-        setMessages(msgsRes.data.map(m => ({ id: m.id, role: m.role as "user" | "assistant", content: m.content })));
-        exchangeCountRef.current = Math.floor(msgsRes.data.length / 2);
-      } else {
-        const welcome: ChatMsg = {
-          id: "welcome", role: "assistant",
-          content: profile?.thesis_topic
-            ? `**${profile.first_name}.** Hai scelto la tua tesi: *"${profile.thesis_topic}"*.\n\nBene. Adesso viene il bello.\n\nSpiegami in modo preciso: **qual è il problema che vuoi risolvere?** Non il tema — il *problema*. Se non riesci a dirlo in una frase, significa che non l'hai ancora capito.`
-            : `**${profile?.first_name || "Studente"}.** Benvenuto. Sono Socrate.\n\nDimmi: a che punto sei con la tesi?`,
-        };
-        setMessages([welcome]);
-        supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: welcome.content });
-      }
-      if (memRes.data) memoryRef.current = memRes.data;
-      if ((spRes as any).data) {
-        const sp = (spRes as any).data;
-        setStudentProfile(sp);
-        // Load career distribution
-        if (sp.career_distribution && Object.keys(sp.career_distribution).length > 0) {
-          const sectors = Object.entries(sp.career_distribution).map(([name, percentage]) => ({
-            name, percentage: percentage as number,
-          }));
-          setCareerSectors(sectors);
-        }
-      }
-      if ((vulnRes as any).data) setVulnerabilities((vulnRes as any).data);
-    });
-  }, [user]);
-
-  // Realtime student_profiles subscription
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase
-      .channel("student-profile-changes")
-      .on("postgres_changes", {
-        event: "*", schema: "public", table: "student_profiles",
-        filter: `user_id=eq.${user.id}`,
-      }, (payload) => {
-        const newData = payload.new as any;
-        if (newData) {
-          setStudentProfile(newData);
-          if (newData.career_distribution && Object.keys(newData.career_distribution).length > 0) {
-            setCareerSectors(Object.entries(newData.career_distribution).map(([name, percentage]) => ({
-              name, percentage: percentage as number,
-            })));
-          }
-        }
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user]);
-
-  // Load saved Google Doc URL
-  useEffect(() => {
-    if (profile && (profile as any).google_doc_url) {
-      const url = (profile as any).google_doc_url;
-      setGoogleDocUrl(url);
-      setGoogleDocInput(url);
-    }
-  }, [profile]);
-
-  // Fetch Google Doc content
-  const fetchGoogleDoc = useCallback(async (url?: string) => {
-    const docUrl = url || googleDocUrl;
+  // Auto-fetch Google Doc content silently on load
+  const fetchGoogleDoc = useCallback(async () => {
+    const docUrl = profile?.google_doc_url;
     if (!docUrl || !user) return;
-    setDocLoading(true);
-    setDocSynced(false);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
         method: "POST",
         headers: AUTH_HEADERS,
         body: JSON.stringify({ google_doc_url: docUrl }),
       });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        toast({ variant: "destructive", title: "Errore Google Doc", description: err.error || "Impossibile leggere il documento." });
-        return;
+      if (resp.ok) {
+        const data = await resp.json();
+        setThesisContent(data.content || "");
+        if (data.content && data.content.length > 100) {
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
+            method: "POST",
+            headers: AUTH_HEADERS,
+            body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
+          }).catch(console.error);
+        }
       }
-      const data = await resp.json();
-      setThesisContent(data.content || "");
-      setDocSynced(true);
-      toast({ title: "📄 Documento sincronizzato", description: `${Math.round((data.length || 0) / 1000)}k caratteri letti.` });
-
-      if (data.content && data.content.length > 100) {
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
-          method: "POST",
-          headers: AUTH_HEADERS,
-          body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
-        }).catch(console.error);
-      }
-    } catch {
-      toast({ variant: "destructive", title: "Errore", description: "Impossibile connettersi al documento." });
-    } finally { setDocLoading(false); }
-  }, [googleDocUrl, user, toast]);
+    } catch { /* silent */ }
+  }, [profile?.google_doc_url, user]);
 
   useEffect(() => {
-    if (googleDocUrl && user && !thesisContent) fetchGoogleDoc(googleDocUrl);
-  }, [googleDocUrl, user]);
-
-  const saveGoogleDocUrl = useCallback(async () => {
-    if (!googleDocInput.trim() || !user) return;
-    setGoogleDocUrl(googleDocInput.trim());
-    await updateProfile({ google_doc_url: googleDocInput.trim() } as any);
-    fetchGoogleDoc(googleDocInput.trim());
-    toast({ title: "✅ Link salvato" });
-  }, [googleDocInput, user, updateProfile, fetchGoogleDoc, toast]);
+    if (profile?.google_doc_url && user && !thesisContent) fetchGoogleDoc();
+  }, [profile?.google_doc_url, user]);
 
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
