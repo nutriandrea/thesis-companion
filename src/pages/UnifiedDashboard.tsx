@@ -1719,7 +1719,7 @@ export default function UnifiedDashboard() {
           </div>
         )}
 
-        {/* ═══ PLANNING: track confermato + roadmap dinamica + tasks + vulnerabilità ═══ */}
+        {/* ═══ PLANNING: roadmap + rubrica + tasks + vulnerabilità ═══ */}
         {currentPhase === "planning" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
             <motion.div className="md:col-span-2 lg:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
@@ -1733,6 +1733,11 @@ export default function UnifiedDashboard() {
               </DashboardCard>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <DashboardCard title="Rubrica" icon={Users}>
+                <ExpertSuggestions userId={user?.id || ""} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
               <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
                 action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
                 <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
