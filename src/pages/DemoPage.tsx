@@ -444,16 +444,46 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
 // ══════════════════════════════════════════════════════
 // STEP 4: DEMO SOCRATE CONVERSATION
 // ══════════════════════════════════════════════════════
+const DEMO_CONVERSATION_HISTORY: ChatMsg[] = [
+  { id: "s1", role: "assistant", content: "You mentioned LLMs for vulnerability detection. That's a crowded space. **What specifically frustrates you** about existing approaches?" },
+  { id: "u1", role: "user", content: "Most tools just do pattern matching on known CVEs. They miss zero-days and context-dependent vulnerabilities entirely." },
+  { id: "s2", role: "assistant", content: "Interesting. So your intuition is that **semantic understanding** of code flow matters more than signature matching. But how would you prove that empirically? What would your ground truth dataset look like?" },
+  { id: "u2", role: "user", content: "I was thinking of using real-world commits that fixed vulnerabilities — the before/after pairs from open source projects." },
+  { id: "s3", role: "assistant", content: "Commit-pair datasets like Big-Vul exist already. Your contribution needs to go beyond that. What if you focused on **the reasoning gap** — why does the LLM detect one vulnerability but miss a structurally similar one? That's where the literature is thin." },
+  { id: "u3", role: "user", content: "That's a great angle. I could build an interpretability layer that explains the model's decision process for each detection." },
+  { id: "s4", role: "assistant", content: "Now we're getting somewhere. An **explainable vulnerability detection pipeline** — combining LLM code analysis with interpretability techniques to expose reasoning failures. That bridges security, NLP, and software engineering.\n\nLet me challenge you: **which interpretability method** would you use? Attention visualization? SHAP? Chain-of-thought prompting?" },
+  { id: "u4", role: "user", content: "Chain-of-thought seems most natural for LLMs — forcing the model to articulate why something is a vulnerability before classifying it." },
+  { id: "s5", role: "assistant", content: "Strong choice. CoT prompting as an **audit mechanism** for detection confidence. Here's your thesis taking shape:\n\n> **\"Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code\"**\n\nThis is focused, novel, and testable. You have a clear research question: *Does CoT prompting improve both detection accuracy and human trust in LLM-based vulnerability analysis?*\n\nI'd say you're ready to move forward. 🎯" },
+];
+
 function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
   const [mode, setMode] = useState<"text" | "voice">("text");
-  const welcomeMsg: ChatMsg = {
-    id: "welcome", role: "assistant",
-    content: "You have a clear direction: LLMs for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?",
-  };
-  const { messages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([welcomeMsg]);
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [autoPlaying, setAutoPlaying] = useState(true);
+  const { messages, setMessages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([]);
+
+  // Auto-reveal messages quickly to simulate a fast conversation recap
+  useEffect(() => {
+    if (!autoPlaying || visibleCount >= DEMO_CONVERSATION_HISTORY.length) {
+      if (visibleCount >= DEMO_CONVERSATION_HISTORY.length) setAutoPlaying(false);
+      return;
+    }
+    const msg = DEMO_CONVERSATION_HISTORY[visibleCount];
+    const delay = visibleCount === 0 ? 600 : msg.role === "assistant" ? 1200 : 700;
+    const timer = setTimeout(() => {
+      setMessages(prev => [...prev, DEMO_CONVERSATION_HISTORY[visibleCount]]);
+      setVisibleCount(prev => prev + 1);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [visibleCount, autoPlaying, setMessages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setAutoPlaying(false);
+    if (visibleCount < DEMO_CONVERSATION_HISTORY.length) {
+      setMessages([...DEMO_CONVERSATION_HISTORY]);
+      setVisibleCount(DEMO_CONVERSATION_HISTORY.length);
+    }
     sendMessage(input);
   };
 
