@@ -127,11 +127,11 @@ const MOCK_MESSAGES = [
 ];
 
 const PHASES = [
-  { key: "orientation", label: "Orientamento", icon: "1" },
-  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "2" },
-  { key: "planning", label: "Pianificazione", icon: "3" },
-  { key: "execution", label: "Esecuzione", icon: "4" },
-  { key: "writing", label: "Scrittura", icon: "5" },
+  { key: "orientation", label: "Orientation", icon: "1" },
+  { key: "topic_supervisor", label: "Topic & Supervisor", icon: "2" },
+  { key: "planning", label: "Planning", icon: "3" },
+  { key: "execution", label: "Execution", icon: "4" },
+  { key: "writing", label: "Writing", icon: "5" },
 ] as const;
 
 const PHASE_COMPLETION: Record<string, number> = {
