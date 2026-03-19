@@ -141,8 +141,6 @@ Deno.serve(async (req) => {
       await supabase.from("embeddings").delete().eq("user_id", userId).eq("source_type", "thesis_chunk");
 
       const chunks = chunkText(content, 2000, 300);
-      const embeddings: any[] = [];
-
       const vectors = await getBatchEmbeddings(chunks, OPENAI_API_KEY);
       const embeddings = chunks.map((chunk, i) => ({
         user_id: userId,
