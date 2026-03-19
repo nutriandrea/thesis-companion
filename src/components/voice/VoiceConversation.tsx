@@ -81,6 +81,8 @@ export default function VoiceConversation({
   const [liveTranscript, setLiveTranscript] = useState("");
   const [muted, setMuted] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [speechProgress, setSpeechProgress] = useState(0); // 0-1
+  const progressTimerRef = useRef<number | null>(null);
   
   const [error, setError] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
