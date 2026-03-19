@@ -1360,7 +1360,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
             </button>
           </div>
           <button onClick={disconnect} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            Disconnect document
+            Disconnetti documento
           </button>
         </div>
       ) : (
