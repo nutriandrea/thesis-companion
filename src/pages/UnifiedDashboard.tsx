@@ -867,6 +867,15 @@ export default function UnifiedDashboard() {
     finally { setCareerLoading(false); }
   }, [user, careerLoading, thesisContent, toast]);
 
+  // Close chat and auto-compute career
+  const closeChat = useCallback(() => {
+    setChatOpen(false);
+    setInputMode("text");
+    if (messages.length > 2) {
+      setTimeout(() => computeCareer(), 500);
+    }
+  }, [messages.length, computeCareer]);
+
   // Evaluate phase
   const evaluatePhase = useCallback(async () => {
     if (!user || phaseEvalLoading) return;
