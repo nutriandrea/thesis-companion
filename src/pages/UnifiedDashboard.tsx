@@ -523,7 +523,7 @@ function ChatOverlay({
 
 // ─── MAIN DASHBOARD ───
 export default function UnifiedDashboard() {
-  const { profile, user, updateProfile, signOut } = useApp();
+  const { profile, user, updateProfile, signOut, inputMode, setInputMode } = useApp();
   const { toast } = useToast();
 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
