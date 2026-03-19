@@ -33,9 +33,9 @@
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 46%;
 
-    /* ── Accent: functional only ── */
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    /* ── Accent: steel-gray for interactive elements ── */
+    --accent: 220 10% 44%;
+    --accent-foreground: 0 0% 100%;
 
     /* ── Destructive/Error ── */
     --destructive: 0 72% 51%;
