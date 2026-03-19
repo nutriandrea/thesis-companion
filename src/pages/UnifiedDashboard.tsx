@@ -546,7 +546,7 @@ function CareerTree({ sectors, userId, loading }: {
                     {isLoading ? (
                       <div className="flex items-center gap-2 py-3 pl-4">
                         <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                        <span className="text-[10px] text-muted-foreground">Searching companies...</span>
+                        <span className="text-[10px] text-muted-foreground">Ricerca aziende...</span>
                       </div>
                     ) : comps.length === 0 ? (
                       <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">No companies found for this sector.</p>
