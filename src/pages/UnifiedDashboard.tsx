@@ -770,31 +770,7 @@ export default function UnifiedDashboard() {
         )}
       </div>
 
-      {/* ─── GOOGLE DOC LINK BAR ─── */}
-      <div className="px-4 lg:px-8 xl:px-16 mb-2">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-2 bg-card/60 border border-border rounded-xl px-4 py-2">
-            <FileText className="w-4 h-4 text-accent shrink-0" />
-            <input
-              value={googleDocInput} onChange={e => setGoogleDocInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && saveGoogleDocUrl()}
-              placeholder="Incolla il link del tuo Google Doc..."
-              className="flex-1 bg-transparent text-xs text-foreground placeholder-muted-foreground focus:outline-none"
-            />
-            {docSynced && <span className="text-[10px] text-success font-medium shrink-0">● Sync</span>}
-            {googleDocUrl && (
-              <button onClick={() => fetchGoogleDoc()} disabled={docLoading}
-                className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-accent disabled:opacity-40">
-                <RefreshCw className={`w-3.5 h-3.5 ${docLoading ? "animate-spin" : ""}`} />
-              </button>
-            )}
-            <button onClick={saveGoogleDocUrl} disabled={!googleDocInput.trim() || docLoading}
-              className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-30">
-              {docLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Link2 className="w-3 h-3" />}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Google Doc auto-syncs from profile settings */}
 
       {/* ─── CARDS GRID ─── */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
