@@ -68,9 +68,18 @@ Deno.serve(async (req) => {
           model: MODEL,
           messages: [{
             role: "system",
-            content: `Sei il TASK ENGINE di Socrate. Genera compiti concreti, personalizzati e azionabili.
+            content: `Sei il TASK ENGINE di Socrate. Genera AZIONI CONCRETE che lo studente deve compiere personalmente.
 
-CONTESTO:
+REGOLE FONDAMENTALI:
+1. Ogni task deve essere un'AZIONE DIRETTA dello studente (verbo all'imperativo o "Scrivi...", "Trova...", "Leggi...")
+2. MAI descrizioni teoriche ("Spiega l'importanza di...") → usa "Scrivi 5 righe su perché X è importante per la tua tesi"
+3. MAI istruzioni generiche ("Fornisci risorse") → usa "Trova e salva 2 articoli su X"
+4. Ogni task deve essere VERIFICABILE: se non si può controllare che è stata fatta, è sbagliata
+5. Se il task può essere completato senza fare nulla → è sbagliato
+6. Titolo: max 10 parole, inizia con un verbo d'azione
+7. Descrizione: spiega COSA fare concretamente, con esempi se utile
+
+CONTESTO STUDENTE:
 - Nome: ${profile?.first_name} ${profile?.last_name}
 - Corso: ${profile?.degree || "N/A"}, Università: ${profile?.university || "N/A"}
 - Topic tesi: ${profile?.thesis_topic || "Non definito"}
@@ -83,8 +92,6 @@ ${studentProfile ? JSON.stringify({
   weaknesses: studentProfile.weaknesses,
   research_maturity: studentProfile.research_maturity,
   thesis_stage: studentProfile.thesis_stage,
-  thesis_quality_score: studentProfile.thesis_quality_score,
-  overall_completion: studentProfile.overall_completion,
 }) : "Non profilato"}
 
 MEMORIA: ${JSON.stringify(memories.slice(0, 10).map((m: any) => ({ type: m.type, title: m.title })))}
@@ -92,7 +99,12 @@ CONVERSAZIONE: ${JSON.stringify(recentMessages.slice(-8).map((m: any) => ({ role
 ${ragContext ? `CONTESTO RAG:\n${ragContext}` : ""}
 TASK ESISTENTI: ${JSON.stringify(existingTasks.map((t: any) => ({ title: t.title, status: t.status })))}
 
-Genera 5-8 compiti NUOVI, concreti, verificabili. Priorità realistiche. Tempo stimato in minuti.`,
+ESEMPI DI TASK CORRETTI:
+- "Scrivi 3 domande di ricerca per il capitolo 2" (non "Definisci le domande di ricerca")
+- "Leggi l'abstract di 3 paper su X e annota le metodologie" (non "Analizza la letteratura")
+- "Contatta il Prof. Y via email con una proposta di 5 righe" (non "Trova un supervisore")
+
+Genera 5-8 compiti NUOVI. Priorità realistiche. Tempo stimato in minuti.`,
           }],
           tools: [{
             type: "function",
@@ -169,7 +181,9 @@ Genera 5-8 compiti NUOVI, concreti, verificabili. Priorità realistiche. Tempo s
           model: MODEL,
           messages: [{
             role: "system",
-            content: `Analizza la conversazione recente e genera 2-3 task concreti e immediati.
+            content: `Analizza la conversazione recente e genera 2-3 AZIONI CONCRETE per lo studente.
+Ogni task deve iniziare con un verbo d'azione (Scrivi, Trova, Leggi, Contatta, Prepara...).
+MAI task descrittivi o teorici. Solo azioni verificabili.
 Topic tesi: ${profile?.thesis_topic || "Non definito"}
 Task già attivi: ${JSON.stringify(existingTasks.map((t: any) => t.title))}
 ${thesis_content ? `Contenuto tesi (estratto): ${thesis_content.substring(0, 2000)}` : ""}

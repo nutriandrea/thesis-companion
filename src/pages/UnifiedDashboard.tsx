@@ -108,29 +108,117 @@ function DashboardCard({
 
 // ─── TASK PANEL ───
 function TaskContent({ userId }: { userId: string }) {
-  const { tasks, updateTaskStatus } = useSocrateTasks(userId);
-  const activeTasks = tasks.filter(t => t.status !== "completed").slice(0, 5);
+  const { tasks, updateTaskStatus, validateTask } = useSocrateTasks(userId);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [validatingId, setValidatingId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const activeTasks = tasks.filter(t => t.status !== "completed").slice(0, 8);
   const completedCount = tasks.filter(t => t.status === "completed").length;
   const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   const sorted = [...activeTasks].sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
 
+  const handleMarkDone = async (taskId: string) => {
+    setValidatingId(taskId);
+    try {
+      const result = await validateTask(taskId);
+      if (result.approved) {
+        await updateTaskStatus(taskId, "completed");
+        toast({ title: "Task completato", description: result.feedback || "Ben fatto." });
+      } else {
+        toast({ variant: "destructive", title: "Non ancora", description: result.feedback || "Socrate non è convinto. Riprova." });
+      }
+    } catch {
+      // Fallback: complete anyway if validation fails
+      await updateTaskStatus(taskId, "completed");
+      toast({ title: "Task completato" });
+    } finally {
+      setValidatingId(null);
+    }
+  };
+
+  const priorityLabel = (p: string) => {
+    switch (p) {
+      case "critical": return { text: "Critico", cls: "bg-destructive/10 text-destructive" };
+      case "high": return { text: "Alta", cls: "bg-warning/10 text-warning" };
+      case "medium": return { text: "Media", cls: "bg-accent/10 text-accent" };
+      default: return { text: "Bassa", cls: "bg-muted text-muted-foreground" };
+    }
+  };
+
   if (sorted.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessun task. Parla con Socrate.</p>;
 
   return (
-    <div className="space-y-2">
-      {sorted.map(task => (
-        <button key={task.id} onClick={() => updateTaskStatus(task.id, "completed")}
-          className="w-full flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/50 transition-colors text-left group">
-          <Circle className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
-            task.priority === "critical" ? "text-destructive" : task.priority === "high" ? "text-warning" : "text-muted-foreground"
-          } group-hover:text-success transition-colors`} />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-foreground leading-tight">{task.title}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>
+    <div className="space-y-1.5">
+      {sorted.map(task => {
+        const isExpanded = expandedId === task.id;
+        const isValidating = validatingId === task.id;
+        const priority = priorityLabel(task.priority);
+
+        return (
+          <div key={task.id} className="border border-border hover:border-foreground/10 transition-colors duration-200">
+            {/* Collapsed row */}
+            <button
+              onClick={() => setExpandedId(isExpanded ? null : task.id)}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
+            >
+              <Circle className={`w-3 h-3 shrink-0 ${
+                task.priority === "critical" ? "text-destructive" : task.priority === "high" ? "text-warning" : "text-muted-foreground/40"
+              }`} />
+              <p className="text-xs font-medium text-foreground flex-1 leading-snug">{task.title}</p>
+              <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 ${priority.cls}`}>
+                {priority.text}
+              </span>
+              {task.estimated_minutes > 0 && (
+                <span className="text-[9px] text-muted-foreground shrink-0">{task.estimated_minutes}m</span>
+              )}
+            </button>
+
+            {/* Expanded content */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {task.description}
+                    </p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleMarkDone(task.id); }}
+                      disabled={isValidating}
+                      className="w-full flex items-center justify-center gap-2 py-2 bg-foreground text-background text-[10px] font-medium uppercase tracking-[0.12em] hover:bg-foreground/90 transition-colors disabled:opacity-40"
+                    >
+                      {isValidating ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Socrate sta verificando…
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3 h-3" />
+                          Segna come fatto
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </button>
-      ))}
-      {completedCount > 0 && <p className="text-[10px] text-success text-center pt-1">{completedCount} completati</p>}
+        );
+      })}
+      {completedCount > 0 && (
+        <div className="flex items-center gap-2 pt-2">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-[10px] text-muted-foreground">{completedCount} completati</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+      )}
     </div>
   );
 }

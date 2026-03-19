@@ -481,6 +481,78 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       });
     }
 
+    // ─── VALIDATE TASK COMPLETION ───
+    if (currentMode === "validate_task") {
+      const { task } = reqBody;
+      if (!task) {
+        return new Response(JSON.stringify({ approved: true, feedback: "" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Get recent conversation context for validation
+      let recentContext = "";
+      if (userId) {
+        const { data: msgs } = await supabase
+          .from("socrate_messages")
+          .select("role, content")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        if (msgs) recentContext = msgs.reverse().map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`).join("\n");
+      }
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{
+            role: "system",
+            content: `Sei Socrate. Uno studente dice di aver completato un task. Valuta se è plausibile basandoti sul contesto della conversazione.
+
+TASK:
+- Titolo: ${task.title}
+- Descrizione: ${task.description}
+- Sezione: ${task.section}
+
+CONVERSAZIONE RECENTE:
+${recentContext || "Nessun contesto disponibile."}
+
+Rispondi SOLO con JSON: {"approved": true/false, "feedback": "breve commento"}
+- approved=true se il task è ragionevolmente completabile e il contesto suggerisce che lo studente ci sta lavorando
+- approved=false SOLO se è chiaramente impossibile che sia stato fatto (es: non ne ha mai parlato e il task richiede output concreto)
+- Sii ragionevole: nel dubbio, approva. Non bloccare lo studente senza motivo.
+- Il feedback deve essere breve, diretto, in italiano.`,
+          }],
+          temperature: 0.3,
+        }),
+      });
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ approved: true, feedback: "" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "";
+
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return new Response(JSON.stringify({ approved: !!parsed.approved, feedback: parsed.feedback || "" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch {}
+
+      return new Response(JSON.stringify({ approved: true, feedback: "" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ─── GENERATE TASKS: Socrate's personalized tasks ───
     if (currentMode === "generate_tasks") {
       if (!userId) {
