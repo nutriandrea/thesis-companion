@@ -118,11 +118,11 @@ const normalizePhase = (phase?: string | null): PhaseKey => normalizeSinglePhase
 
 // ─── CARD COMPONENT with overflow detection & expand dialog ───
 function DashboardCard({
-  title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200,
+  title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200, closeRef,
 }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
   badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
-  maxContentHeight?: number;
+  maxContentHeight?: number; closeRef?: React.MutableRefObject<(() => void) | null>;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
