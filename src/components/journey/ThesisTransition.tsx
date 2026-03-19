@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import socrateImg from "@/assets/socrate.png";
+import socrateCoinImg from "@/assets/socrate-coin.png";
 
 interface Props {
   thesisTopic: string;
