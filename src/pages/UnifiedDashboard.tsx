@@ -2270,7 +2270,7 @@ export default function UnifiedDashboard() {
                     {isBeforeActive ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
                   </div>
                   <span className={`text-[8px] font-medium whitespace-nowrap ${isCurrent ? "text-foreground" : isBeforeActive ? "text-foreground" : "text-muted-foreground"}`}>
-                    {p.label}
+                    {t(`phase.${p.key}`) || p.label}
                   </span>
                   {isPrimary && phaseConfidence > 0 && (
                     <div className="flex items-center gap-1">
