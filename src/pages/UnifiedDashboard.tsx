@@ -575,6 +575,42 @@ export default function UnifiedDashboard() {
 
   const studentContext = profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "";
 
+  const fetchStudentProfile = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("student_profiles" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (data) setStudentProfile(data);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    fetchStudentProfile();
+
+    const channel = supabase
+      .channel(`student-profile-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "student_profiles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchStudentProfile();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchStudentProfile]);
+
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
     const reader = resp.body!.getReader();
