@@ -1,10 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Square, Volume2, VolumeX, Keyboard, Loader2 } from "lucide-react";
+import { MicOff, Mic, Volume2, VolumeX, Send, Loader2 } from "lucide-react";
 import { useScribe } from "@elevenlabs/react";
 import VoiceWaveform from "./VoiceWaveform";
 import { supabase } from "@/integrations/supabase/client";
-import { AUTH_HEADERS } from "@/lib/auth-headers";
 
 type VoiceState = "idle" | "listening" | "processing" | "speaking";
 
@@ -27,12 +26,19 @@ export default function VoiceConversation({
 }: VoiceConversationProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [liveTranscript, setLiveTranscript] = useState("");
+  const [muted, setMuted] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [textInput, setTextInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const prevMessageRef = useRef<string>("");
   const isSpeakingRef = useRef(false);
+  const hasAutoStarted = useRef(false);
+  const mutedRef = useRef(false);
+
+  // Keep mutedRef in sync
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
 
   // Scribe (STT)
   const scribe = useScribe({
@@ -52,17 +58,14 @@ export default function VoiceConversation({
 
   // Start listening
   const startListening = useCallback(async () => {
+    if (mutedRef.current || isSpeakingRef.current) return;
     setError(null);
     try {
-      // Stop any playing audio
-      stopAudio();
-
       const { data, error: fnError } = await supabase.functions.invoke("elevenlabs-scribe-token");
       if (fnError || !data?.token) {
         setError("Impossibile avviare la trascrizione");
         return;
       }
-
       await scribe.connect({
         token: data.token,
         microphone: {
@@ -71,7 +74,6 @@ export default function VoiceConversation({
           autoGainControl: true,
         },
       });
-
       setVoiceState("listening");
     } catch (e) {
       console.error("Start listening error:", e);
@@ -79,15 +81,13 @@ export default function VoiceConversation({
     }
   }, [scribe]);
 
-  // Stop listening
-  const stopListening = useCallback(() => {
-    scribe.disconnect();
-    if (liveTranscript.trim()) {
-      onTranscript(liveTranscript.trim());
-      setLiveTranscript("");
+  // Auto-start on mount
+  useEffect(() => {
+    if (!hasAutoStarted.current) {
+      hasAutoStarted.current = true;
+      startListening();
     }
-    setVoiceState("idle");
-  }, [scribe, liveTranscript, onTranscript]);
+  }, [startListening]);
 
   // Stop audio
   const stopAudio = useCallback(() => {
@@ -101,16 +101,12 @@ export default function VoiceConversation({
       audioUrlRef.current = null;
     }
     isSpeakingRef.current = false;
-    if (voiceState === "speaking") {
-      setVoiceState("idle");
-    }
-  }, [voiceState]);
+  }, []);
 
   // Speak text via TTS
   const speakText = useCallback(async (text: string) => {
     if (!audioEnabled || !text.trim()) return;
 
-    // Clean markdown for speech
     const cleanText = text
       .replace(/\*\*(.*?)\*\*/g, "$1")
       .replace(/\*(.*?)\*/g, "$1")
@@ -124,6 +120,8 @@ export default function VoiceConversation({
 
     if (!cleanText) return;
 
+    // Disconnect mic before speaking
+    scribe.disconnect();
     stopAudio();
     setVoiceState("speaking");
     isSpeakingRef.current = true;
@@ -140,9 +138,11 @@ export default function VoiceConversation({
       });
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        console.error("TTS error:", errData);
+        console.error("TTS error:", response.status);
+        isSpeakingRef.current = false;
         setVoiceState("idle");
+        // Resume listening even on TTS error
+        setTimeout(() => startListening(), 300);
         return;
       }
 
@@ -159,13 +159,14 @@ export default function VoiceConversation({
         audioUrlRef.current = null;
         audioRef.current = null;
         setVoiceState("idle");
-        // Auto-resume listening after Socrate finishes speaking
+        // Auto-resume listening after Socrate finishes
         setTimeout(() => startListening(), 300);
       };
 
       audio.onerror = () => {
         isSpeakingRef.current = false;
         setVoiceState("idle");
+        setTimeout(() => startListening(), 300);
       };
 
       await audio.play();
@@ -173,8 +174,9 @@ export default function VoiceConversation({
       console.error("TTS playback error:", e);
       isSpeakingRef.current = false;
       setVoiceState("idle");
+      setTimeout(() => startListening(), 300);
     }
-  }, [audioEnabled, severity, stopAudio, startListening]);
+  }, [audioEnabled, severity, stopAudio, startListening, scribe]);
 
   // Watch for new assistant messages to auto-speak
   useEffect(() => {
@@ -204,14 +206,46 @@ export default function VoiceConversation({
     };
   }, []);
 
-  // Interrupt Socrate
+  // Mute/unmute
+  const toggleMute = useCallback(() => {
+    if (muted) {
+      // Unmute → start listening
+      setMuted(false);
+      if (!isSpeakingRef.current) {
+        setTimeout(() => startListening(), 100);
+      }
+    } else {
+      // Mute → stop listening
+      setMuted(true);
+      scribe.disconnect();
+      setLiveTranscript("");
+      if (voiceState === "listening") {
+        setVoiceState("idle");
+      }
+    }
+  }, [muted, scribe, voiceState, startListening]);
+
+  // Interrupt Socrate by tapping the orb
   const interruptSocrate = useCallback(() => {
     stopAudio();
-    startListening();
+    setVoiceState("idle");
+    if (!mutedRef.current) {
+      setTimeout(() => startListening(), 100);
+    }
   }, [stopAudio, startListening]);
 
+  // Send text message
+  const handleTextSend = () => {
+    if (!textInput.trim()) return;
+    stopAudio();
+    scribe.disconnect();
+    onTranscript(textInput.trim());
+    setTextInput("");
+    setVoiceState("processing");
+  };
+
   const stateLabel = {
-    idle: "Pronto",
+    idle: muted ? "In muto" : "Pronto",
     listening: "In ascolto",
     processing: "Elaborazione",
     speaking: "Socrate parla",
@@ -219,9 +253,9 @@ export default function VoiceConversation({
 
   return (
     <div className="flex flex-col items-center justify-center h-full relative select-none">
-      {/* State indicator - minimal */}
+      {/* State indicator */}
       <motion.p
-        key={voiceState}
+        key={`${voiceState}-${muted}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="ds-caption mb-8 uppercase tracking-widest text-[10px]"
@@ -229,16 +263,13 @@ export default function VoiceConversation({
         {stateLabel}
       </motion.p>
 
-      {/* Central orb - subtle pulse based on state */}
+      {/* Central orb */}
       <motion.div
         className="relative cursor-pointer"
         onClick={() => {
-          if (voiceState === "idle") startListening();
-          else if (voiceState === "listening") stopListening();
-          else if (voiceState === "speaking") interruptSocrate();
+          if (voiceState === "speaking") interruptSocrate();
         }}
       >
-        {/* Outer ring - state indicator */}
         <motion.div
           className={`w-24 h-24 rounded-full border-2 flex items-center justify-center transition-colors duration-300 ${
             voiceState === "listening"
@@ -247,6 +278,8 @@ export default function VoiceConversation({
               ? "border-muted-foreground/50"
               : voiceState === "speaking"
               ? "border-foreground/60"
+              : muted
+              ? "border-destructive/40"
               : "border-border"
           }`}
           animate={
@@ -268,6 +301,8 @@ export default function VoiceConversation({
             <VoiceWaveform active />
           ) : voiceState === "speaking" ? (
             <Volume2 className="w-6 h-6 text-foreground/80" />
+          ) : muted ? (
+            <MicOff className="w-6 h-6 text-destructive/60" />
           ) : (
             <Mic className="w-6 h-6 text-muted-foreground" />
           )}
@@ -292,6 +327,17 @@ export default function VoiceConversation({
         )}
       </AnimatePresence>
 
+      {/* Speaking hint */}
+      {voiceState === "speaking" && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.5 }}
+          className="mt-6 text-[10px] text-muted-foreground"
+        >
+          Tocca per interrompere
+        </motion.p>
+      )}
+
       {/* Error */}
       <AnimatePresence>
         {error && (
@@ -306,66 +352,52 @@ export default function VoiceConversation({
         )}
       </AnimatePresence>
 
-      {/* Bottom controls */}
-      <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-4">
-        {/* Toggle audio */}
-        <button
-          onClick={() => {
-            setAudioEnabled(!audioEnabled);
-            if (audioEnabled) stopAudio();
-          }}
-          className="p-2.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
-          title={audioEnabled ? "Disattiva audio" : "Attiva audio"}
-        >
-          {audioEnabled ? (
-            <Volume2 className="w-4 h-4" />
-          ) : (
-            <VolumeX className="w-4 h-4" />
-          )}
-        </button>
-
-        {/* Stop button (when active) */}
-        {(voiceState === "listening" || voiceState === "speaking") && (
-          <motion.button
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            onClick={() => {
-              stopAudio();
-              stopListening();
-              setVoiceState("idle");
-            }}
-            className="p-2.5 rounded-md bg-foreground text-background hover:bg-foreground/90 transition-colors duration-150"
-            title="Ferma"
+      {/* Bottom area: mute + text input */}
+      <div className="absolute bottom-4 left-0 right-0 px-4 space-y-3">
+        {/* Mute + audio toggle */}
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={toggleMute}
+            className={`p-2.5 rounded-full transition-colors duration-150 ${
+              muted
+                ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            }`}
+            title={muted ? "Riattiva microfono" : "Metti in muto"}
           >
-            <Square className="w-4 h-4" />
-          </motion.button>
-        )}
+            {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
 
-        {/* Switch to text */}
-        <button
-          onClick={() => {
-            stopAudio();
-            if (scribe.isConnected) scribe.disconnect();
-            onSwitchToText();
-          }}
-          className="p-2.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
-          title="Passa alla tastiera"
-        >
-          <Keyboard className="w-4 h-4" />
-        </button>
+          <button
+            onClick={() => {
+              setAudioEnabled(!audioEnabled);
+              if (audioEnabled) stopAudio();
+            }}
+            className="p-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
+            title={audioEnabled ? "Disattiva voce Socrate" : "Attiva voce Socrate"}
+          >
+            {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {/* Text input fallback */}
+        <div className="flex items-center gap-2 max-w-md mx-auto">
+          <input
+            value={textInput}
+            onChange={(e) => setTextInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
+            placeholder="Scrivi..."
+            className="flex-1 bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+          />
+          <button
+            onClick={handleTextSend}
+            disabled={!textInput.trim()}
+            className="p-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
       </div>
-
-      {/* Tap instruction */}
-      {voiceState === "idle" && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          transition={{ delay: 1 }}
-          className="absolute bottom-20 text-[10px] text-muted-foreground"
-        >
-          Tocca per parlare
-        </motion.p>
-      )}
     </div>
   );
 }
