@@ -100,7 +100,7 @@ export default function ContactsPage() {
         </div>
         <Button onClick={filterDatabase} disabled={filterLoading} variant="outline" size="sm" className="gap-1.5">
           {filterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-ai" />}
-          {filterLoading ? "Filtrando..." : "Filtra con Socrate"}
+          {filterLoading ? "Filtering..." : "Filter with Socrate"}
         </Button>
       </div>
 
@@ -135,8 +135,8 @@ export default function ContactsPage() {
           <Filter className="w-3.5 h-3.5 text-muted-foreground" />
           {([
             { v: "all", l: `Tutti (${allContacts.length})` },
-            { v: "supervisor", l: "Professori" },
-            { v: "expert", l: "Esperti" },
+            { v: "supervisor", l: "Professors" },
+            { v: "expert", l: "Experts" },
             { v: "socrate", l: `Socrate (${professorSuggestions.length})` },
           ] as const).map(opt => (
             <button key={opt.v} onClick={() => setFilter(opt.v)}

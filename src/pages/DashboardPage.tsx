@@ -100,8 +100,8 @@ export default function DashboardPage() {
   const thesisStage = sessionData?.progress?.thesisStage;
 
   const stageLabels: Record<string, string> = {
-    exploration: "Esplorazione", topic_chosen: "Topic scelto", structuring: "Struttura",
-    writing: "Scrittura", revision: "Revisione",
+    exploration: "Exploration", topic_chosen: "Topic chosen", structuring: "Structuring",
+    writing: "Writing", revision: "Revision",
   };
 
   const stats = [
