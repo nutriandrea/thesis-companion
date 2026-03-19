@@ -35,29 +35,29 @@ const MOCK_SECTORS: CareerSector[] = [
 
 const MOCK_TASKS: Record<string, MockTask[]> = {
   orientation: [
-    { id: "t1", title: "Esplorare 3 aree di interesse", description: "Identificare almeno tre macro-aree di interesse e scrivere pro/contro per ciascuna.", priority: "high", status: "completed", estimated_minutes: 30 },
-    { id: "t2", title: "Leggere survey su LLM per analisi codice", description: "Trovare e leggere almeno una survey recente su LLM per analisi del codice.", priority: "high", status: "completed", estimated_minutes: 60 },
-    { id: "t3", title: "Definire domanda di ricerca preliminare", description: "Scrivere una prima versione della domanda di ricerca.", priority: "critical", status: "pending", estimated_minutes: 45 },
+    { id: "t1", title: "Explore 3 areas of interest", description: "Identify at least three macro-areas of interest and write pros/cons for each.", priority: "high", status: "completed", estimated_minutes: 30 },
+    { id: "t2", title: "Read survey on LLMs for code analysis", description: "Find and read at least one recent survey on LLMs for code analysis.", priority: "high", status: "completed", estimated_minutes: 60 },
+    { id: "t3", title: "Define preliminary research question", description: "Write a first version of the research question.", priority: "critical", status: "pending", estimated_minutes: 45 },
   ],
   topic_supervisor: [
-    { id: "t4", title: "Contattare Prof. Rossi per supervisione", description: "Scrivere un'email motivata al Prof. Rossi spiegando il tuo interesse nella ricerca su LLM.", priority: "critical", status: "pending", estimated_minutes: 30 },
-    { id: "t5", title: "Preparare outline tesi (5 capitoli)", description: "Definire la macro-struttura della tesi con titoli provvisori dei capitoli.", priority: "high", status: "pending", estimated_minutes: 60 },
-    { id: "t6", title: "Raccogliere dataset vulnerabilità", description: "Identificare e scaricare almeno 2 dataset pubblici di vulnerabilità software.", priority: "medium", status: "pending", estimated_minutes: 90 },
+    { id: "t4", title: "Contact Prof. Rossi for supervision", description: "Write a motivated email to Prof. Rossi explaining your interest in LLM research.", priority: "critical", status: "pending", estimated_minutes: 30 },
+    { id: "t5", title: "Prepare thesis outline (5 chapters)", description: "Define the macro-structure of the thesis with provisional chapter titles.", priority: "high", status: "pending", estimated_minutes: 60 },
+    { id: "t6", title: "Collect vulnerability datasets", description: "Identify and download at least 2 public software vulnerability datasets.", priority: "medium", status: "pending", estimated_minutes: 90 },
   ],
   planning: [
-    { id: "t7", title: "Creare timeline dettagliata", description: "Suddividere il lavoro in sprint bisettimanali con deliverable misurabili.", priority: "high", status: "completed", estimated_minutes: 45 },
-    { id: "t8", title: "Configurare ambiente sperimentale", description: "Configurare GPU cloud, repository Git e pipeline di training.", priority: "critical", status: "pending", estimated_minutes: 120 },
-    { id: "t9", title: "Definire metriche di valutazione", description: "Scegliere precision, recall, F1 e metriche specifiche per il rilevamento vulnerabilità.", priority: "high", status: "pending", estimated_minutes: 30 },
+    { id: "t7", title: "Create detailed timeline", description: "Break down the work into bi-weekly sprints with measurable deliverables.", priority: "high", status: "completed", estimated_minutes: 45 },
+    { id: "t8", title: "Set up experimental environment", description: "Configure cloud GPU, Git repository and training pipeline.", priority: "critical", status: "pending", estimated_minutes: 120 },
+    { id: "t9", title: "Define evaluation metrics", description: "Choose precision, recall, F1 and specific metrics for vulnerability detection.", priority: "high", status: "pending", estimated_minutes: 30 },
   ],
   execution: [
-    { id: "t10", title: "Fine-tuning GPT-4 su dataset CWE", description: "Eseguire il fine-tuning del modello sul dataset di vulnerabilità CWE.", priority: "critical", status: "pending", estimated_minutes: 240 },
-    { id: "t11", title: "Benchmark contro strumenti SAST", description: "Confrontare i risultati del modello con SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
-    { id: "t12", title: "Analisi qualitativa dei falsi positivi", description: "Classificare e analizzare i pattern di falsi positivi più comuni.", priority: "medium", status: "pending", estimated_minutes: 120 },
+    { id: "t10", title: "Fine-tune GPT-4 on CWE dataset", description: "Run fine-tuning of the model on the CWE vulnerability dataset.", priority: "critical", status: "pending", estimated_minutes: 240 },
+    { id: "t11", title: "Benchmark against SAST tools", description: "Compare model results with SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
+    { id: "t12", title: "Qualitative analysis of false positives", description: "Classify and analyze the most common false positive patterns.", priority: "medium", status: "pending", estimated_minutes: 120 },
   ],
   writing: [
-    { id: "t13", title: "Scrivere capitolo Metodologia", description: "Descrivere in dettaglio la pipeline sperimentale, i modelli usati e i parametri di training.", priority: "critical", status: "pending", estimated_minutes: 300 },
-    { id: "t14", title: "Creare grafici dei risultati", description: "Generare matrice di confusione, curve ROC e tabelle comparative.", priority: "high", status: "pending", estimated_minutes: 120 },
-    { id: "t15", title: "Revisione finale con relatore", description: "Inviare la bozza completa al relatore per la revisione finale.", priority: "critical", status: "pending", estimated_minutes: 60 },
+    { id: "t13", title: "Write Methodology chapter", description: "Describe in detail the experimental pipeline, models used and training parameters.", priority: "critical", status: "pending", estimated_minutes: 300 },
+    { id: "t14", title: "Create result charts", description: "Generate confusion matrix, ROC curves and comparative tables.", priority: "high", status: "pending", estimated_minutes: 120 },
+    { id: "t15", title: "Final review with supervisor", description: "Send the complete draft to the supervisor for final review.", priority: "critical", status: "pending", estimated_minutes: 60 },
   ],
 };
 
