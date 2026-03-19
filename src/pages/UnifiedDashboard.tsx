@@ -1323,8 +1323,12 @@ export default function UnifiedDashboard() {
   const [phaseEvalLoading, setPhaseEvalLoading] = useState(false);
   const [supervisorResponse, setSupervisorResponse] = useState<string | null>(null);
 
-  // Google Docs state - auto-sync from profile
-  const [thesisContent, setThesisContent] = useState("");
+   // Google Docs state - auto-sync from profile
+   const [thesisContent, setThesisContent] = useState("");
+
+   // References state
+   const [references, setReferences] = useState<Reference[]>([]);
+   const [isLoadingRefs, setIsLoadingRefs] = useState(false);
 
   // Auto-fetch Google Doc content silently on load
   const fetchGoogleDoc = useCallback(async () => {
