@@ -940,7 +940,7 @@ function DemoDashboard() {
     delay += 0.05;
   }
   if (showTopicSupervisor) {
-    cards.push({ key: "supervisors", delay, component: <DemoCard title="Relatori suggeriti" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
+    cards.push({ key: "supervisors", delay, component: <DemoCard title="Suggested Supervisors" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
     delay += 0.05;
     cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
