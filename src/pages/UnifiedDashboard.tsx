@@ -1245,7 +1245,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
           onClick={() => { setShowSaved(false); setExpandedIdx(null); }}
           className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${!showSaved ? "text-accent border-b-2 border-accent" : "text-muted-foreground hover:text-foreground"}`}
         >
-          Suggested ({references.length})
+          Suggeriti ({references.length})
         </button>
         <button
           onClick={() => { setShowSaved(true); setExpandedIdx(null); }}
