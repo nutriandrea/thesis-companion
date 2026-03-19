@@ -1352,6 +1352,8 @@ function DemoExperts() {
 function DemoReferences() {
   const { data, loading } = useDemoEngine<{ references: MockReference[] }>("generate_references");
   const refs = data?.references?.length ? data.references : MOCK_REFERENCES;
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [savedUrls, setSavedUrls] = useState<Set<string>>(new Set());
   const categoryLabel: Record<string, { text: string; cls: string }> = {
     foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
     methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
@@ -1365,14 +1367,57 @@ function DemoReferences() {
     <div className="space-y-1.5">
       {refs.map((ref, i) => {
         const cat = categoryLabel[ref.category] || categoryLabel.foundational;
+        const isExpanded = expandedIdx === i;
+        const isSaved = savedUrls.has(ref.url + i);
         return (
-          <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
-            <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{ref.authors} ({ref.year})</p>
+          <div key={i} className="rounded-lg hover:bg-secondary/30 transition-colors">
+            <div className="flex items-start">
+              <button
+                onClick={() => setExpandedIdx(isExpanded ? null : i)}
+                className="flex-1 flex items-start gap-2.5 p-2.5 text-left"
+              >
+                <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{ref.authors} ({ref.year})</p>
+                </div>
+                <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>{cat.text}</span>
+              </button>
+              <button
+                onClick={() => setSavedUrls(prev => {
+                  const next = new Set(prev);
+                  const key = ref.url + i;
+                  if (next.has(key)) next.delete(key); else next.add(key);
+                  return next;
+                })}
+                className={`p-2.5 shrink-0 transition-colors ${isSaved ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"}`}
+              >
+                {isSaved ? <span className="text-sm">⭐</span> : <span className="text-sm opacity-50">☆</span>}
+              </button>
             </div>
-            <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>{cat.text}</span>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-2.5 pb-2.5 pt-0 space-y-2 pl-8">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ref.relevance}</p>
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Open source
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
@@ -1380,9 +1425,10 @@ function DemoReferences() {
   );
 }
 
-function DemoVulnerabilities() {
+function DemoVulnerabilities({ onResolve }: { onResolve?: (title: string) => void }) {
   const { data, loading } = useDemoEngine<{ vulnerabilities: MockVulnerability[] }>("extract_vulnerabilities");
   const vulns = data?.vulnerabilities?.length ? data.vulnerabilities : MOCK_VULNERABILITIES;
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const ranked = [...vulns].sort((a, b) => {
     const order: Record<string, number> = { critical: 0, high: 1, medium: 2 };
     return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
@@ -1393,18 +1439,47 @@ function DemoVulnerabilities() {
   return (
     <div className="space-y-1.5">
       {ranked.map((v, i) => {
+        const isExpanded = expandedId === v.id;
         const severityColor = v.severity === "critical" ? "text-destructive" : v.severity === "high" ? "text-warning" : "text-muted-foreground";
         const severityBg = v.severity === "critical" ? "bg-destructive/[0.06]" : v.severity === "high" ? "bg-warning/[0.06]" : "bg-muted/30";
         return (
-          <div key={v.id} className={`rounded-lg p-2.5 ${severityBg}`}>
-            <div className="flex items-start gap-2.5">
+          <div key={v.id} className={`rounded-lg transition-colors ${severityBg}`}>
+            <button
+              onClick={() => setExpandedId(isExpanded ? null : v.id)}
+              className="w-full flex items-start gap-2.5 p-2.5 text-left"
+            >
               <span className={`text-[10px] font-bold mt-0.5 shrink-0 w-4 text-center ${severityColor}`}>{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-foreground leading-tight">{v.title}</p>
-                <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">{v.description}</p>
+                {!isExpanded && (
+                  <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1 mt-0.5">{v.description}</p>
+                )}
               </div>
               <ShieldAlert className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${severityColor}`} />
-            </div>
+            </button>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-2.5 pb-2.5 pt-0 space-y-2">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed pl-6">{v.description}</p>
+                    {onResolve && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onResolve(v.title); }}
+                        className="ml-6 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
+                      >
+                        Tell Socrates it's resolved →
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
