@@ -994,7 +994,72 @@ function DemoRoadmap() {
   );
 }
 
-// DemoChat is now replaced by interactive DemoChatOverlay below
+function DemoChatOverlay({ onClose }: { onClose: () => void }) {
+  const welcomeMsg: ChatMsg = {
+    id: "dash-welcome", role: "assistant",
+    content: "What would you like to discuss? I can help with your research methodology, review your approach, or challenge your assumptions.",
+  };
+  const { messages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([welcomeMsg]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
+  };
+
+  return (
+    <>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-foreground/10 z-40" onClick={onClose} />
+      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+        className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
+          <SocrateCoin size={32} interactive={false} />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-foreground font-display">Socrates</p>
+            <p className="text-[10px] text-muted-foreground">Demo — interactive conversation</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          {messages.map(msg => (
+            <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] px-4 py-3 text-xs rounded-2xl ${msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"}`}>
+                <div className="leading-relaxed prose prose-xs prose-foreground max-w-none">
+                  <ReactMarkdown>{msg.content || "…"}</ReactMarkdown>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+          {isStreaming && messages[messages.length - 1]?.content === "" && (
+            <div className="flex justify-start">
+              <div className="flex gap-1.5 px-4 py-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+        <form onSubmit={handleSubmit} className="border-t border-border px-5 py-3 flex items-center gap-3">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Reply to Socrates..."
+            disabled={isStreaming}
+            className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent/30 transition-colors disabled:opacity-50"
+          />
+          <button type="submit" disabled={isStreaming || !input.trim()} className="p-2.5 bg-accent text-accent-foreground rounded-full disabled:opacity-50 hover:bg-accent/90 transition-colors">
+            {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </form>
+      </motion.div>
+    </>
+  );
+}
 
 // ══════════════════════════════════════════════════════
 // DASHBOARD VIEW
