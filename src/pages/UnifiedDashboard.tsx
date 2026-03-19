@@ -116,32 +116,110 @@ const normalizePhase = (phase?: string | null): PhaseKey => normalizeSinglePhase
 
 // SocrateIcon is now the shared SocrateCoin component
 
-// ─── CARD COMPONENT ───
+// ─── CARD COMPONENT with overflow detection & expand dialog ───
 function DashboardCard({
-  title, icon: Icon, children, badge, action, className = ""
+  title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200,
 }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
   badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
+  maxContentHeight?: number;
 }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const check = () => setIsOverflowing(el.scrollHeight > maxContentHeight + 8);
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [maxContentHeight, children]);
+
   return (
-    <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
-          <span className="text-[6px] font-bold text-background">S</span>
+    <>
+      <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border shrink-0">
+          <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
+            <span className="text-[6px] font-bold text-background">S</span>
+          </div>
+          <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
+          {badge != null && badge > 0 && (
+            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+          )}
+          {action && (
+            <button onClick={action.onClick} disabled={action.loading}
+              className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+              {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+            </button>
+          )}
         </div>
-        <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
-        {badge != null && badge > 0 && (
-          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
-        )}
-        {action && (
-          <button onClick={action.onClick} disabled={action.loading}
-            className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
-            {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
-          </button>
-        )}
+        <div className="relative flex-1 min-h-0">
+          <div
+            ref={contentRef}
+            className="px-4 py-2.5 overflow-hidden"
+            style={{ maxHeight: maxContentHeight }}
+          >
+            {children}
+          </div>
+          {isOverflowing && (
+            <div className="absolute bottom-0 left-0 right-0">
+              <div className="h-10 bg-gradient-to-t from-card to-transparent" />
+              <div className="bg-card px-4 pb-2 pt-0">
+                <button
+                  onClick={() => setExpanded(true)}
+                  className="w-full text-center text-[10px] font-medium text-accent hover:text-accent/80 transition-colors py-1"
+                >
+                  Show more
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto px-4 py-3">{children}</div>
-    </div>
+
+      {/* Expanded modal */}
+      <AnimatePresence>
+        {expanded && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/10 backdrop-blur-sm z-[60]"
+              onClick={() => setExpanded(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-6 lg:inset-x-[15%] lg:inset-y-[10%] z-[61] bg-card border border-border rounded-lg shadow-xl flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-border shrink-0">
+                <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
+                  <span className="text-[6px] font-bold text-background">S</span>
+                </div>
+                <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
+                {badge != null && badge > 0 && (
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+                )}
+                {action && (
+                  <button onClick={action.onClick} disabled={action.loading}
+                    className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+                    {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+                  </button>
+                )}
+                <button onClick={() => setExpanded(false)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors ml-2">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                {children}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -186,14 +264,14 @@ function TaskContent({ userId }: { userId: string }) {
 
   const priorityLabel = (p: string) => {
     switch (p) {
-      case "critical": return { text: "Critico", cls: "bg-destructive/10 text-destructive" };
-      case "high": return { text: "Alta", cls: "bg-warning/10 text-warning" };
-      case "medium": return { text: "Media", cls: "bg-accent/10 text-accent" };
-      default: return { text: "Bassa", cls: "bg-muted text-muted-foreground" };
+      case "critical": return { text: "Critical", cls: "bg-destructive/10 text-destructive" };
+      case "high": return { text: "High", cls: "bg-warning/10 text-warning" };
+      case "medium": return { text: "Medium", cls: "bg-accent/10 text-accent" };
+      default: return { text: "Low", cls: "bg-muted text-muted-foreground" };
     }
   };
 
-  if (sorted.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessun task. Parla con Socrate.</p>;
+  if (sorted.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">No tasks yet. Talk to Socrate.</p>;
 
   return (
     <div className="space-y-1.5">
@@ -243,12 +321,12 @@ function TaskContent({ userId }: { userId: string }) {
                       {isValidating ? (
                         <>
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          Socrate sta verificando…
+                          Socrate is verifying…
                         </>
                       ) : (
                         <>
                           <CheckCircle2 className="w-3 h-3" />
-                          Segna come fatto
+                          Mark as done
                         </>
                       )}
                     </button>
@@ -257,7 +335,7 @@ function TaskContent({ userId }: { userId: string }) {
                         onClick={(e) => { e.stopPropagation(); forceComplete(task.id); }}
                         className="w-full flex items-center justify-center gap-2 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        Forza completamento
+                        Force complete
                       </button>
                     )}
                   </div>
@@ -270,7 +348,7 @@ function TaskContent({ userId }: { userId: string }) {
       {completedCount > 0 && (
         <div className="flex items-center gap-2 pt-2">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-[10px] text-muted-foreground">{completedCount} completati</span>
+          <span className="text-[10px] text-muted-foreground">{completedCount} completed</span>
           <div className="h-px flex-1 bg-border" />
         </div>
       )}
@@ -562,7 +640,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                 className="overflow-hidden"
               >
                 <div className="px-2 py-2 space-y-2">
-                  <p className="text-[10px] text-muted-foreground">Perché questo supervisore?</p>
+                  <p className="text-[10px] text-muted-foreground">Why this supervisor?</p>
                   <textarea
                     value={motivation}
                     onChange={e => setMotivation(e.target.value)}
@@ -575,7 +653,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                     disabled={!motivation.trim()}
                     className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30"
                   >
-                    Conferma scelta
+                    Confirm selection
                   </button>
                 </div>
               </motion.div>
@@ -641,7 +719,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               {exp.offerInterviews && (
-                <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Intervista</span>
+                <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Interview</span>
               )}
               <span className="text-[10px] font-bold text-accent">{exp.score}%</span>
             </div>
@@ -717,7 +795,7 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
       </div>
     );
 
-    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna azienda trovata per {activeSector}.</p>;
+    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">No companies found for {activeSector}.</p>;
 
     return (
       <div className="space-y-2">
@@ -782,7 +860,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
       )}
       {sup && (
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Supervisore</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Supervisor</p>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
               <GraduationCap className="w-3 h-3 text-accent" />
@@ -898,7 +976,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
   // Empty state: offer to generate
   if (phases.length === 0) return (
     <div className="text-center py-8 space-y-3">
-      <p className="text-xs text-muted-foreground">Nessuna roadmap ancora. Socrate può generarne una basata sulla tua tesi.</p>
+      <p className="text-xs text-muted-foreground">No roadmap yet. Socrate can generate one based on your thesis.</p>
       <button
         onClick={generateRoadmap}
         disabled={generating}
@@ -921,7 +999,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
             className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-            Rigenera
+            Regenerate
           </button>
         </div>
       )}
@@ -963,7 +1041,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
                   </span>
                   {task.due_date && (
                     <span className="text-[9px] text-muted-foreground">
-                      {new Date(task.due_date).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}
+                      {new Date(task.due_date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
                     </span>
                   )}
                 </div>
@@ -980,7 +1058,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
 function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
+  if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">No vulnerabilities detected.</p>;
 
   // Rank: critical first, then high, medium, low
   const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -1027,7 +1105,7 @@ function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilitie
                         onClick={(e) => { e.stopPropagation(); onResolve(v.id); }}
                         className="ml-6 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
                       >
-                        Spiega a Socrate che è risolta →
+                        Tell Socrate it's resolved →
                       </button>
                     )}
                   </div>
@@ -1144,7 +1222,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
                   className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
-                  Apri riferimento
+                  Open reference
                 </a>
               </div>
             </motion.div>
@@ -1157,7 +1235,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
   if (loading) return (
     <div className="flex items-center justify-center py-6">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Cercando riferimenti...</span>
+      <span className="text-xs text-muted-foreground ml-2">Searching references...</span>
     </div>
   );
 
@@ -1188,7 +1266,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
           </p>
           {!showSaved && (
             <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
-              Genera riferimenti →
+              Generate references →
             </button>
           )}
         </div>
@@ -1272,11 +1350,11 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
           <div className="flex items-center gap-2 p-2.5 bg-secondary/50">
             <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-foreground">Collegato</p>
+              <p className="text-xs font-medium text-foreground">Connected</p>
               <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
               {lastSyncTime && (
                 <p className="text-[9px] text-muted-foreground mt-0.5">
-                  Last sync: {lastSyncTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
+                  Last sync: {lastSyncTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                 </p>
               )}
             </div>
@@ -1286,17 +1364,17 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
             </button>
           </div>
           <button onClick={disconnect} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            Scollega documento
+            Disconnect document
           </button>
         </div>
       ) : (
         <>
           <div className="flex items-center gap-2 p-2.5 bg-secondary/30">
             <div className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
-            <p className="text-xs text-muted-foreground">Nessun documento collegato</p>
+            <p className="text-xs text-muted-foreground">No document connected</p>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Collega il tuo documento per consentire a Socrate di analizzare la tua tesi.
+            Connect your document to let Socrate analyze your thesis.
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -1335,7 +1413,7 @@ function ChatOverlay({
         <SocrateCoin size={32} interactive={false} />
         <div className="flex-1">
           <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-          <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
+          <p className="text-[10px] text-muted-foreground">Your critical mentor</p>
         </div>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
           <X className="w-4 h-4 text-muted-foreground" />
@@ -1445,7 +1523,7 @@ export default function UnifiedDashboard() {
     if (profile?.google_doc_url && user && !thesisContent) fetchGoogleDoc();
   }, [profile?.google_doc_url, user]);
 
-  const studentContext = profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "";
+  const studentContext = profile ? `Name: ${profile.first_name} ${profile.last_name}\nDegree: ${profile.degree || "N/A"}\nUniversity: ${profile.university || "N/A"}\nSkills: ${profile.skills?.join(", ") || "N/A"}\nTopic: ${profile.thesis_topic || "Not defined"}` : "";
 
   const fetchStudentProfile = useCallback(async () => {
     if (!user?.id) return;
@@ -1686,7 +1764,7 @@ export default function UnifiedDashboard() {
         if (data.can_advance) {
           toast({ title: "Phase advanced", description: data.socrate_comment?.substring(0, 100) || "You have moved to the next phase." });
         } else {
-          toast({ title: "Non ancora", description: data.socrate_comment?.substring(0, 100) || "There are blockers to resolve." });
+          toast({ title: "Not yet", description: data.socrate_comment?.substring(0, 100) || "There are blockers to resolve." });
         }
         // Refresh student profile
         const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
@@ -1731,7 +1809,7 @@ export default function UnifiedDashboard() {
   const currentPhaseIndex = PHASES.findIndex(p => p.key === parsedPhase.primary);
   const secondaryPhaseIndex = parsedPhase.secondary ? PHASES.findIndex(p => p.key === parsedPhase.secondary) : -1;
   const selectedSupervisorId = studentProfile?.selected_supervisor_id || null;
-  const name = profile?.first_name || "Studente";
+  const name = profile?.first_name || "Student";
   const lastMessage = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
 
   // ─── AUTO-ADVANCE: when all roadmap tasks + critical side tasks are done ───
@@ -1869,7 +1947,7 @@ export default function UnifiedDashboard() {
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Parla con Socrate
+          Talk to Socrate
         </motion.button>
         {lastMessage && !chatOpen && (
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -1893,7 +1971,7 @@ export default function UnifiedDashboard() {
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground">Collega documento tesi</h3>
+                <h3 className="text-sm font-bold text-foreground">Connect thesis document</h3>
                 <button onClick={() => setShowDocModal(false)} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
               </div>
               <ThesisDocWidget profile={profile} updateProfile={updateProfile} user={user} />
@@ -1905,7 +1983,7 @@ export default function UnifiedDashboard() {
       {/* Google Doc auto-syncs from profile settings */}
 
       {/* ─── CARDS GRID — strict phase-gated ─── */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
+      <div className="flex-1 min-h-0 overflow-hidden px-4 lg:px-8 xl:px-16 pb-16">
 
         {/* ═══ PHASE CONTENT — supports hybrid phases ═══ */}
         {(() => {
@@ -1921,7 +1999,7 @@ export default function UnifiedDashboard() {
 
           // Roadmap: planning, execution, writing
           if (showPlanning || showExecution || showWriting) {
-            const roadmapTitle = showPlanning && !showExecution ? "Roadmap (in costruzione)" : "Roadmap";
+            const roadmapTitle = showPlanning && !showExecution ? "Roadmap (building)" : "Roadmap";
             cards.push({
               key: "roadmap",
               colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined,
