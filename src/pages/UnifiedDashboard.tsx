@@ -5,7 +5,7 @@ import {
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
   ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw,
   TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3, Mic,
-  BookOpen, ExternalLink, Mail
+  BookOpen, ExternalLink, Mail, UserPlus
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import VoiceConversation from "@/components/voice/VoiceConversation";
@@ -1865,9 +1865,19 @@ export default function UnifiedDashboard() {
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* ─── TOP: Orb + Identity ─── */}
       <div className="flex flex-col items-center pt-6 pb-6 shrink-0 relative gap-5">
-        {/* Top-left: user name + logout */}
+        {/* Top-left: user name + invite + logout */}
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">{name}</span>
+          {phaseActive(parsedPhase, "topic_supervisor") && (
+            <button
+              onClick={() => toast({ title: "Invito relatore", description: "Funzionalità in arrivo. Il relatore potrà vedere roadmap e avanzamenti, ma non le conversazioni con Socrate." })}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary border border-border transition-colors"
+              title="Invita il tuo relatore a seguire i progressi"
+            >
+              <UserPlus className="w-3 h-3" />
+              Invita relatore
+            </button>
+          )}
           <button onClick={signOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
             <LogOut className="w-3.5 h-3.5" />
           </button>

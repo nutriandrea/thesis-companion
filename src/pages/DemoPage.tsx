@@ -945,10 +945,7 @@ function DemoDashboard() {
     cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
-  if (showTopicSupervisor || showPlanning || showExecution || showWriting) {
-    cards.push({ key: "invite-supervisor", delay, component: <DemoCard title="Invita il relatore" icon={UserPlus}><DemoInviteSupervisor confirmed={showPlanning || showExecution || showWriting} /></DemoCard> });
-    delay += 0.05;
-  }
+  // Invite supervisor is now inline in the header, not a card
   cards.push({ key: "tasks", delay, component: <DemoCard title="Task" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
   delay += 0.05;
   cards.push({ key: "rubrica", delay, component: <DemoCard title="Contatti" icon={Users}><DemoExperts /></DemoCard> });
@@ -970,6 +967,16 @@ function DemoDashboard() {
       <div className="flex flex-col items-center pt-6 pb-6 shrink-0 relative gap-5">
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
+          {(showTopicSupervisor || showPlanning || showExecution || showWriting) && (
+            <button
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary border border-border transition-colors"
+              title="Invita il tuo relatore a seguire i progressi"
+              onClick={() => {}}
+            >
+              <UserPlus className="w-3 h-3" />
+              Invita relatore
+            </button>
+          )}
         </div>
 
         <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
