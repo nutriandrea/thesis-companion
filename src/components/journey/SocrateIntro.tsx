@@ -104,7 +104,7 @@ export default function SocrateIntro({ onComplete }: Props) {
               initial={{ x: 0, y: 0 }}
               animate={{
                 x: typeof window !== "undefined" ? window.innerWidth / 2 - 280 : 300,
-                y: typeof window !== "undefined" ? window.innerHeight / 2 - 370 : 0,
+                y: typeof window !== "undefined" ? window.innerHeight / 2 - 400 : 0,
               }}
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               className="absolute z-10"
