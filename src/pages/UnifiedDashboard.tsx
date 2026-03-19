@@ -1345,7 +1345,7 @@ function ChatOverlay({
         {messages.map(msg => (
           <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[80%] px-4 py-3 text-sm rounded-xl ${
+            <div className={`max-w-[80%] px-4 py-3 text-sm rounded-2xl ${
               msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
             }`}>
               {msg.content === "" && isStreaming ? (
@@ -1368,17 +1368,17 @@ function ChatOverlay({
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
           placeholder="Rispondi a Socrate..."
           disabled={isStreaming}
-          className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+          className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
         {onSwitchToVoice && (
           <button onClick={onSwitchToVoice}
-            className="p-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="p-2.5 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             title="Passa alla modalità vocale">
             <Mic className="w-4 h-4" />
           </button>
         )}
         <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
-          className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30">
+          className="p-2.5 bg-accent text-accent-foreground rounded-full hover:bg-accent/90 transition-colors disabled:opacity-30">
           <Send className="w-4 h-4" />
         </button>
       </div>

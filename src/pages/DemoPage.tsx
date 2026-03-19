@@ -151,12 +151,12 @@ const PHASE_CONFIDENCE: Record<string, number> = {
 };
 
 // ─── CARD COMPONENT ───
-function DemoCard({ title, icon: Icon, children, badge, className = "" }: {
+function DemoCard({ title, icon: Icon, children, badge, action, className = "" }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
-  badge?: number | null; className?: string;
+  badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
 }) {
   return (
-    <div className={`bg-card border border-border rounded-lg flex flex-col h-full ${className}`}>
+    <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
           <span className="text-[6px] font-bold text-background">S</span>
@@ -164,6 +164,12 @@ function DemoCard({ title, icon: Icon, children, badge, className = "" }: {
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
         {badge != null && badge > 0 && (
           <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+        )}
+        {action && (
+          <button onClick={action.onClick} disabled={action.loading}
+            className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+            {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+          </button>
         )}
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3">{children}</div>
@@ -456,7 +462,7 @@ function DemoChat() {
     <div className="space-y-3">
       {MOCK_MESSAGES.map(msg => (
         <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-          <div className={`max-w-[85%] px-3 py-2 text-xs rounded-lg ${msg.role === "assistant" ? "bg-secondary/30 border border-border" : "bg-accent/5 border border-accent/20"}`}>
+          <div className={`max-w-[80%] px-4 py-3 text-xs rounded-2xl ${msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"}`}>
             <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
           </div>
         </div>
@@ -525,12 +531,12 @@ export default function DemoPage() {
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Demo banner */}
       <div className="bg-accent/10 border-b border-accent/20 px-4 py-2 text-center shrink-0">
-        <span className="text-xs font-semibold text-accent uppercase tracking-wider">🎯 Demo Mode — Dati simulati — Clicca sulle fasi per navigare</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Dati simulati — Clicca sulle fasi per navigare</span>
       </div>
 
       {/* Top: Identity */}
-      <div className="flex flex-col items-center pt-4 pb-2 shrink-0 relative">
-        <div className="absolute top-3 left-4 flex items-center gap-2">
+      <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
+        <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
         </div>
 
@@ -634,9 +640,9 @@ export default function DemoPage() {
                 <DemoChat />
               </div>
               <div className="border-t border-border px-5 py-3 flex items-center gap-3">
-                <input placeholder="Rispondi a Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
-                <button disabled className="p-2.5 rounded-xl border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
-                <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-xl opacity-50"><ArrowRight className="w-4 h-4" /></button>
+                <input placeholder="Rispondi a Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
+                <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
+                <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
               </div>
             </motion.div>
           </>
