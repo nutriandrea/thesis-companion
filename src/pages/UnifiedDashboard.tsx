@@ -649,7 +649,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                     disabled={!motivation.trim()}
                     className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30"
                   >
-                    Confirm selection
+                    Conferma selezione
                   </button>
                 </div>
               </motion.div>
