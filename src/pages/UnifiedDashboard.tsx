@@ -1662,7 +1662,7 @@ export default function UnifiedDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-6xl mx-auto">
             <motion.div className="md:col-span-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <DashboardCard title="Roadmap" icon={BarChart3}>
-                <RoadmapCard currentPhase={currentPhase} />
+                <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
             <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
