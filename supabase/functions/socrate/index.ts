@@ -1754,7 +1754,7 @@ Italiano, diretto, specifico, provocatorio.`;
         // Load RAG context, vulnerabilities, and affinities in parallel
         const lastUserMsg = (messages as any[]).filter((m: any) => m.role === "user").slice(-1)[0]?.content || "";
 
-        const [vulnsResult, affinitiesResult, ragResult] = await Promise.allSettled([
+        const [vulnsResult, affinitiesResult, ragResult, studentRes] = await Promise.allSettled([
           supabase.from("vulnerabilities")
             .select("type, title, description, severity")
             .eq("user_id", userId).eq("resolved", false)
@@ -1768,6 +1768,9 @@ Italiano, diretto, specifico, provocatorio.`;
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` },
             body: JSON.stringify({ mode: "get_context", query: lastUserMsg, include_thesis: true, include_conversations: true }),
           }).then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null),
+          supabase.from("student_profiles")
+            .select("career_distribution, current_phase, selected_supervisor_id, supervisor_motivation")
+            .eq("user_id", userId).single(),
         ]);
 
         // Process RAG context
