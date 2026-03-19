@@ -58,14 +58,32 @@ export default function SocrateIntro({ onComplete }: Props) {
     <div className="fixed inset-0 z-50 bg-foreground overflow-hidden flex items-center justify-center">
       <AnimatePresence mode="wait">
         {phase === "coin-reveal" && (
-          <motion.div key="coin-reveal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="relative flex flex-col items-center justify-center">
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 2, ease: "easeOut" }}>
-              <SocrateCoin size={336} interactive={false} />
+          <motion.div
+            key="coin-reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            className="relative flex flex-col items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 2, ease: "easeOut" }}
+            >
+              <SocrateCoin size={280} interactive={false} />
             </motion.div>
             <div className="mt-12 h-20 flex items-center justify-center">
               <AnimatePresence mode="wait">
                 {currentSubtitle && (
-                  <motion.p key={currentSubtitle} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.6 }} className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight">
+                  <motion.p
+                    key={currentSubtitle}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.6 }}
+                    className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight"
+                  >
                     {currentSubtitle}
                   </motion.p>
                 )}
@@ -75,22 +93,47 @@ export default function SocrateIntro({ onComplete }: Props) {
         )}
 
         {(phase === "coin-translate" || phase === "text-appear" || phase === "mode-choice") && (
-          <motion.div key="main-layout" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="fixed inset-0 flex items-center justify-center">
-            <motion.div initial={{ x: 0, y: 0 }} animate={{ x: typeof window !== "undefined" ? (window.innerWidth / 2) - 160 : 300, y: 0 }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }} className="absolute z-10">
-              <motion.div initial={{ scale: 1 }} animate={{ scale: 0.45 }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}>
-                <SocrateCoin size={336} interactive={false} />
+          <motion.div
+            key="main-layout"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            className="fixed inset-0 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ x: 0, y: 0 }}
+              animate={{
+                x: typeof window !== "undefined" ? window.innerWidth / 2 - 160 : 300,
+                y: typeof window !== "undefined" ? window.innerHeight / 2 - 63 : 0,
+              }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute z-10"
+            >
+              <motion.div
+                initial={{ scale: 1 }}
+                animate={{ scale: 0.45 }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <SocrateCoin size={280} interactive={false} />
               </motion.div>
             </motion.div>
 
-            <motion.div
-              className="flex flex-col items-center justify-center max-w-xl px-8"
-              animate={{ y: phase === "mode-choice" ? -40 : 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            >
+            <div className="flex flex-col items-center max-w-xl px-8 mt-8">
               {(phase === "text-appear" || phase === "mode-choice") && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: "easeOut" }} className="text-center mb-12">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="text-center mb-16"
+                >
                   {introText.split("\n\n").map((paragraph, i) => (
-                    <motion.p key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.4, duration: 0.8 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] mb-5 last:mb-0">
+                    <motion.p
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.4, duration: 0.8 }}
+                      className="font-display text-background/60 text-base md:text-lg leading-[1.8] mb-5 last:mb-0"
+                    >
                       {paragraph}
                     </motion.p>
                   ))}
@@ -98,22 +141,37 @@ export default function SocrateIntro({ onComplete }: Props) {
               )}
 
               {phase === "mode-choice" && (
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} className="flex gap-14 mt-4">
-                  <button onClick={() => handleModeChoice("voice")} className="group flex flex-col items-center gap-3 transition-all">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="flex gap-14 mt-4"
+                >
+                  <button
+                    onClick={() => handleModeChoice("voice")}
+                    className="group flex flex-col items-center gap-3 transition-all"
+                  >
                     <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
                       <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
                     </div>
-                    <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voce</span>
+                    <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">
+                      Voce
+                    </span>
                   </button>
-                  <button onClick={() => handleModeChoice("text")} className="group flex flex-col items-center gap-3 transition-all">
+                  <button
+                    onClick={() => handleModeChoice("text")}
+                    className="group flex flex-col items-center gap-3 transition-all"
+                  >
                     <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
                       <PenTool className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
                     </div>
-                    <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Testo</span>
+                    <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">
+                      Testo
+                    </span>
                   </button>
                 </motion.div>
               )}
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
