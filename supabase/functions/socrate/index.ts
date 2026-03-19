@@ -1808,6 +1808,37 @@ COME USARE I PATTERN:
 - "Nel tuo settore, questo tipo di tesi è stato fatto molte volte. Cosa rende la tua diversa?"
 - Se lo studente non ha considerato un match forte: "C'è un professore/azienda che lavora esattamente su questo. Lo sapevi?"`;
         }
+
+        // Career distribution context
+        let careerCtx = "";
+        const career = (studentRes as any)?.data?.career_distribution;
+        const currentPhase = (studentRes as any)?.data?.current_phase;
+        const selectedSup = (studentRes as any)?.data?.selected_supervisor_id;
+        const supMotivation = (studentRes as any)?.data?.supervisor_motivation;
+
+        if (career && Object.keys(career).length > 0) {
+          const sorted = Object.entries(career).sort(([,a], [,b]) => (b as number) - (a as number));
+          careerCtx = `
+ORIENTAMENTO LAVORATIVO DELLO STUDENTE:
+${sorted.map(([sector, pct]) => `- ${sector}: ${pct}%`).join("\n")}
+
+USA QUESTO PER:
+- Commentare se la tesi sta andando nella direzione giusta: "Stai andando verso ${sorted[0]?.[0]}, ma la tua tesi non approfondisce X"
+- Sfidare: "Vuoi lavorare in ${sorted[0]?.[0]}? Allora perché non stai facendo Y?"
+- Collegare aziende: "Le aziende in ${sorted[0]?.[0]} cercano chi sa fare Z. Tu lo sai fare?"`;
+        }
+
+        let phaseCtx = "";
+        if (currentPhase) {
+          phaseCtx = `\nFASE ATTUALE: ${currentPhase}. Adatta il tuo approccio alla fase.`;
+        }
+
+        let supervisorCtx = "";
+        if (selectedSup && supMotivation) {
+          supervisorCtx = `\nSUPERVISORE SCELTO: Lo studente ha scelto un supervisore con motivazione: "${supMotivation}". Metti in dubbio questa scelta quando appropriato.`;
+        }
+
+        vulnerabilitiesCtx += careerCtx + phaseCtx + supervisorCtx;
       }
 
       // Post-thesis critical attack instructions
