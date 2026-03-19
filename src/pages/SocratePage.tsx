@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles, Zap, Target } from "lucide-react";
+import VoiceConversation from "@/components/voice/VoiceConversation";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
@@ -51,7 +52,7 @@ const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
 
 
 export default function SocratePage({ explorationMode = false, onThesisConfirmed }: SocratePageProps = {}) {
-  const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
+  const { profile, user, updateProfile, setActiveSection, inputMode, setInputMode } = useApp();
   const { toast } = useToast();
   const [showThesisDialog, setShowThesisDialog] = useState(false);
   const [proposedThesisTopic, setProposedThesisTopic] = useState("");
@@ -372,21 +373,20 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     }
   };
 
+  // Get last assistant message for TTS
+  const lastAssistantMsg = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
+
   // VOICE MODE
   if (inputMode === "voice") {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-3rem)] relative">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-          <SocrateIcon size="lg" />
-        </motion.div>
-        <motion.h2 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-foreground text-lg font-semibold tracking-wide uppercase mt-6 text-center leading-relaxed">
-          SPEAK WITH<br />ME
-        </motion.h2>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="absolute bottom-8 left-8">
-          <button className="w-10 h-10 bg-secondary border border-border rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-150">
-            <Mic className="w-4 h-4" />
-          </button>
-        </motion.div>
+      <div className="h-[calc(100vh-3rem)]">
+        <VoiceConversation
+          onTranscript={(text) => sendMessage(text)}
+          onSwitchToText={() => setInputMode("text")}
+          isStreaming={isStreaming}
+          lastAssistantMessage={lastAssistantMsg}
+          severity={severita ?? 0.5}
+        />
       </div>
     );
   }
