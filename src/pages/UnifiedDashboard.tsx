@@ -1413,7 +1413,7 @@ function ChatOverlay({
         <SocrateCoin size={32} interactive={false} />
         <div className="flex-1">
           <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-          <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
+          <p className="text-[10px] text-muted-foreground">Your critical mentor</p>
         </div>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
           <X className="w-4 h-4 text-muted-foreground" />
