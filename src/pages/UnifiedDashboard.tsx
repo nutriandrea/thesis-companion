@@ -1809,7 +1809,7 @@ export default function UnifiedDashboard() {
   const currentPhaseIndex = PHASES.findIndex(p => p.key === parsedPhase.primary);
   const secondaryPhaseIndex = parsedPhase.secondary ? PHASES.findIndex(p => p.key === parsedPhase.secondary) : -1;
   const selectedSupervisorId = studentProfile?.selected_supervisor_id || null;
-  const name = profile?.first_name || "Studente";
+  const name = profile?.first_name || "Student";
   const lastMessage = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
 
   // ─── AUTO-ADVANCE: when all roadmap tasks + critical side tasks are done ───
