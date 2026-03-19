@@ -12,7 +12,7 @@ import SocrateCoin from "@/components/shared/SocrateCoin";
 import ReactMarkdown from "react-markdown";
 
 // ─── DEMO STEPS ───
-type DemoStep = "login" | "onboarding" | "intro" | "socrate" | "dashboard";
+type DemoStep = "intro" | "socrate" | "dashboard";
 
 // ─── TYPES ───
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
