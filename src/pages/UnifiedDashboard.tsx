@@ -1251,7 +1251,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
           onClick={() => { setShowSaved(true); setExpandedIdx(null); }}
           className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${showSaved ? "text-yellow-500 border-b-2 border-yellow-500" : "text-muted-foreground hover:text-foreground"}`}
         >
-          ⭐ Saved ({savedRefs.length})
+          ⭐ Salvati ({savedRefs.length})
         </button>
       </div>
 
