@@ -753,7 +753,7 @@ export default function UnifiedDashboard() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        toast({ title: "✅ Supervisore selezionato", description: supName });
+        toast({ title: "Supervisore selezionato", description: supName });
         if (data.socrate_response) {
           setSupervisorResponse(data.socrate_response);
           // Also inject into chat
