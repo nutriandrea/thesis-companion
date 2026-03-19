@@ -12,7 +12,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Lora", "serif"],
+        display: ["Playfair Display", "serif"],
         sans: ["Inter", "sans-serif"],
       },
       colors: {

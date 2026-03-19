@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import VoiceConversation from "@/components/voice/VoiceConversation";
+import SocrateCoin from "@/components/shared/SocrateCoin";
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
@@ -73,17 +74,7 @@ const normalizePhase = (phase?: string | null): PhaseKey => {
   }
 };
 
-// ─── GRADIENT ORB ───
-function SocrateIcon({ size = 40, isActive = false }: { size?: number; isActive?: boolean }) {
-  return (
-    <div
-      className="rounded-full bg-foreground flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      <span className="font-display font-bold text-background" style={{ fontSize: size * 0.4 }}>S</span>
-    </div>
-  );
-}
+// SocrateIcon is now the shared SocrateCoin component
 
 // ─── CARD COMPONENT ───
 function DashboardCard({
@@ -95,7 +86,9 @@ function DashboardCard({
   return (
     <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <Icon className="w-4 h-4 text-accent" />
+        <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
+          <span className="text-[6px] font-bold text-background">S</span>
+        </div>
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
         {badge != null && badge > 0 && (
           <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
@@ -465,11 +458,9 @@ function ChatOverlay({
       className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
     >
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-        <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
-          <span className="text-xs font-bold text-background font-display">S</span>
-        </div>
+        <SocrateCoin size={32} interactive={false} />
         <div className="flex-1">
-          <p className="text-sm font-bold text-foreground">Socrate</p>
+          <p className="text-sm font-bold text-foreground font-display">Socrate</p>
           <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
         </div>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
@@ -793,7 +784,7 @@ export default function UnifiedDashboard() {
         <button onClick={signOut} className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
           <LogOut className="w-4 h-4" />
         </button>
-        <SocrateIcon size={48} isActive={isStreaming} />
+        <SocrateCoin size={56} isActive={isStreaming} onClick={() => setChatOpen(true)} />
         <motion.div className="text-center mt-3 space-y-0.5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <h1 className="text-lg font-bold text-foreground font-display">{name}</h1>
           <p className="text-xs text-muted-foreground max-w-md mx-auto px-4 truncate">{profile?.thesis_topic || "Tesi non definita"}</p>
@@ -929,9 +920,7 @@ export default function UnifiedDashboard() {
                 className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
               >
                 <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-                  <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
-                    <span className="text-xs font-bold text-background font-display">S</span>
-                  </div>
+                  <SocrateCoin size={32} interactive={false} isActive />
                   <div className="flex-1">
                     <p className="text-sm font-bold text-foreground">Socrate</p>
                     <p className="text-[10px] text-muted-foreground">Modalità vocale</p>

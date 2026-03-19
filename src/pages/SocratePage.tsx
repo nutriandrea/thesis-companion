@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles, Zap, Target } from "lucide-react";
+import SocrateCoin from "@/components/shared/SocrateCoin";
 import VoiceConversation from "@/components/voice/VoiceConversation";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,14 +25,7 @@ interface ChatMsg {
   content: string;
 }
 
-function SocrateIcon({ size = "sm" }: { size?: "sm" | "lg" }) {
-  const dim = size === "lg" ? "w-16 h-16" : "w-8 h-8";
-  return (
-    <div className={`${dim} rounded-full bg-foreground flex items-center justify-center shrink-0`}>
-      <span className={`font-display font-bold text-background ${size === "lg" ? "text-2xl" : "text-xs"}`}>S</span>
-    </div>
-  );
-}
+// SocrateIcon is now the shared SocrateCoin component
 
 function useLatexContent() {
   const [latex, setLatex] = useState("");
@@ -396,9 +390,9 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     <div className={`flex flex-col ${explorationMode ? "h-screen max-w-3xl mx-auto px-6" : "h-[calc(100vh-3rem)]"}`}>
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
-        <SocrateIcon size="sm" />
+       <SocrateCoin size={36} interactive={false} isActive={isStreaming} />
         <div>
-          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Socrate</h2>
+          <h2 className="font-display text-base font-semibold text-foreground">Socrate</h2>
           <p className="ds-caption">Hub centrale</p>
         </div>
         {severita !== null && (

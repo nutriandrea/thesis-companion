@@ -1,0 +1,98 @@
+import { motion } from "framer-motion";
+import { useState, useCallback } from "react";
+import socrateCoinImg from "@/assets/socrate-coin.png";
+
+interface SocrateCoinProps {
+  size?: number;
+  interactive?: boolean;
+  isActive?: boolean;
+  onClick?: () => void;
+  className?: string;
+}
+
+export default function SocrateCoin({
+  size = 64,
+  interactive = true,
+  isActive = false,
+  onClick,
+  className = "",
+}: SocrateCoinProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [ripple, setRipple] = useState(false);
+
+  const handleClick = useCallback(() => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 600);
+    onClick?.();
+  }, [onClick]);
+
+  return (
+    <motion.div
+      className={`relative cursor-pointer select-none ${className}`}
+      style={{ width: size, height: size }}
+      onHoverStart={() => interactive && setIsHovered(true)}
+      onHoverEnd={() => interactive && setIsHovered(false)}
+      onClick={interactive ? handleClick : undefined}
+      whileHover={interactive ? { scale: 1.05 } : undefined}
+      whileTap={interactive ? { scale: 0.95 } : undefined}
+    >
+      {/* Pulse ring when active */}
+      {isActive && (
+        <div
+          className="absolute inset-0 rounded-full border border-foreground/20 animate-pulse-ring"
+          style={{ width: size, height: size }}
+        />
+      )}
+
+      {/* Outer ring */}
+      <motion.div
+        className="absolute inset-0 rounded-full border-2 border-foreground/10"
+        animate={{
+          borderColor: isActive
+            ? "hsl(0 0% 6% / 0.4)"
+            : isHovered
+            ? "hsl(0 0% 6% / 0.25)"
+            : "hsl(0 0% 6% / 0.1)",
+        }}
+        transition={{ duration: 0.3 }}
+      />
+
+      {/* Coin image */}
+      <motion.img
+        src={socrateCoinImg}
+        alt="Socrate"
+        className="w-full h-full rounded-full object-cover"
+        style={{ filter: "contrast(1.1) grayscale(100%)" }}
+        animate={{
+          rotate: isActive ? [0, 2, -2, 0] : 0,
+        }}
+        transition={
+          isActive
+            ? { duration: 3, repeat: Infinity, ease: "easeInOut" }
+            : { duration: 0.3 }
+        }
+      />
+
+      {/* Ripple on click */}
+      {ripple && (
+        <motion.div
+          className="absolute inset-0 rounded-full border border-foreground/30"
+          initial={{ scale: 1, opacity: 0.5 }}
+          animate={{ scale: 1.6, opacity: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        />
+      )}
+
+      {/* Hover label */}
+      {interactive && isHovered && !isActive && (
+        <motion.span
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-medium uppercase tracking-[0.15em] text-muted-foreground whitespace-nowrap"
+        >
+          Socrate
+        </motion.span>
+      )}
+    </motion.div>
+  );
+}
