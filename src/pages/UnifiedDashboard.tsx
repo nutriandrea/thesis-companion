@@ -1171,7 +1171,7 @@ function VulnerabilitiesContent({ vulnerabilities, onResolve, onCloseExpanded }:
                     <p className="text-[11px] text-muted-foreground leading-relaxed pl-6">{v.description}</p>
                     {onResolve && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); onResolve(v.id); }}
+                        onClick={(e) => { e.stopPropagation(); onCloseExpanded?.(); onResolve(v.id); }}
                         className="ml-6 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
                       >
                         Comunica a Socrate che è risolta →
