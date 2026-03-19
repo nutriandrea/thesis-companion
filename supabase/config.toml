@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.career-engine]
 verify_jwt = false
+
+[functions.auto-sync-docs]
+verify_jwt = false
