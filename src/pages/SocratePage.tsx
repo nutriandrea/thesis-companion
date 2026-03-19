@@ -390,9 +390,9 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     <div className={`flex flex-col ${explorationMode ? "h-screen max-w-3xl mx-auto px-6" : "h-[calc(100vh-3rem)]"}`}>
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
-        <SocrateIcon size="sm" />
+       <SocrateCoin size={36} interactive={false} isActive={isStreaming} />
         <div>
-          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Socrate</h2>
+          <h2 className="font-display text-base font-semibold text-foreground">Socrate</h2>
           <p className="ds-caption">Hub centrale</p>
         </div>
         {severita !== null && (
