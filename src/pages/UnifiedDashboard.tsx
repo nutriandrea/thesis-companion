@@ -1372,7 +1372,7 @@ function ChatOverlay({
         />
         {onSwitchToVoice && (
           <button onClick={onSwitchToVoice}
-            className="p-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="p-2.5 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             title="Passa alla modalità vocale">
             <Mic className="w-4 h-4" />
           </button>
