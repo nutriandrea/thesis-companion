@@ -290,7 +290,7 @@ export default function UnifiedDashboard() {
     } finally {
       setIsStreaming(false);
     }
-  }, [isStreaming, user, messages, studentContext, latexContent, profile, updateProfile, toast, streamResponse]);
+  }, [isStreaming, user, messages, studentContext, thesisContent, profile, updateProfile, toast, streamResponse]);
 
   // Background extraction
   const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
