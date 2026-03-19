@@ -1983,7 +1983,7 @@ export default function UnifiedDashboard() {
       {/* Google Doc auto-syncs from profile settings */}
 
       {/* ─── CARDS GRID — strict phase-gated ─── */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
+      <div className="flex-1 min-h-0 overflow-hidden px-4 lg:px-8 xl:px-16 pb-16">
 
         {/* ═══ PHASE CONTENT — supports hybrid phases ═══ */}
         {(() => {
