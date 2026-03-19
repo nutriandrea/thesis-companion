@@ -1967,7 +1967,7 @@ export default function UnifiedDashboard() {
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground">Connect thesis document</h3>
+                <h3 className="text-sm font-bold text-foreground">Connetti documento tesi</h3>
                 <button onClick={() => setShowDocModal(false)} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
               </div>
               <ThesisDocWidget profile={profile} updateProfile={updateProfile} user={user} />
