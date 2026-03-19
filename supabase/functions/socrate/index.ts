@@ -1680,7 +1680,7 @@ PROFILO INTELLETTUALE (dal database):
       }
     }
 
-    const phaseConfig = THESIS_PHASES[currentPhase];
+    const phaseConfig = THESIS_PHASES[currentPhase] || THESIS_PHASES.orientation;
 
     // Build severity + phase-specific instructions
     const severityInstructions = severita >= 0.8
