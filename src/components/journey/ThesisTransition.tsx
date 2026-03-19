@@ -82,17 +82,15 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
-            className="flex items-center gap-10 px-6 max-w-2xl"
+            className="text-center px-6 max-w-lg"
           >
-            <div className="shrink-0 order-2">
+            <div className="mx-auto mb-12">
               <SocrateCoin size={120} interactive={false} />
             </div>
-            <div className="text-left order-1">
-              <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-3">Your thesis</p>
-              <h1 className="font-display text-white text-2xl md:text-3xl font-medium tracking-wide leading-tight italic">
-                {thesisTopic}
-              </h1>
-            </div>
+            <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-3">Your thesis</p>
+            <h1 className="font-display text-white text-2xl md:text-3xl font-medium tracking-wide leading-tight italic">
+              {thesisTopic}
+            </h1>
           </motion.div>
         )}
 
