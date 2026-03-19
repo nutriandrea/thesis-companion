@@ -1235,7 +1235,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
   if (loading) return (
     <div className="flex items-center justify-center py-6">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Cercando riferimenti...</span>
+      <span className="text-xs text-muted-foreground ml-2">Searching references...</span>
     </div>
   );
 
