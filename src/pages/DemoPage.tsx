@@ -98,16 +98,16 @@ const MOCK_SUPERVISORS: MockSupervisor[] = [
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
-  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Esperto di fuzzing e ricerca vulnerabilità.", offerInterviews: true, email: "p.ferretti@google.com" },
-  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Pubblicazioni su LLM per generazione codice.", offerInterviews: true, email: "m.conti@deepmind.com" },
-  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Esperienza industriale in AI per cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
+  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Expert in fuzzing and vulnerability research.", offerInterviews: true, email: "p.ferretti@google.com" },
+  { id: "e2", name: "Dr. Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Publications on LLMs for code generation.", offerInterviews: true, email: "m.conti@deepmind.com" },
+  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Industry experience in AI for cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
 ];
 
 const MOCK_REFERENCES: MockReference[] = [
-  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "#", category: "foundational", relevance: "Survey fondamentale su LLM per il codice." },
-  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "#", category: "methodology", relevance: "Primo paper a usare deep learning per rilevamento vulnerabilità." },
-  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "#", category: "recent", relevance: "Revisione sistematica di ML per rilevamento vulnerabilità." },
-  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "#", category: "contrarian", relevance: "Analisi critica dei limiti degli LLM nella sicurezza." },
+  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "#", category: "foundational", relevance: "Foundational survey on LLMs for code." },
+  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "#", category: "methodology", relevance: "First paper to use deep learning for vulnerability detection." },
+  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "#", category: "recent", relevance: "Systematic review of ML for vulnerability detection." },
+  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "#", category: "contrarian", relevance: "Critical analysis of LLM limitations in security." },
 ];
 
 const MOCK_VULNERABILITIES: MockVulnerability[] = [
