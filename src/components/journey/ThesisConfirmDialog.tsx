@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, AlertTriangle } from "lucide-react";
 
@@ -11,6 +11,10 @@ interface Props {
 
 export default function ThesisConfirmDialog({ open, onClose, onConfirm, initialTopic = "" }: Props) {
   const [topic, setTopic] = useState(initialTopic);
+
+  useEffect(() => {
+    if (initialTopic) setTopic(initialTopic);
+  }, [initialTopic]);
 
   if (!open) return null;
 
