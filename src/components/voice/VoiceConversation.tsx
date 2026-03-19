@@ -227,6 +227,14 @@ export default function VoiceConversation({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const cleanupVoiceSession = useCallback(() => {
+    unmountedRef.current = true;
+    abortRef.current?.abort();
+    try { scribe.disconnect(); } catch (e) {}
+    stopAudio();
+    setVoiceState("idle");
+  }, [scribe, stopAudio]);
+
   const toggleMute = useCallback(() => {
     if (muted) { setMuted(false); if (!isSpeakingRef.current) setTimeout(() => startListening(), 100); }
     else { setMuted(true); scribe.disconnect(); setLiveTranscript(""); if (voiceState === "listening") setVoiceState("idle"); }
