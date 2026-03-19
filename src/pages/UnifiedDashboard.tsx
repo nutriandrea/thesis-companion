@@ -1554,6 +1554,7 @@ export default function UnifiedDashboard() {
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
+  const vulnCardCloseRef = useRef<(() => void) | null>(null);
 
   // New state
   const [careerSectors, setCareerSectors] = useState<CareerSector[]>([]);
