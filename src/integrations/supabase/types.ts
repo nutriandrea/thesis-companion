@@ -239,6 +239,42 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_references: {
+        Row: {
+          authors: string
+          category: string
+          created_at: string
+          id: string
+          relevance: string
+          title: string
+          url: string
+          user_id: string
+          year: string | null
+        }
+        Insert: {
+          authors?: string
+          category?: string
+          created_at?: string
+          id?: string
+          relevance?: string
+          title: string
+          url: string
+          user_id: string
+          year?: string | null
+        }
+        Update: {
+          authors?: string
+          category?: string
+          created_at?: string
+          id?: string
+          relevance?: string
+          title?: string
+          url?: string
+          user_id?: string
+          year?: string | null
+        }
+        Relationships: []
+      }
       session_events: {
         Row: {
           created_at: string | null
