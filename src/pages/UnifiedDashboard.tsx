@@ -373,6 +373,93 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
   );
 }
 
+// ─── EXPERT SUGGESTIONS ───
+function ExpertSuggestions({ userId }: { userId: string }) {
+  const { affinities, loading } = useAffinityScores(userId, "expert");
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const items = useMemo(() => {
+    if (affinities.length > 0) {
+      return affinities.slice(0, 6).map(a => {
+        const exp = experts.find(e => e.id === a.entity_id);
+        return {
+          id: a.entity_id, name: a.entity_name, score: a.score,
+          reasoning: a.reasoning,
+          matched_traits: a.matched_traits || [],
+          title: exp?.title || "",
+          offerInterviews: exp?.offerInterviews ?? false,
+          fieldIds: exp?.fieldIds || [],
+        };
+      });
+    }
+    return [];
+  }, [affinities]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-6">
+      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  if (items.length === 0) return (
+    <p className="text-xs text-muted-foreground text-center py-6 italic">
+      I suggerimenti appariranno dopo le prime conversazioni con Socrate.
+    </p>
+  );
+
+  return (
+    <div className="space-y-1.5">
+      {items.map(exp => (
+        <div key={exp.id}>
+          <div
+            className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+            onClick={() => setExpanded(expanded === exp.id ? null : exp.id)}
+          >
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+              exp.offerInterviews ? "bg-green-500/10" : "bg-accent/10"
+            }`}>
+              <Users className={`w-3.5 h-3.5 ${exp.offerInterviews ? "text-green-500" : "text-accent"}`} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground truncate">{exp.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{exp.title}</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {exp.offerInterviews && (
+                <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Intervista</span>
+              )}
+              <span className="text-[10px] font-bold text-accent">{exp.score}%</span>
+            </div>
+          </div>
+          <AnimatePresence>
+            {expanded === exp.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-2 pb-2 space-y-1.5">
+                  <p className="text-[11px] text-foreground/80 leading-relaxed">{exp.reasoning}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {exp.matched_traits.slice(0, 4).map((t: string) => (
+                      <span key={t} className="text-[8px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">{t}</span>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {exp.fieldIds.map(fid => {
+                      const f = fields.find(ff => ff.id === fid);
+                      return f ? <span key={fid} className="text-[8px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{f.name}</span> : null;
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── DYNAMIC COMPANIES ───
 function DynamicCompanies({ userId, sectors, activeSector }: {
   userId: string; sectors: CareerSector[]; activeSector: string | null;
