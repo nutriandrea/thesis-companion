@@ -1068,7 +1068,7 @@ function DemoDashboard() {
                 <SocrateCoin size={32} interactive={false} />
                 <div className="flex-1">
                   <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-                  <p className="text-[10px] text-muted-foreground">Demo — conversazione simulata</p>
+                  <p className="text-[10px] text-muted-foreground">Demo — simulated conversation</p>
                 </div>
                 <button onClick={() => setShowChat(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                   <span className="text-muted-foreground text-sm">✕</span>
