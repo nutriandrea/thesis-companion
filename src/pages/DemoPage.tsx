@@ -15,6 +15,7 @@ import ReactMarkdown from "react-markdown";
 type DemoStep = "login" | "onboarding" | "intro" | "socrate" | "dashboard";
 
 // ─── TYPES ───
+interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface CareerSector { name: string; percentage: number; reasoning?: string; }
 interface MockTask { id: string; title: string; description: string; priority: string; status: string; estimated_minutes: number; }
 interface MockVulnerability { id: string; type: string; title: string; description: string; severity: string; }
@@ -22,6 +23,88 @@ interface MockReference { title: string; authors: string; year: string; url: str
 interface MockSupervisor { id: string; name: string; fields: string[]; score: number; reasoning: string; email: string; university: string; }
 interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; email: string; }
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
+
+// ─── DEMO SOCRATE CHAT HOOK ───
+const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
+const DEMO_STUDENT_CONTEXT = `Name: Marco Demo\nDegree: MSc Computer Science\nUniversity: ETH Zurich\nSkills: Python, machine learning, NLP, data analysis\nState: topic_chosen\nTopic: Applying Large Language Models for Automated Vulnerability Detection in Source Code`;
+
+function useDemoChat(initialMessages?: ChatMsg[]) {
+  const [messages, setMessages] = useState<ChatMsg[]>(initialMessages || []);
+  const [input, setInput] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isStreaming) return;
+    const userMsg: ChatMsg = { id: `u-${Date.now()}`, role: "user", content: text };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setIsStreaming(true);
+
+    const apiMessages = [...messages, userMsg].slice(-20).map(m => ({ role: m.role, content: m.content }));
+
+    try {
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          messages: apiMessages,
+          studentContext: DEMO_STUDENT_CONTEXT,
+          mode: "chat",
+        }),
+      });
+
+      if (!resp.ok) {
+        setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Sorry, I couldn't process that. Try again." }]);
+        setIsStreaming(false);
+        return;
+      }
+
+      const assistantId = `a-${Date.now()}`;
+      setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+
+      // Stream the response
+      const reader = resp.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let content = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const delta = JSON.parse(jsonStr).choices?.[0]?.delta?.content;
+            if (delta) {
+              content += delta;
+              const cleaned = content.replace(/<!--\s*THESIS_TITLE:.*?-->/g, "").replace(/<!--\s*THESIS_READY\s*-->/g, "").trim();
+              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: cleaned } : m));
+            }
+          } catch {}
+        }
+      }
+    } catch {
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Connection error. Try again." }]);
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [isStreaming, messages]);
+
+  return { messages, setMessages, input, setInput, isStreaming, sendMessage, bottomRef };
+}
 
 // ─── MOCK DATA ───
 const MOCK_THESIS = "Applying Large Language Models for Automated Vulnerability Detection in Source Code";
