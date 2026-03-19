@@ -5,7 +5,7 @@ import {
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
   ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw,
   TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3, Mic,
-  BookOpen, ExternalLink
+  BookOpen, ExternalLink, Mail
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import VoiceConversation from "@/components/voice/VoiceConversation";
@@ -520,11 +520,11 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
         const sup = supervisors.find(s => s.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [], reasoning: a.reasoning };
+        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [], reasoning: a.reasoning, email: sup?.email || "", university: sup?.universityId || "" };
       });
     }
     return supervisors.slice(0, 5).map(s => ({
-      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2), reasoning: "",
+      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2), reasoning: "", email: s.email, university: s.universityId,
     }));
   }, [affinities]);
 
@@ -544,6 +544,11 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
               <p className="text-[10px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
+              {sup.email && (
+                <a href={`mailto:${sup.email}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-[10px] text-accent hover:underline mt-0.5">
+                  <Mail className="w-2.5 h-2.5" />{sup.email}
+                </a>
+              )}
               {sup.reasoning && <p className="text-[10px] text-foreground/60 line-clamp-1 mt-0.5">{sup.reasoning}</p>}
             </div>
             {sup.score !== null && <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>}
@@ -598,6 +603,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
           title: exp?.title || "",
           offerInterviews: exp?.offerInterviews ?? false,
           fieldIds: exp?.fieldIds || [],
+          email: exp?.email || "",
         };
       });
     }
@@ -648,6 +654,11 @@ function ExpertSuggestions({ userId }: { userId: string }) {
               >
                 <div className="px-2 pb-2 space-y-1.5">
                   <p className="text-[11px] text-foreground/80 leading-relaxed">{exp.reasoning}</p>
+                  {exp.email && (
+                    <a href={`mailto:${exp.email}`} className="flex items-center gap-1.5 text-[10px] text-accent hover:underline font-medium">
+                      <Mail className="w-3 h-3" /> {exp.email}
+                    </a>
+                  )}
                   <div className="flex flex-wrap gap-1">
                     {exp.matched_traits.slice(0, 4).map((t: string) => (
                       <span key={t} className="text-[8px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">{t}</span>
