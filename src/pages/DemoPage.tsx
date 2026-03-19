@@ -997,8 +997,9 @@ function DemoVoiceView({ messages, onSwitchToText, onSkip }: {
 // ══════════════════════════════════════════════════════
 
 // ─── CARD COMPONENT with overflow detection & expand dialog ───
-function DemoCard({ title, icon: Icon, children, badge, className = "", maxContentHeight = 200 }: {
-  title: string; icon: React.ElementType; children: React.ReactNode; badge?: number | null; className?: string; maxContentHeight?: number;
+function DemoCard({ title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200 }: {
+  title: string; icon: React.ElementType; children: React.ReactNode; badge?: number | null;
+  action?: { label: string; onClick: () => void; loading?: boolean }; className?: string; maxContentHeight?: number;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -1022,6 +1023,12 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
           <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
           {badge != null && badge > 0 && (
             <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+          )}
+          {action && (
+            <button onClick={action.onClick} disabled={action.loading}
+              className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+              {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+            </button>
           )}
         </div>
         <div className="relative flex-1 min-h-0">
@@ -1067,6 +1074,12 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
                 <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
                 {badge != null && badge > 0 && (
                   <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+                )}
+                {action && (
+                  <button onClick={action.onClick} disabled={action.loading}
+                    className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+                    {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+                  </button>
                 )}
                 <button onClick={() => setExpanded(false)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors ml-2">
                   <X className="w-4 h-4 text-muted-foreground" />
@@ -1158,38 +1171,128 @@ function DemoCareerTree() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const COLORS = ["hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)", "hsl(var(--warning))", "hsl(270 60% 55%)"];
 
+  // Mock companies per sector
+  const MOCK_COMPANIES: Record<string, { name: string; domains: string[] }[]> = {
+    "AI & Machine Learning": [
+      { name: "DeepMind", domains: ["AI Research", "Machine Learning"] },
+      { name: "OpenAI", domains: ["Large Language Models", "AI Safety"] },
+      { name: "Anthropic", domains: ["AI Safety", "LLMs"] },
+    ],
+    "Cybersecurity": [
+      { name: "CrowdStrike", domains: ["Endpoint Security", "Threat Intelligence"] },
+      { name: "Palo Alto Networks", domains: ["Network Security", "Cloud Security"] },
+    ],
+    "DevOps & Automation": [
+      { name: "HashiCorp", domains: ["Infrastructure", "Automation"] },
+      { name: "GitLab", domains: ["DevOps", "CI/CD"] },
+    ],
+    "Academic Research": [
+      { name: "ETH AI Center", domains: ["AI Research", "NLP"] },
+      { name: "EPFL IC", domains: ["Computer Science", "Security"] },
+    ],
+    "Tech Consulting": [
+      { name: "McKinsey Digital", domains: ["Digital Transformation", "AI Strategy"] },
+    ],
+  };
+
   if (loading) return <DemoLoadingSkeleton lines={4} />;
+
+  const sorted = [...sectors].sort((a, b) => b.percentage - a.percentage);
 
   return (
     <div className="space-y-1">
+      {/* Trunk label */}
       <div className="flex items-center gap-2 pb-2">
         <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
         <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
         <div className="flex-1 h-px bg-border" />
       </div>
-      {sectors.map((sector, i) => {
+
+      {sorted.map((sector, i) => {
         const color = COLORS[i % COLORS.length];
         const isExpanded = expanded === sector.name;
+        const comps = MOCK_COMPANIES[sector.name] || [];
+
         return (
           <div key={sector.name} className="relative">
+            {/* Vertical connector line */}
             <div className="absolute left-[7px] top-0 bottom-0 w-px bg-border" />
-            <button onClick={() => setExpanded(isExpanded ? null : sector.name)}
-              className={`relative w-full flex items-center gap-3 pl-5 pr-3 py-2.5 rounded-lg transition-all text-left ${isExpanded ? "bg-secondary/60" : "hover:bg-secondary/30"}`}>
+
+            {/* Branch */}
+            <button
+              onClick={() => setExpanded(isExpanded ? null : sector.name)}
+              className={`relative w-full flex items-center gap-3 pl-5 pr-3 py-2.5 rounded-lg transition-all text-left group ${
+                isExpanded ? "bg-secondary/60" : "hover:bg-secondary/30"
+              }`}
+            >
+              {/* Branch node */}
               <div className="absolute left-[3px] top-1/2 -translate-y-1/2 flex items-center">
                 <div className="w-[9px] h-[9px] rounded-full border-2 shrink-0" style={{ borderColor: color, backgroundColor: isExpanded ? color : "transparent" }} />
                 <div className="w-3 h-px" style={{ backgroundColor: color }} />
               </div>
+
+              {/* Sector info */}
               <div className="flex-1 min-w-0 ml-2">
-                <span className="text-xs font-semibold text-foreground">{sector.name}</span>
-                {sector.reasoning && <p className="text-[10px] text-muted-foreground mt-0.5">{sector.reasoning}</p>}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-foreground">{sector.name}</span>
+                  {sector.reasoning && (
+                    <span className="text-[9px] text-muted-foreground truncate max-w-[180px] hidden lg:inline">
+                      {sector.reasoning}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* Percentage bar */}
               <div className="flex items-center gap-2 shrink-0">
                 <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
-                  <motion.div className="h-full rounded-full" style={{ backgroundColor: color }} initial={{ width: 0 }} animate={{ width: `${sector.percentage}%` }} transition={{ duration: 0.6, delay: i * 0.08 }} />
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: color }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${sector.percentage}%` }}
+                    transition={{ duration: 0.6, delay: i * 0.08 }}
+                  />
                 </div>
                 <span className="text-[11px] font-bold w-8 text-right" style={{ color }}>{sector.percentage}%</span>
               </div>
+
+              {/* Expand indicator */}
+              <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             </button>
+
+            {/* Expanded: companies under this branch */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pl-8 pr-2 pb-2 space-y-1">
+                    {comps.length === 0 ? (
+                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">No companies matched</p>
+                    ) : (
+                      comps.map((comp, j) => (
+                        <div key={j} className="relative flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
+                          {/* Leaf connector */}
+                          <div className="absolute left-0 top-1/2 w-3 h-px" style={{ backgroundColor: `${color}40` }} />
+                          <div className="w-5 h-5 rounded bg-secondary flex items-center justify-center shrink-0">
+                            <Building2 className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-medium text-foreground truncate">{comp.name}</p>
+                            <p className="text-[9px] text-muted-foreground truncate">{comp.domains.join(", ")}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
@@ -1700,6 +1803,8 @@ function DemoDashboard() {
   const showExecution = currentPhase === "execution";
   const showWriting = currentPhase === "writing";
 
+  const lastMessage = MOCK_SOCRATE_MESSAGES.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
+
   const handleResolveVuln = (vulnTitle: string) => {
     setShowChat(true);
     setChatMode("text");
@@ -1723,10 +1828,20 @@ function DemoDashboard() {
   delay += 0.05;
   cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
+  cards.push({ key: "references", delay, component: (
+    <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}
+      action={{ label: "Update", onClick: () => {}, loading: false }}>
+      <DemoReferences />
+    </DemoCard>
+  ) });
   delay += 0.05;
   if (showExecution || showWriting) {
-    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities onResolve={handleResolveVuln} /></DemoCard> });
+    cards.push({ key: "vulnerabilities", delay, component: (
+      <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}
+        action={{ label: "Scan", onClick: () => {}, loading: false }}>
+        <DemoVulnerabilities onResolve={handleResolveVuln} />
+      </DemoCard>
+    ) });
   }
 
   return (
@@ -1736,8 +1851,9 @@ function DemoDashboard() {
         <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Simulated data — Click phases to navigate</span>
       </div>
 
-      {/* Top: Identity */}
+      {/* ─── TOP: Identity ─── */}
       <div className="flex flex-col items-center pt-6 pb-6 shrink-0 relative gap-5">
+        {/* Top-left: user name + invite + logout */}
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
           {(showTopicSupervisor || showPlanning || showExecution || showWriting) && (
@@ -1752,15 +1868,20 @@ function DemoDashboard() {
           )}
         </div>
 
-        <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Center: Thesis title + doc link */}
+        <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-lg font-bold text-foreground font-display">{MOCK_THESIS}</h1>
-            <Link2 className="w-4 h-4 text-muted-foreground" />
+            <button className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" title="Connect thesis document">
+              <Link2 className="w-4 h-4" />
+            </button>
           </div>
         </motion.div>
 
+        {/* Confirmed track summary — inline under title in planning+ */}
         {(showPlanning || showExecution || showWriting) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 flex-wrap">
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="flex items-center justify-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <GraduationCap className="w-3 h-3 text-accent" />
               <span className="text-[11px] text-muted-foreground">Prof. Marco Rossi</span>
@@ -1782,10 +1903,18 @@ function DemoDashboard() {
           <MessageCircle className="w-4 h-4" />
           Talk to Socrates
         </motion.button>
+
+        {/* Last message preview */}
+        {lastMessage && !showChat && (
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="text-[11px] text-muted-foreground max-w-lg mx-auto px-6 mt-2 text-center line-clamp-2 italic">
+            "{lastMessage.slice(0, 120)}…"
+          </motion.p>
+        )}
       </div>
 
       {/* Cards grid */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
+      <div className="flex-1 min-h-0 overflow-hidden px-4 lg:px-8 xl:px-16 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
           {cards.map(card => (
             <motion.div key={card.key + currentPhase} className={card.colSpan || ""} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: card.delay }}>
