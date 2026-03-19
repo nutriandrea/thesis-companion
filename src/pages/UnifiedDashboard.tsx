@@ -791,7 +791,7 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
       </div>
     );
 
-    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">No companies found for {activeSector}.</p>;
+    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna azienda trovata per {activeSector}.</p>;
 
     return (
       <div className="space-y-2">
