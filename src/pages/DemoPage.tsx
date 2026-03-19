@@ -1136,33 +1136,7 @@ function DemoDashboard() {
 
       {/* Chat overlay */}
       <AnimatePresence>
-        {showChat && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-foreground/10 z-40" onClick={() => setShowChat(false)} />
-            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-              className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-                <SocrateCoin size={32} interactive={false} />
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-                  <p className="text-[10px] text-muted-foreground">Demo — simulated conversation</p>
-                </div>
-                <button onClick={() => setShowChat(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
-                  <span className="text-muted-foreground text-sm">✕</span>
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                <DemoChat />
-              </div>
-              <div className="border-t border-border px-5 py-3 flex items-center gap-3">
-                <input placeholder="Reply to Socrates..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
-                <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
-                <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
-              </div>
-            </motion.div>
-          </>
-        )}
+        {showChat && <DemoChatOverlay onClose={() => setShowChat(false)} />}
       </AnimatePresence>
     </div>
   );
