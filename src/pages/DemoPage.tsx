@@ -164,7 +164,7 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
             THESIS ALLY
           </motion.h1>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-white/40 text-sm mt-3">
-            {isSignUp ? "Crea il tuo account per iniziare" : "Bentornato"}
+            {isSignUp ? "Create your account to get started" : "Welcome back"}
           </motion.p>
         </div>
 
