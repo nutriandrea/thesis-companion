@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { motion } from "framer-motion";
-import { User, Mail, GraduationCap, Code, Target, CheckCircle2, Circle, LogOut, Save, Loader2, Brain, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { User, Mail, GraduationCap, Code, Target, CheckCircle2, Circle, LogOut, Save, Loader2, Brain, Sparkles, TrendingUp, Zap, FileText, Link2, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
