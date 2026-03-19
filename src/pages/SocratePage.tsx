@@ -482,6 +482,8 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         initialTopic={proposedThesisTopic || profile?.thesis_topic || ""}
         onConfirm={async (topic) => {
           setShowThesisDialog(false);
+          // Trigger transition BEFORE updating profile to avoid flash of dashboard
+          onThesisConfirmed?.();
           await updateProfile({ thesis_topic: topic, journey_state: "topic_chosen" });
 
           // Update student_profiles phase so the progress bar reflects the transition
@@ -491,8 +493,6 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
               .update({ current_phase: "topic_supervisor", overall_completion: Math.max(17, 0) } as any)
               .eq("user_id", user.id);
           }
-
-          onThesisConfirmed?.();
         }}
       />
     </div>
