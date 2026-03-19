@@ -41,6 +41,78 @@ const maturityLabels: Record<string, { label: string; color: string; percent: nu
   advanced: { label: "Avanzato", color: "text-success", percent: 95 },
 };
 
+function GoogleDocConfig() {
+  const { profile, updateProfile, user } = useApp();
+  const { toast } = useToast();
+  const [docUrl, setDocUrl] = useState(profile?.google_doc_url || "");
+  const [syncing, setSyncing] = useState(false);
+  const [synced, setSynced] = useState(false);
+
+  useEffect(() => {
+    if (profile?.google_doc_url) setDocUrl(profile.google_doc_url);
+  }, [profile?.google_doc_url]);
+
+  const saveAndSync = async () => {
+    if (!docUrl.trim() || !user) return;
+    setSyncing(true);
+    try {
+      await updateProfile({ google_doc_url: docUrl.trim() } as any);
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
+        method: "POST",
+        headers: AUTH_HEADERS,
+        body: JSON.stringify({ google_doc_url: docUrl.trim() }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setSynced(true);
+        toast({ title: "📄 Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri letti. Sync automatico attivo.` });
+        if (data.content?.length > 100) {
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
+            method: "POST", headers: AUTH_HEADERS,
+            body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
+          }).catch(console.error);
+        }
+      } else {
+        toast({ variant: "destructive", title: "Errore", description: "Impossibile leggere il documento. Assicurati che sia condiviso." });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "Errore", description: "Connessione fallita." });
+    } finally { setSyncing(false); }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+      className="bg-card border rounded-xl p-6 shadow-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <FileText className="w-4 h-4 text-accent" />
+        <h3 className="font-semibold font-display text-sm">Google Doc della Tesi</h3>
+        {synced && <span className="text-[10px] text-success font-medium ml-auto">● Collegato</span>}
+        {profile?.google_doc_url && !synced && <span className="text-[10px] text-muted-foreground ml-auto">● Configurato</span>}
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        Collega il tuo documento Google per sincronizzazione automatica. Il sistema aggiornerà il contenuto periodicamente.
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          value={docUrl} onChange={e => setDocUrl(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && saveAndSync()}
+          placeholder="https://docs.google.com/document/d/..."
+          className="flex-1 bg-secondary border rounded-md px-3 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+        />
+        <Button size="sm" onClick={saveAndSync} disabled={!docUrl.trim() || syncing} className="gap-1.5">
+          {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Link2 className="w-3 h-3" />}
+          {profile?.google_doc_url ? "Aggiorna" : "Collega"}
+        </Button>
+        {profile?.google_doc_url && (
+          <Button size="sm" variant="outline" onClick={saveAndSync} disabled={syncing}>
+            <RefreshCw className={`w-3 h-3 ${syncing ? "animate-spin" : ""}`} />
+          </Button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function ProfilePage() {
   const { profile, roadmap, signOut, updateProfile, user } = useApp();
   const { toast } = useToast();
