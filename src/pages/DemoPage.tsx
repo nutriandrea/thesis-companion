@@ -1683,6 +1683,7 @@ function DemoChatOverlay({ onClose }: { onClose: () => void }) {
 function DemoDashboard() {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(2);
   const [showChat, setShowChat] = useState(false);
+  const [chatMode, setChatMode] = useState<"text" | "voice">("text");
   const currentPhase = PHASES[currentPhaseIdx].key;
   const confidence = PHASE_CONFIDENCE[currentPhase] || 0;
 
@@ -1691,28 +1692,33 @@ function DemoDashboard() {
   const showExecution = currentPhase === "execution";
   const showWriting = currentPhase === "writing";
 
+  const handleResolveVuln = (vulnTitle: string) => {
+    setShowChat(true);
+    setChatMode("text");
+  };
+
   const cards: { key: string; component: React.ReactNode; colSpan?: string; delay: number }[] = [];
   let delay = 0.1;
 
   if (showPlanning || showExecution || showWriting) {
-    cards.push({ key: "roadmap", colSpan: "md:col-span-2 lg:col-span-2", delay, component: <DemoCard title="Roadmap" icon={BarChart3}><DemoRoadmap /></DemoCard> });
+    const roadmapTitle = showPlanning && !showExecution ? "Roadmap (in progress)" : "Roadmap";
+    cards.push({ key: "roadmap", colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined, delay, component: <DemoCard title={roadmapTitle} icon={BarChart3}><DemoRoadmap /></DemoCard> });
     delay += 0.05;
   }
   if (showTopicSupervisor) {
     cards.push({ key: "supervisors", delay, component: <DemoCard title="Suggested Supervisors" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
     delay += 0.05;
-    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
+    cards.push({ key: "career-tree", colSpan: !showPlanning ? "md:col-span-2" : undefined, delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
-  // Invite supervisor is now inline in the header, not a card
   cards.push({ key: "tasks", delay, component: <DemoCard title="Tasks" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "rubrica", delay, component: <DemoCard title="Contacts" icon={Users}><DemoExperts /></DemoCard> });
+  cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
   cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
   delay += 0.05;
   if (showExecution || showWriting) {
-    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
+    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities onResolve={handleResolveVuln} /></DemoCard> });
   }
 
   return (
