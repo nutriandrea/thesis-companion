@@ -492,6 +492,11 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
             placeholder="Rispondi a Socrate..." disabled={isStreaming}
             className="flex-1 bg-card border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          <button onClick={() => setInputMode("voice")}
+            className="px-3 py-3 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Passa alla modalità vocale">
+            <Mic className="w-4 h-4" />
+          </button>
           <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
             className="px-4 py-3 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30">
             <Send className="w-4 h-4" />

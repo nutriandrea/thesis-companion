@@ -4,9 +4,10 @@ import {
   Send, Loader2, ShieldAlert, Flame, Target, Users, Building2,
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
   ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw,
-  TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3
+  TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3, Mic
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import VoiceConversation from "@/components/voice/VoiceConversation";
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
@@ -450,10 +451,10 @@ function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updat
 
 // ─── CHAT OVERLAY ───
 function ChatOverlay({
-  messages, input, setInput, sendMessage, isStreaming, onClose
+  messages, input, setInput, sendMessage, isStreaming, onClose, onSwitchToVoice
 }: {
   messages: ChatMsg[]; input: string; setInput: (v: string) => void;
-  sendMessage: (text: string) => void; isStreaming: boolean; onClose: () => void;
+  sendMessage: (text: string) => void; isStreaming: boolean; onClose: () => void; onSwitchToVoice?: () => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -504,6 +505,13 @@ function ChatOverlay({
           disabled={isStreaming}
           className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
+        {onSwitchToVoice && (
+          <button onClick={onSwitchToVoice}
+            className="p-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Passa alla modalità vocale">
+            <Mic className="w-4 h-4" />
+          </button>
+        )}
         <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
           className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30">
           <Send className="w-4 h-4" />
@@ -515,7 +523,7 @@ function ChatOverlay({
 
 // ─── MAIN DASHBOARD ───
 export default function UnifiedDashboard() {
-  const { profile, user, updateProfile, signOut } = useApp();
+  const { profile, user, updateProfile, signOut, inputMode, setInputMode } = useApp();
   const { toast } = useToast();
 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -906,17 +914,47 @@ export default function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* ─── CHAT OVERLAY ─── */}
+      {/* ─── CHAT / VOICE OVERLAY ─── */}
       <AnimatePresence>
         {chatOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 bg-foreground/10 z-40"
-              onClick={() => setChatOpen(false)}
+              onClick={() => { setChatOpen(false); setInputMode("text"); }}
             />
-            <ChatOverlay messages={messages} input={input} setInput={setInput}
-              sendMessage={sendMessage} isStreaming={isStreaming} onClose={() => setChatOpen(false)} />
+            {inputMode === "voice" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+              >
+                <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
+                  <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
+                    <span className="text-xs font-bold text-background font-display">S</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-foreground">Socrate</p>
+                    <p className="text-[10px] text-muted-foreground">Modalità vocale</p>
+                  </div>
+                  <button onClick={() => { setChatOpen(false); setInputMode("text"); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <VoiceConversation
+                    onTranscript={(text) => sendMessage(text)}
+                    onSwitchToText={() => setInputMode("text")}
+                    isStreaming={isStreaming}
+                    lastAssistantMessage={lastMessage}
+                    severity={studentProfile?.severita ?? 0.5}
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              <ChatOverlay messages={messages} input={input} setInput={setInput}
+                sendMessage={sendMessage} isStreaming={isStreaming} onClose={() => setChatOpen(false)}
+                onSwitchToVoice={() => setInputMode("voice")} />
+            )}
           </>
         )}
       </AnimatePresence>
