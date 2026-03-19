@@ -353,6 +353,63 @@ export default function UnifiedDashboard() {
     });
   }, [user]);
 
+  // Load saved Google Doc URL from profile
+  useEffect(() => {
+    if (profile && (profile as any).google_doc_url) {
+      const url = (profile as any).google_doc_url;
+      setGoogleDocUrl(url);
+      setGoogleDocInput(url);
+    }
+  }, [profile]);
+
+  // Fetch Google Doc content
+  const fetchGoogleDoc = useCallback(async (url?: string) => {
+    const docUrl = url || googleDocUrl;
+    if (!docUrl || !user) return;
+    setDocLoading(true);
+    setDocSynced(false);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ google_doc_url: docUrl }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        toast({ variant: "destructive", title: "Errore Google Doc", description: err.error || "Impossibile leggere il documento." });
+        return;
+      }
+      const data = await resp.json();
+      setThesisContent(data.content || "");
+      setDocSynced(true);
+      toast({ title: "📄 Documento sincronizzato", description: `${Math.round((data.length || 0) / 1000)}k caratteri letti.` });
+    } catch {
+      toast({ variant: "destructive", title: "Errore", description: "Impossibile connettersi al documento." });
+    } finally {
+      setDocLoading(false);
+    }
+  }, [googleDocUrl, user, toast]);
+
+  // Auto-fetch on load if URL exists
+  useEffect(() => {
+    if (googleDocUrl && user && !thesisContent) {
+      fetchGoogleDoc(googleDocUrl);
+    }
+  }, [googleDocUrl, user]);
+
+  // Save Google Doc URL
+  const saveGoogleDocUrl = useCallback(async () => {
+    if (!googleDocInput.trim() || !user) return;
+    setGoogleDocUrl(googleDocInput.trim());
+    await updateProfile({ google_doc_url: googleDocInput.trim() } as any);
+    fetchGoogleDoc(googleDocInput.trim());
+    toast({ title: "✅ Link salvato", description: "Il tuo Google Doc è stato collegato." });
+  }, [googleDocInput, user, updateProfile, fetchGoogleDoc, toast]);
+
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
     const reader = resp.body!.getReader();
