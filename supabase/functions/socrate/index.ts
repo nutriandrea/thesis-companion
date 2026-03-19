@@ -1791,10 +1791,8 @@ ISTRUZIONI ATTACCO:
 - Quando una vulnerabilità viene affrontata seriamente, riconosci il progresso ma alza il livello.`;
         }
 
-        // Load affinity scores to identify dataset patterns
-        const { data: affinities } = await supabase.from("affinity_scores")
-          .select("entity_type, entity_name, score, reasoning")
-          .eq("user_id", userId).order("score", { ascending: false }).limit(10);
+        // Process affinities
+        const affinities = affinitiesResult.status === "fulfilled" ? (affinitiesResult.value as any).data : null;
 
         if (affinities && affinities.length > 0) {
           const topMatches = affinities.filter((a: any) => a.score >= 60);
