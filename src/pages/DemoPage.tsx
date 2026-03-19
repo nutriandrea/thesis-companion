@@ -960,7 +960,7 @@ function DemoDashboard() {
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Demo banner */}
       <div className="bg-accent/10 border-b border-accent/20 px-4 py-2 text-center shrink-0">
-        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Modalità Demo — Dati simulati — Clicca sulle fasi per navigare</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Simulated data — Click phases to navigate</span>
       </div>
 
       {/* Top: Identity */}
