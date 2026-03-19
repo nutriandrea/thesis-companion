@@ -422,8 +422,8 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-6 space-y-5">
         {messages.map((msg) => (
-          <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={msg.id}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}>
             <div className={`max-w-[75%] px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-card border border-border rounded-2xl" : "bg-secondary border border-border rounded-2xl"}`}>
               {msg.content === "" && (isStreaming || isGeneratingReport) ? (
                 <div className="flex gap-1.5">
@@ -435,7 +435,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
                 <div className="prose prose-sm max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
               )}
             </div>
-          </motion.div>
+          </div>
         ))}
         <div ref={bottomRef} />
       </div>
