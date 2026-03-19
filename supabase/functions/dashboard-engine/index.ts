@@ -30,11 +30,7 @@ Deno.serve(async (req) => {
       });
     }
     const userId = claimsData.claims.sub as string;
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+
 
     // Fetch ALL dashboard data in parallel
     const [
