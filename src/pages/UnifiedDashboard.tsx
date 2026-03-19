@@ -652,6 +652,7 @@ export default function UnifiedDashboard() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [studentProfile, setStudentProfile] = useState<any>(null);
@@ -912,13 +913,42 @@ export default function UnifiedDashboard() {
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* ─── TOP: Orb + Identity ─── */}
       <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
-        <button onClick={signOut} className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-          <LogOut className="w-4 h-4" />
-        </button>
-        <motion.div className="text-center space-y-0.5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <h1 className="text-lg font-bold text-foreground font-display">{name}</h1>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto px-4 truncate">{profile?.thesis_topic || "Tesi non definita"}</p>
+        {/* Top-left: user name + logout */}
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">{name}</span>
+          <button onClick={signOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Center: Thesis title + doc link */}
+        <motion.div className="text-center space-y-1 px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-lg font-bold text-foreground font-display">
+              {profile?.thesis_topic || "Tesi non definita"}
+            </h1>
+            {profile?.google_doc_url ? (
+              <a
+                href={profile.google_doc_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Apri documento tesi"
+              >
+                <Link2 className="w-4 h-4" />
+              </a>
+            ) : (
+              <button
+                onClick={() => setShowDocModal(true)}
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Collega documento tesi"
+              >
+                <Link2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </motion.div>
+
         <motion.button
           onClick={() => setChatOpen(true)}
           className="mt-3 flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
@@ -934,6 +964,29 @@ export default function UnifiedDashboard() {
           </motion.p>
         )}
       </div>
+
+      {/* Doc link modal */}
+      <AnimatePresence>
+        {showDocModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+            onClick={() => setShowDocModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-card border border-border rounded-lg p-6 w-full max-w-md mx-4 space-y-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-foreground">Collega documento tesi</h3>
+                <button onClick={() => setShowDocModal(false)} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+              </div>
+              <ThesisDocWidget profile={profile} updateProfile={updateProfile} user={user} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Google Doc auto-syncs from profile settings */}
 
