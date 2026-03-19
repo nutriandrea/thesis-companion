@@ -652,6 +652,7 @@ export default function UnifiedDashboard() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [studentProfile, setStudentProfile] = useState<any>(null);
