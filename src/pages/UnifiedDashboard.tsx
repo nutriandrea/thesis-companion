@@ -314,10 +314,16 @@ export default function UnifiedDashboard() {
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
 
+  // Google Docs state
+  const [googleDocUrl, setGoogleDocUrl] = useState("");
+  const [googleDocInput, setGoogleDocInput] = useState("");
+  const [thesisContent, setThesisContent] = useState("");
+  const [docLoading, setDocLoading] = useState(false);
+  const [docSynced, setDocSynced] = useState(false);
+
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
     : "";
-  const thesisContent = "";
 
   // Load data
   useEffect(() => {
