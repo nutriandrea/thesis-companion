@@ -484,7 +484,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
             placeholder="Rispondi a Socrate..." disabled={isStreaming}
             className="flex-1 bg-card border border-border rounded-full px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
           <button onClick={() => setInputMode("voice")}
-            className="px-3 py-3 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="px-3 py-3 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             title="Passa alla modalità vocale">
             <Mic className="w-4 h-4" />
           </button>
