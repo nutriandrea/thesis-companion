@@ -2081,8 +2081,8 @@ export default function UnifiedDashboard() {
               key: "vulnerabilities",
               delay: delay,
               component: (
-                <DashboardCard title="Vulnerabilities" icon={ShieldAlert} badge={vulnerabilities.length}
-                  action={{ label: "Scan", onClick: scanVulnerabilities, loading: isScanning }}>
+                <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
                   <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
                 </DashboardCard>
               ),
