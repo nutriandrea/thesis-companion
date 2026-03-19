@@ -1821,12 +1821,44 @@ function DemoDashboard() {
               </div>
             );
           })}
+          <button
+            onClick={() => {
+              const nextIdx = Math.min(currentPhaseIdx + 1, PHASES.length - 1);
+              setCurrentPhaseIdx(nextIdx);
+            }}
+            className="ml-4 p-2 rounded-full bg-foreground/10 text-foreground hover:bg-foreground/20 transition-colors shrink-0"
+            title="Evaluate phase"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
       {/* Chat overlay */}
       <AnimatePresence>
-        {showChat && <DemoChatOverlay onClose={() => setShowChat(false)} />}
+        {showChat && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/10 z-40"
+              onClick={() => setShowChat(false)}
+            />
+            {chatMode === "voice" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+              >
+                <DemoVoiceView
+                  messages={MOCK_SOCRATE_MESSAGES}
+                  onSwitchToText={() => setChatMode("text")}
+                  onSkip={() => setShowChat(false)}
+                />
+              </motion.div>
+            ) : (
+              <DemoChatOverlay onClose={() => setShowChat(false)} />
+            )}
+          </>
+        )}
       </AnimatePresence>
     </div>
   );
