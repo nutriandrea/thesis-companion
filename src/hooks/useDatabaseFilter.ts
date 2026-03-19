@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 import supervisorsData from "@/data/supervisors.json";
 import topicsData from "@/data/topics.json";
 import companiesData from "@/data/companies.json";
