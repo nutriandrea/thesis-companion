@@ -40,11 +40,11 @@ const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`
 
 
 const PHASES = [
-  { key: "orientation", label: "Orientation", icon: "1" },
-  { key: "topic_supervisor", label: "Topic & Supervisor", icon: "2" },
-  { key: "planning", label: "Planning", icon: "3" },
-  { key: "execution", label: "Execution", icon: "4" },
-  { key: "writing", label: "Writing", icon: "5" },
+  { key: "orientation", label: "Orientamento", icon: "1" },
+  { key: "topic_supervisor", label: "Tema & Relatore", icon: "2" },
+  { key: "planning", label: "Pianificazione", icon: "3" },
+  { key: "execution", label: "Esecuzione", icon: "4" },
+  { key: "writing", label: "Scrittura", icon: "5" },
 ] as const;
 
 type SinglePhaseKey = (typeof PHASES)[number]["key"];
