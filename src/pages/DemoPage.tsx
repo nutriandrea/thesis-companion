@@ -12,8 +12,8 @@ interface CareerSector { name: string; percentage: number; reasoning?: string; }
 interface MockTask { id: string; title: string; description: string; priority: string; status: string; estimated_minutes: number; }
 interface MockVulnerability { id: string; type: string; title: string; description: string; severity: string; }
 interface MockReference { title: string; authors: string; year: string; url: string; category: string; relevance: string; }
-interface MockSupervisor { id: string; name: string; fields: string[]; score: number; reasoning: string; }
-interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; }
+interface MockSupervisor { id: string; name: string; fields: string[]; score: number; reasoning: string; email: string; university: string; }
+interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; email: string; }
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
 
 // ─── MOCK DATA ───
@@ -47,11 +47,15 @@ const MOCK_TASKS: Record<string, MockTask[]> = {
     { id: "t10", title: "Fine-tuning GPT-4 su dataset CWE", description: "Esegui il fine-tuning del modello sul dataset di vulnerabilità CWE.", priority: "critical", status: "pending", estimated_minutes: 240 },
     { id: "t11", title: "Benchmark contro SAST tools", description: "Confronta i risultati del modello con SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
     { id: "t12", title: "Analisi qualitativa dei falsi positivi", description: "Classifica e analizza i pattern dei falsi positivi più comuni.", priority: "medium", status: "pending", estimated_minutes: 120 },
+    { id: "t10b", title: "Leggere paper: VulDeePecker (Li et al.)", description: "Leggi in dettaglio il paper VulDeePecker per confrontare il tuo approccio di detection con il baseline deep learning.", priority: "high", status: "completed", estimated_minutes: 90 },
+    { id: "t10c", title: "Leggere tesi: 'LLM-based SAST' (ETH 2025)", description: "Analizza la tesi di master di K. Meier (ETH Zurich) sul confronto LLM vs SAST tradizionali per code review.", priority: "medium", status: "pending", estimated_minutes: 120 },
   ],
   writing: [
     { id: "t13", title: "Scrivere capitolo Methodology", description: "Descrivi in dettaglio la pipeline sperimentale, i modelli usati, e i parametri di training.", priority: "critical", status: "pending", estimated_minutes: 300 },
     { id: "t14", title: "Creare grafici risultati", description: "Genera confusion matrix, ROC curves, e tabelle comparative.", priority: "high", status: "pending", estimated_minutes: 120 },
     { id: "t15", title: "Revisione finale con supervisore", description: "Invia la bozza completa al supervisore per la review finale.", priority: "critical", status: "pending", estimated_minutes: 60 },
+    { id: "t15b", title: "Leggere paper: Limits of LLMs in Security", description: "Rileggi il paper critico di Pearce et al. per rafforzare la sezione Discussion e anticipare obiezioni.", priority: "high", status: "pending", estimated_minutes: 60 },
+    { id: "t15c", title: "Leggere tesi: 'Automated Vuln Detection' (EPFL 2024)", description: "Consulta la tesi di dottorato di S. Dupont (EPFL) per approfondire related work sulla vulnerability detection automatizzata.", priority: "medium", status: "pending", estimated_minutes: 90 },
   ],
 };
 
@@ -86,17 +90,17 @@ const MOCK_ROADMAP: RoadmapPhase[] = [
 ];
 
 const MOCK_SUPERVISORS: MockSupervisor[] = [
-  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "Esperto di NLP applicato al software engineering con 15 pubblicazioni sul tema." },
-  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Ricerca attiva su vulnerability detection con approcci ML." },
-  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Focus su testing automatico e qualità del codice." },
-  { id: "s4", name: "Prof.ssa Anna Neri", fields: ["AI Safety", "LLM"], score: 74, reasoning: "Lavora su alignment e safety dei large language models." },
+  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "Esperto di NLP applicato al software engineering con 15 pubblicazioni sul tema.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
+  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Ricerca attiva su vulnerability detection con approcci ML.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
+  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Focus su testing automatico e qualità del codice.", email: "luigi.verdi@uzh.ch", university: "UZH" },
+  { id: "s4", name: "Prof.ssa Anna Neri", fields: ["AI Safety", "LLM"], score: 74, reasoning: "Lavora su alignment e safety dei large language models.", email: "anna.neri@unisg.ch", university: "HSG" },
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
-  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Esperto di fuzzing e vulnerability research, potrebbe dare insight pratici.", offerInterviews: true },
-  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Ha pubblicato su LLM per code generation, conosce le limitazioni.", offerInterviews: true },
-  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Esperienza industriale nell'applicazione di AI alla cybersecurity.", offerInterviews: false },
-  { id: "e4", name: "Prof. James Chen", title: "Stanford University", score: 71, reasoning: "Autore del framework VulnBench, reference nella vulnerability detection.", offerInterviews: false },
+  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Esperto di fuzzing e vulnerability research, potrebbe dare insight pratici.", offerInterviews: true, email: "p.ferretti@google.com" },
+  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Ha pubblicato su LLM per code generation, conosce le limitazioni.", offerInterviews: true, email: "m.conti@deepmind.com" },
+  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Esperienza industriale nell'applicazione di AI alla cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
+  { id: "e4", name: "Prof. James Chen", title: "Stanford University", score: 71, reasoning: "Autore del framework VulnBench, reference nella vulnerability detection.", offerInterviews: false, email: "jchen@stanford.edu" },
 ];
 
 const MOCK_REFERENCES: MockReference[] = [
@@ -292,7 +296,8 @@ function DemoSupervisors() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{sup.university} · {sup.fields.join(", ")}</p>
+            <a href={`mailto:${sup.email}`} className="text-[10px] text-accent hover:underline block">{sup.email}</a>
             <p className="text-[10px] text-foreground/60 line-clamp-1 mt-0.5">{sup.reasoning}</p>
           </div>
           <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
@@ -313,6 +318,7 @@ function DemoExperts() {
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-foreground truncate">{exp.name}</p>
             <p className="text-[10px] text-muted-foreground truncate">{exp.title}</p>
+            <a href={`mailto:${exp.email}`} className="text-[10px] text-accent hover:underline block">{exp.email}</a>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {exp.offerInterviews && <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Intervista</span>}
@@ -505,11 +511,9 @@ export default function DemoPage() {
   cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Rubrica"} icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
 
-  // References: pre-execution
-  if (!showExecution && !showWriting) {
-    cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
-    delay += 0.05;
-  }
+  // References: all phases
+  cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
+  delay += 0.05;
 
   // Vulnerabilities: execution+
   if (showExecution || showWriting) {
