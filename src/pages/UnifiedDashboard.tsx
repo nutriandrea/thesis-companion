@@ -34,6 +34,16 @@ const CAREER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/career-eng
 const RAG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`;
 const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
 
+  // Close chat and auto-compute career
+  const closeChat = useCallback(() => {
+    setChatOpen(false);
+    setInputMode("text");
+    // Auto-compute career after conversation ends (if there were messages)
+    if (messages.length > 2) {
+      setTimeout(() => computeCareer(), 500);
+    }
+  }, [messages.length, computeCareer]);
+
 
 const PHASES = [
   { key: "orientation", label: "Orientamento", icon: "1" },
