@@ -106,9 +106,9 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: [0.5, 1.2, 1], opacity: 1 }}
               transition={{ duration: 1.5, ease: "easeOut" }}
-              className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-6 ring-2 ring-accent/30"
+              className="mx-auto mb-6"
             >
-              <img src={socrateCoinImg} alt="Socrate" className="w-full h-full object-cover" style={{ filter: "contrast(1.1) grayscale(100%)" }} />
+              <SocrateCoin size={96} interactive={false} />
             </motion.div>
             <motion.p
               initial={{ opacity: 0, y: 8 }}
