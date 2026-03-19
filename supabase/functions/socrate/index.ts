@@ -2151,14 +2151,24 @@ Italiano, diretto, specifico, provocatorio.`;
         if (vulns && vulns.length > 0) {
           vulnerabilitiesCtx = `
 VULNERABILITÀ ATTIVE (usa queste per attaccare direttamente lo studente):
-${vulns.map((v: any) => `- [${v.severity.toUpperCase()}] ${v.type}: "${v.title}" — ${v.description}`).join("\n")}
+${vulns.map((v: any) => `- [${v.severity.toUpperCase()}] ${v.type}: "${v.title}" (ID: ${v.id}) — ${v.description}`).join("\n")}
 
 ISTRUZIONI ATTACCO:
 - Cita ESPLICITAMENTE queste vulnerabilità durante la conversazione.
 - Non aspettare che lo studente le menzioni. Attacca TU.
 - "Mi risulta che la tua tesi ha un problema serio: [vulnerabilità]. Come pensi di risolverlo?"
 - Se lo studente evita, insisti: "Non hai risposto. Questo punto è debole e lo sai."
-- Quando una vulnerabilità viene affrontata seriamente, riconosci il progresso ma alza il livello.`;
+- Quando una vulnerabilità viene affrontata seriamente, riconosci il progresso ma alza il livello.
+
+VALIDAZIONE RISOLUZIONE VULNERABILITÀ:
+Se lo studente afferma di aver risolto una vulnerabilità specifica:
+1. Fai domande critiche per VERIFICARE che abbia realmente compreso e risolto il problema
+2. NON accettare spiegazioni superficiali — chiedi EVIDENZE concrete e ragionamento dettagliato
+3. Solo quando sei GENUINAMENTE CONVINTO che la vulnerabilità è stata risolta, inserisci il marcatore:
+   <!-- VULN_RESOLVED:ID_DELLA_VULNERABILITA -->
+4. Il marcatore deve contenere l'ID esatto della vulnerabilità (presente sopra tra parentesi)
+5. NON inserire mai il marcatore se hai ancora dubbi — continua a interrogare
+6. Quando inserisci il marcatore, accompagnalo con una conferma: "Fine. Questa debolezza è risolta."`;
         }
 
         // Process affinities
