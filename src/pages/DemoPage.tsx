@@ -1034,9 +1034,11 @@ function DemoSupervisors() {
   const [selected, setSelected] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
 
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
+
   return (
     <div className="space-y-2">
-      {MOCK_SUPERVISORS.map(sup => {
+      {sups.map(sup => {
         const isSelected = selected === sup.id;
         return (
           <div key={sup.id}>
