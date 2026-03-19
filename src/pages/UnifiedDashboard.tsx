@@ -1440,7 +1440,7 @@ function ChatOverlay({
         <input
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-          placeholder="Reply to Socrate..."
+          placeholder="Rispondi a Socrate..."
           disabled={isStreaming}
           className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
