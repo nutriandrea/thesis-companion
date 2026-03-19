@@ -151,20 +151,30 @@ Massimo 6 settori.`,
       const vulns = vulnsRes.data || [];
       const memories = memRes.data || [];
       const affinities = affinityRes.data || [];
-      const currentPhase = student?.current_phase || "orientation";
+      const rawPhase = student?.current_phase || "orientation";
 
-      // Canonical phases used by the dashboard
-      // orientation → topic_supervisor → planning → execution → writing
       const CANONICAL_PHASES = ["orientation", "topic_supervisor", "planning", "execution", "writing"];
-      const currentIndex = CANONICAL_PHASES.indexOf(currentPhase);
-      const nextPhase = currentIndex >= 0 && currentIndex < CANONICAL_PHASES.length - 1
-        ? CANONICAL_PHASES[currentIndex + 1]
-        : currentPhase;
+      
+      // Parse hybrid phase: "phaseA+phaseB" or single phase
+      const parsedPhases = rawPhase.includes("+") ? rawPhase.split("+") : [rawPhase];
+      const primaryPhase = parsedPhases[0];
+      const currentIndex = CANONICAL_PHASES.indexOf(primaryPhase);
+      const furthestPhase = parsedPhases.length > 1 ? parsedPhases[1] : primaryPhase;
+      const furthestIndex = CANONICAL_PHASES.indexOf(furthestPhase);
+      const nextPhase = furthestIndex >= 0 && furthestIndex < CANONICAL_PHASES.length - 1
+        ? CANONICAL_PHASES[furthestIndex + 1]
+        : furthestPhase;
 
       const completedTasks = tasks.filter((t: any) => t.status === "completed").length;
       const pendingTasks = tasks.filter((t: any) => t.status !== "completed").length;
       const criticalVulns = vulns.filter((v: any) => v.severity === "critical").length;
       const hasSupervisor = !!student?.selected_supervisor_id;
+
+      // Build all valid phase options including hybrid
+      const VALID_PHASES: string[] = [...CANONICAL_PHASES];
+      for (let i = 0; i < CANONICAL_PHASES.length - 1; i++) {
+        VALID_PHASES.push(`${CANONICAL_PHASES[i]}+${CANONICAL_PHASES[i + 1]}`);
+      }
 
       const response = await fetch(AI_URL, {
         method: "POST",
@@ -173,7 +183,7 @@ Massimo 6 settori.`,
           model: MODEL,
           messages: [{
             role: "system",
-            content: `Sei il PHASE ENGINE di Socrate. Valuta se lo studente è pronto a passare dalla fase "${currentPhase}" alla fase "${nextPhase}".
+            content: `Sei il PHASE ENGINE di Socrate. Valuta la fase attuale dello studente e determina se deve avanzare, restare, o trovarsi in una fase IBRIDA.
 
 LE 5 FASI CANONICHE (in ordine):
 1. orientation — lo studente esplora argomenti e cerca una direzione
@@ -182,8 +192,14 @@ LE 5 FASI CANONICHE (in ordine):
 4. execution — esegue la ricerca, raccoglie dati, sviluppa il progetto
 5. writing — scrive, rivede e finalizza la tesi
 
+FASI IBRIDE possibili (quando lo studente è a cavallo tra due fasi adiacenti):
+- "orientation+topic_supervisor" — sta iniziando a convergere su un topic ma non ha ancora deciso
+- "topic_supervisor+planning" — ha il topic, sta scegliendo supervisore e iniziando a pianificare
+- "planning+execution" — sta finalizzando la struttura e già iniziando l'esecuzione
+- "execution+writing" — sta eseguendo e già scrivendo alcune sezioni
+
 STATO ATTUALE:
-- Fase corrente: ${currentPhase} (indice ${currentIndex} di ${CANONICAL_PHASES.length})
+- Fase corrente: ${rawPhase} (${parsedPhases.length > 1 ? "ibrida" : "singola"})
 - Prossima fase possibile: ${nextPhase}
 - Topic tesi: ${profile?.thesis_topic || "Non definito"}
 - Supervisore scelto: ${hasSupervisor ? "Sì" : "No"}
@@ -195,17 +211,18 @@ STATO ATTUALE:
 MEMORIE RECENTI: ${JSON.stringify(memories.slice(0, 10).map((m: any) => m.title))}
 AFFINITÀ: ${JSON.stringify(affinities.slice(0, 5).map((a: any) => ({ type: a.entity_type, name: a.entity_name, score: a.score })))}
 
-REGOLE DI TRANSIZIONE RIGOROSE:
-- orientation → topic_supervisor: RICHIEDE topic tesi definito (thesis_topic non vuoto)
-- topic_supervisor → planning: RICHIEDE supervisore scelto (selected_supervisor_id presente) E topic solido
-- planning → execution: RICHIEDE struttura capitoli definita, nessuna vulnerabilità critica
-- execution → writing: RICHIEDE progresso significativo (>50%), task chiave completati
-- writing → (finale): non si avanza ulteriormente
+REGOLE:
+- Se lo studente soddisfa PARZIALMENTE i criteri per avanzare, usa una fase IBRIDA
+- Se li soddisfa COMPLETAMENTE, avanza alla fase successiva piena
+- Se non li soddisfa, resta nella fase corrente
+- orientation → topic_supervisor: RICHIEDE topic tesi definito
+- topic_supervisor → planning: RICHIEDE supervisore scelto E topic solido
+- planning → execution: RICHIEDE struttura definita, no vulnerabilità critiche
+- execution → writing: RICHIEDE progresso >50%, task chiave completati
 
 IMPORTANTE:
-- new_phase DEVE essere esattamente uno di: ${CANONICAL_PHASES.join(", ")}
-- Se non può avanzare, new_phase = "${currentPhase}" (fase corrente)
-- Sii RIGOROSO: non avanzare se le condizioni non sono chiaramente soddisfatte`,
+- new_phase DEVE essere uno di: ${VALID_PHASES.join(", ")}
+- Preferisci le fasi ibride quando lo studente mostra segni di transizione ma non è completamente pronto`,
           }],
           tools: [{
             type: "function",
@@ -215,8 +232,8 @@ IMPORTANTE:
               parameters: {
                 type: "object",
                 properties: {
-                  can_advance: { type: "boolean" },
-                  new_phase: { type: "string", enum: CANONICAL_PHASES },
+                  can_advance: { type: "boolean", description: "True if phase changes (including to hybrid)" },
+                  new_phase: { type: "string", description: "New phase: single (e.g. 'planning') or hybrid (e.g. 'planning+execution')" },
                   confidence: { type: "number" },
                   reasoning: { type: "string" },
                   blockers: {
@@ -244,24 +261,27 @@ IMPORTANTE:
         try { result = JSON.parse(toolCall.function.arguments); } catch { result = {}; }
       }
 
-      // Validate new_phase is canonical
-      if (!CANONICAL_PHASES.includes(result.new_phase)) {
-        result.new_phase = currentPhase;
+      // Validate new_phase is valid (single or hybrid)
+      if (!VALID_PHASES.includes(result.new_phase)) {
+        result.new_phase = rawPhase;
         result.can_advance = false;
       }
 
-      // Update phase if advancing
-      if (result.can_advance && result.new_phase !== currentPhase) {
+      // Update phase if changed
+      if (result.can_advance && result.new_phase !== rawPhase) {
         const history = student?.phase_history || [];
         history.push({
-          from: currentPhase,
+          from: rawPhase,
           to: result.new_phase,
           timestamp: new Date().toISOString(),
           reasoning: result.reasoning,
         });
 
+        // Completion estimate based on furthest phase reached
+        const newPhaseParts = result.new_phase.split("+");
+        const furthest = newPhaseParts[newPhaseParts.length - 1];
         const newCompletion = result.completion_estimate || Math.min(
-          (CANONICAL_PHASES.indexOf(result.new_phase) + 1) / CANONICAL_PHASES.length * 100,
+          (CANONICAL_PHASES.indexOf(furthest) + 1) / CANONICAL_PHASES.length * 100,
           100
         );
 
@@ -273,7 +293,8 @@ IMPORTANTE:
           overall_completion: Math.round(newCompletion),
         }).eq("user_id", userId);
 
-        // Map canonical phase to profiles.journey_state
+        // Map to profiles.journey_state using the primary phase
+        const primary = newPhaseParts[0];
         const stateMap: Record<string, string> = {
           orientation: "lost",
           topic_supervisor: "topic_chosen",
@@ -281,13 +302,12 @@ IMPORTANTE:
           execution: "writing",
           writing: "writing",
         };
-        if (stateMap[result.new_phase]) {
+        if (stateMap[primary]) {
           await supabase.from("profiles").update({
-            journey_state: stateMap[result.new_phase],
+            journey_state: stateMap[primary],
           }).eq("user_id", userId);
         }
       } else {
-        // Just update confidence and completion estimate
         const updates: any = { phase_confidence: result.confidence };
         if (result.completion_estimate) updates.overall_completion = Math.round(result.completion_estimate);
         await supabase.from("student_profiles").update(updates).eq("user_id", userId);
