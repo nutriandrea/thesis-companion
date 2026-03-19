@@ -537,10 +537,10 @@ function DemoTasks({ phase }: { phase: string }) {
   const tasks = MOCK_TASKS[phase] || MOCK_TASKS.orientation;
   const priorityLabel = (p: string) => {
     switch (p) {
-      case "critical": return { text: "Critico", cls: "bg-destructive/10 text-destructive" };
-      case "high": return { text: "Alto", cls: "bg-warning/10 text-warning" };
-      case "medium": return { text: "Medio", cls: "bg-accent/10 text-accent" };
-      default: return { text: "Basso", cls: "bg-muted text-muted-foreground" };
+      case "critical": return { text: "Critical", cls: "bg-destructive/10 text-destructive" };
+      case "high": return { text: "High", cls: "bg-warning/10 text-warning" };
+      case "medium": return { text: "Medium", cls: "bg-accent/10 text-accent" };
+      default: return { text: "Low", cls: "bg-muted text-muted-foreground" };
     }
   };
   const [expandedId, setExpandedId] = useState<string | null>(null);
