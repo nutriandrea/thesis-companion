@@ -1376,7 +1376,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
             <input
               value={docUrl} onChange={e => setDocUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveAndSync()}
-              placeholder="Paste Google Docs / Overleaf link"
+              placeholder="Incolla link Google Docs / Overleaf"
               className="flex-1 bg-secondary/50 border border-border px-3 py-2.5 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-foreground/20 transition-colors"
             />
             <button onClick={saveAndSync} disabled={!docUrl.trim() || syncing}
