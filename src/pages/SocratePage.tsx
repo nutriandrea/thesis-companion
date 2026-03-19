@@ -95,8 +95,8 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
           const welcome: ChatMsg = {
             id: "welcome", role: "assistant",
             content: profile?.first_name
-              ? `**${profile.first_name}.** Finalmente ci incontriamo.\n\nSono Socrate. Non sono qui per darti risposte — sono qui per farti le domande che non vuoi farti.\n\nPrima di iniziare, dimmi: **a che punto sei con la tesi?**\n\n1. 🔍 **Ricerca** — sto ancora cercando un argomento\n2. 📐 **Struttura** — ho un topic ma devo organizzare i capitoli\n3. ✍️ **Scrittura** — sto scrivendo attivamente\n4. 🔄 **Revisione** — sto rivedendo e perfezionando`
-              : `Benvenuto. Sono Socrate. Presentati: chi sei, cosa studi, e cosa ti porta qui.`,
+              ? `**${profile.first_name} ${profile.last_name || ""}**.${profile.degree ? ` ${profile.degree}` : ""}${profile.university ? ` all'${profile.university}` : ""}.\n\nSono Socrate. Non sono qui per darti risposte — sono qui per farti le domande che non vuoi farti.\n\n**A che punto sei con la tesi?**\n\n1. 🔍 **Ricerca** — sto ancora cercando un argomento\n2. 📐 **Struttura** — ho un topic ma devo organizzare i capitoli\n3. ✍️ **Scrittura** — sto scrivendo attivamente\n4. 🔄 **Revisione** — sto rivedendo e perfezionando`
+              : `Benvenuto. Sono Socrate. Non ho i tuoi dati — presentati: chi sei, cosa studi, e cosa ti porta qui.`,
           };
           setMessages([welcome]);
           if (user) supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: welcome.content });
