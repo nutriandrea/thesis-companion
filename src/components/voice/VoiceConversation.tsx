@@ -280,9 +280,16 @@ export default function VoiceConversation({
             <FileText className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setShowTextInput(!showTextInput)}
-            className={`p-2 rounded-full transition-colors ${showTextInput ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
-            title="Type instead">
+            onClick={() => {
+              unmountedRef.current = true;
+              abortRef.current?.abort();
+              try { scribe.disconnect(); } catch(e) {}
+              stopAudio();
+              setVoiceState("idle");
+              onClose();
+            }}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Passa alla chat testuale">
             <Keyboard className="w-4 h-4" />
           </button>
           {showReport && (
