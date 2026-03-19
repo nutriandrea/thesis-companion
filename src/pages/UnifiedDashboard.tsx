@@ -2055,7 +2055,7 @@ export default function UnifiedDashboard() {
             key: "rubrica",
             delay: delay,
             component: (
-              <DashboardCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}>
+              <DashboardCard title={showTopicSupervisor ? "Partner per interviste" : "Contatti"} icon={Users}>
                 <ExpertSuggestions userId={user?.id || ""} />
               </DashboardCard>
             ),
