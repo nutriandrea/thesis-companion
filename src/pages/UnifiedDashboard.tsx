@@ -300,6 +300,177 @@ function CareerBar({ sectors, onSectorClick, loading }: {
   );
 }
 
+// ─── CAREER TREE (tree view with sectors → companies) ───
+function CareerTree({ sectors, userId, loading }: {
+  sectors: CareerSector[]; userId: string; loading: boolean;
+}) {
+  const [expandedSector, setExpandedSector] = useState<string | null>(null);
+  const [sectorCompanies, setSectorCompanies] = useState<Record<string, any[]>>({});
+  const [loadingSector, setLoadingSector] = useState<string | null>(null);
+  const { affinities } = useAffinityScores(userId, "company");
+
+  const BRANCH_COLORS = [
+    "hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)",
+    "hsl(var(--warning))", "hsl(270 60% 55%)", "hsl(200 70% 50%)",
+  ];
+
+  const sorted = useMemo(() => [...sectors].sort((a, b) => b.percentage - a.percentage), [sectors]);
+
+  // When a sector expands, fetch its companies
+  const toggleSector = useCallback(async (sectorName: string) => {
+    if (expandedSector === sectorName) { setExpandedSector(null); return; }
+    setExpandedSector(sectorName);
+    if (sectorCompanies[sectorName]) return; // already fetched
+
+    setLoadingSector(sectorName);
+    try {
+      const resp = await fetch(CAREER_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ mode: "get_companies_by_sector", sector: sectorName }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setSectorCompanies(prev => ({ ...prev, [sectorName]: data.companies || [] }));
+      }
+    } catch { /* silent */ }
+
+    // Fallback: match from local data by domain keywords
+    if (!sectorCompanies[sectorName]) {
+      const kw = sectorName.toLowerCase();
+      const matched = companies.filter(c =>
+        c.domains.some(d => d.toLowerCase().includes(kw)) ||
+        c.description.toLowerCase().includes(kw)
+      ).slice(0, 5);
+      setSectorCompanies(prev => ({ ...prev, [sectorName]: matched.map(c => ({ name: c.name, description: c.description, domains: c.domains })) }));
+    }
+    setLoadingSector(null);
+  }, [expandedSector, sectorCompanies]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      <span className="text-xs text-muted-foreground ml-2">Analizzando direzioni...</span>
+    </div>
+  );
+
+  if (sorted.length === 0) return (
+    <p className="text-xs text-muted-foreground text-center py-8 italic">
+      Parla con Socrate per scoprire le direzioni possibili della tua tesi.
+    </p>
+  );
+
+  return (
+    <div className="space-y-1">
+      {/* Trunk label */}
+      <div className="flex items-center gap-2 pb-2">
+        <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
+        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">La tua tesi</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      {sorted.map((sector, i) => {
+        const isExpanded = expandedSector === sector.name;
+        const color = BRANCH_COLORS[i % BRANCH_COLORS.length];
+        const comps = sectorCompanies[sector.name] || [];
+        const isLoading = loadingSector === sector.name;
+
+        return (
+          <div key={sector.name} className="relative">
+            {/* Vertical connector line */}
+            <div className="absolute left-[7px] top-0 bottom-0 w-px bg-border" />
+
+            {/* Branch */}
+            <button
+              onClick={() => toggleSector(sector.name)}
+              className={`relative w-full flex items-center gap-3 pl-5 pr-3 py-2.5 rounded-lg transition-all text-left group ${
+                isExpanded ? "bg-secondary/60" : "hover:bg-secondary/30"
+              }`}
+            >
+              {/* Branch node */}
+              <div className="absolute left-[3px] top-1/2 -translate-y-1/2 flex items-center">
+                <div className="w-[9px] h-[9px] rounded-full border-2 shrink-0" style={{ borderColor: color, backgroundColor: isExpanded ? color : "transparent" }} />
+                <div className="w-3 h-px" style={{ backgroundColor: color }} />
+              </div>
+
+              {/* Sector info */}
+              <div className="flex-1 min-w-0 ml-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-foreground">{sector.name}</span>
+                  {sector.reasoning && (
+                    <span className="text-[9px] text-muted-foreground truncate max-w-[180px] hidden lg:inline">
+                      {sector.reasoning}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Percentage bar */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: color }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${sector.percentage}%` }}
+                    transition={{ duration: 0.6, delay: i * 0.08 }}
+                  />
+                </div>
+                <span className="text-[11px] font-bold w-8 text-right" style={{ color }}>{sector.percentage}%</span>
+              </div>
+
+              {/* Expand indicator */}
+              <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+            </button>
+
+            {/* Expanded: companies under this branch */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pl-8 pr-2 pb-2 space-y-1">
+                    {isLoading ? (
+                      <div className="flex items-center gap-2 py-3 pl-4">
+                        <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground">Cercando aziende...</span>
+                      </div>
+                    ) : comps.length === 0 ? (
+                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">Nessuna azienda trovata per questo settore.</p>
+                    ) : (
+                      comps.slice(0, 5).map((comp: any, j: number) => (
+                        <div key={j} className="relative flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
+                          {/* Leaf connector */}
+                          <div className="absolute left-0 top-1/2 w-3 h-px" style={{ backgroundColor: `${color}40` }} />
+                          <div className="w-5 h-5 rounded bg-secondary flex items-center justify-center shrink-0">
+                            <Building2 className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-medium text-foreground truncate">{comp.name}</p>
+                            <p className="text-[9px] text-muted-foreground truncate">
+                              {comp.domains?.join(", ") || comp.description?.substring(0, 60) || ""}
+                            </p>
+                          </div>
+                          {comp.thesis_coherence != null && (
+                            <span className="text-[9px] font-bold shrink-0" style={{ color }}>{comp.thesis_coherence}%</span>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── SUPERVISOR SELECTION ───
 function SupervisorSelection({ userId, selectedId, onSelect }: {
   userId: string; selectedId: string | null;
