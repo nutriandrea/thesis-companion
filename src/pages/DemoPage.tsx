@@ -461,7 +461,7 @@ function DemoOnboarding({ onNext }: { onNext: () => void }) {
 // ══════════════════════════════════════════════════════
 // STEP 3: DEMO SOCRATE INTRO (1:1 with SocrateIntro)
 // ══════════════════════════════════════════════════════
-function DemoIntro({ onNext }: { onNext: () => void }) {
+function DemoIntro({ onNext }: { onNext: (mode: "voice" | "text") => void }) {
   const [phase, setPhase] = useState<"coin-reveal" | "coin-translate" | "text-appear" | "mode-choice">("coin-reveal");
   const [currentSubtitle, setCurrentSubtitle] = useState("");
 
