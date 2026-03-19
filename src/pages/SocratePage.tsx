@@ -376,14 +376,14 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
   if (inputMode === "voice") {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-3rem)] relative">
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1, ease: "easeOut" }} className="animate-subtle-float">
-          <GradientOrb size="lg" />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+          <SocrateIcon size="lg" />
         </motion.div>
-        <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-foreground text-lg font-bold tracking-[0.15em] uppercase mt-8 text-center leading-relaxed">
+        <motion.h2 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-foreground text-lg font-semibold tracking-wide uppercase mt-6 text-center leading-relaxed">
           SPEAK WITH<br />ME
         </motion.h2>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="absolute bottom-8 left-8">
-          <button className="w-10 h-10 bg-secondary border border-border rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="absolute bottom-8 left-8">
+          <button className="w-10 h-10 bg-secondary border border-border rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-150">
             <Mic className="w-4 h-4" />
           </button>
         </motion.div>
