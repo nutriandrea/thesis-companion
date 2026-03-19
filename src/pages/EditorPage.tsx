@@ -323,7 +323,7 @@ export default function EditorPage() {
               <div key={fb.id} className="bg-ai/5 border border-ai/10 rounded-lg p-3">
                 <p className="text-xs font-medium text-foreground">{fb.title}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">{fb.detail}</p>
-                {fb.reason && <p className="text-[10px] text-ai/70 mt-1 italic">💡 {fb.reason}</p>}
+                {fb.reason && <p className="text-[10px] text-ai/70 mt-1 italic">{fb.reason}</p>}
               </div>
             ))}
           </div>

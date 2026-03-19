@@ -94,7 +94,7 @@ export default function FuturesPage() {
                   <div><p className="text-[10px] font-medium text-muted-foreground mb-1"><Award className="w-2.5 h-2.5 inline" /> Impatto</p><span className="text-sm font-semibold">{s.impactScore}/100</span></div>
                 </div>
                 <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
-                  <p>⏱ {s.completionTime}</p><p>📄 {s.publications} pubblicazioni</p><p>🤝 +{s.networkGrowth} contatti</p>
+                  <p>{s.completionTime}</p><p>{s.publications} pubblicazioni</p><p>+{s.networkGrowth} contatti</p>
                 </div>
               </motion.div>
             ))}

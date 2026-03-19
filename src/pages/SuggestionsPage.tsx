@@ -179,7 +179,7 @@ export default function SuggestionsPage() {
                         <h3 className="font-semibold text-sm">{sug.title}</h3>
                         <p className="text-xs text-muted-foreground mt-1">{sug.detail}</p>
                         {sug.reason && (
-                          <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">💡 {sug.reason}</p>
+                          <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">{sug.reason}</p>
                         )}
                       </div>
                     </div>
