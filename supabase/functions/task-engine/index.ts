@@ -181,7 +181,9 @@ Genera 5-8 compiti NUOVI. Priorità realistiche. Tempo stimato in minuti.`,
           model: MODEL,
           messages: [{
             role: "system",
-            content: `Analizza la conversazione recente e genera 2-3 task concreti e immediati.
+            content: `Analizza la conversazione recente e genera 2-3 AZIONI CONCRETE per lo studente.
+Ogni task deve iniziare con un verbo d'azione (Scrivi, Trova, Leggi, Contatta, Prepara...).
+MAI task descrittivi o teorici. Solo azioni verificabili.
 Topic tesi: ${profile?.thesis_topic || "Non definito"}
 Task già attivi: ${JSON.stringify(existingTasks.map((t: any) => t.title))}
 ${thesis_content ? `Contenuto tesi (estratto): ${thesis_content.substring(0, 2000)}` : ""}
