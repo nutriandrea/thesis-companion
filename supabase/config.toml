@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.fetch-google-doc]
 verify_jwt = false
+
+[functions.rag-engine]
+verify_jwt = false
+
+[functions.task-engine]
+verify_jwt = false
+
+[functions.dashboard-engine]
+verify_jwt = false
