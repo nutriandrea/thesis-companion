@@ -364,7 +364,7 @@ function CareerBar({ sectors, onSectorClick, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-6">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analyzing career...</span>
+      <span className="text-xs text-muted-foreground ml-2">Analisi carriera...</span>
     </div>
   );
 
