@@ -950,7 +950,7 @@ function DemoDashboard() {
   delay += 0.05;
   cards.push({ key: "rubrica", delay, component: <DemoCard title="Contacts" icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
+  cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
   delay += 0.05;
   if (showExecution || showWriting) {
     cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilità" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
