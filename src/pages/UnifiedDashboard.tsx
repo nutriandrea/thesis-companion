@@ -636,7 +636,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                 className="overflow-hidden"
               >
                 <div className="px-2 py-2 space-y-2">
-                  <p className="text-[10px] text-muted-foreground">Why this supervisor?</p>
+                  <p className="text-[10px] text-muted-foreground">Perché questo relatore?</p>
                   <textarea
                     value={motivation}
                     onChange={e => setMotivation(e.target.value)}
