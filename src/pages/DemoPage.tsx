@@ -1263,7 +1263,10 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
 }
 
 function DemoRoadmap() {
+  const { data, loading } = useDemoEngine<{ phases: RoadmapPhase[] }>("generate_roadmap");
+  const initialItems = data?.phases?.length ? data.phases : MOCK_ROADMAP;
   const [items, setItems] = useState(MOCK_ROADMAP);
+  useEffect(() => { if (data?.phases?.length) setItems(data.phases); }, [data]);
   const toggleTask = (phaseKey: string, taskId: string) => {
     setItems(prev => prev.map(phase =>
       phase.key === phaseKey
