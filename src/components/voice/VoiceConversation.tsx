@@ -202,6 +202,8 @@ export default function VoiceConversation({
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       audio.onended = () => {
+        if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+        setSpeechProgress(1);
         isSpeakingRef.current = false;
         URL.revokeObjectURL(audioUrl); audioUrlRef.current = null; audioRef.current = null;
         if (!unmountedRef.current) {
