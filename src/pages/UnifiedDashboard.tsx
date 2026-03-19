@@ -1598,6 +1598,31 @@ export default function UnifiedDashboard() {
     if (profile?.google_doc_url && user && !thesisContent) fetchGoogleDoc();
   }, [profile?.google_doc_url, user]);
 
+  // Load persisted vulnerabilities from DB on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("vulnerabilities" as any)
+      .select("id, type, title, description, severity")
+      .eq("user_id", user.id)
+      .eq("resolved", false)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => { if (data && data.length) setVulnerabilities(data as any); });
+  }, [user?.id]);
+
+  // Load persisted references (last generated) from saved_references on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("saved_references" as any)
+      .select("title, authors, year, url, category, relevance")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => { if (data && data.length) setReferences(data as any); });
+  }, [user?.id]);
+
   const studentContext = profile ? `Name: ${profile.first_name} ${profile.last_name}\nDegree: ${profile.degree || "N/A"}\nUniversity: ${profile.university || "N/A"}\nSkills: ${profile.skills?.join(", ") || "N/A"}\nTopic: ${profile.thesis_topic || "Not defined"}` : "";
 
   const fetchStudentProfile = useCallback(async () => {
