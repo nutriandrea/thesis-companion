@@ -418,7 +418,7 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
 
       {/* Bottom bar with Skip button */}
       <div className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
-        <input placeholder="Rispondi a Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
+        <input placeholder="Reply to Socrates..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
         <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
         <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
       </div>
