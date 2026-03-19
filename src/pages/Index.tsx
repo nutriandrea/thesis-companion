@@ -5,10 +5,15 @@ import SocrateIntro from "@/components/journey/SocrateIntro";
 import ThesisTransition from "@/components/journey/ThesisTransition";
 import UnifiedDashboard from "@/pages/UnifiedDashboard";
 import SocratePage from "@/pages/SocratePage";
+import DemoPage from "@/pages/DemoPage";
 
 function AppContent() {
   const { user, profile, loading, setActiveSection, setInputMode } = useApp();
   const [showTransition, setShowTransition] = useState(false);
+
+  // Check if URL has ?demo param
+  const isDemo = new URLSearchParams(window.location.search).has("demo");
+  if (isDemo) return <DemoPage />;
 
   const handleTransitionComplete = useCallback(() => {
     setShowTransition(false);
