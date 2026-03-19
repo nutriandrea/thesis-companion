@@ -458,8 +458,7 @@ function ChatOverlay({
       className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
     >
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-        <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
-          <span className="text-xs font-bold text-background font-display">S</span>
+        <SocrateCoin size={32} interactive={false} />
         </div>
         <div className="flex-1">
           <p className="text-sm font-bold text-foreground">Socrate</p>
