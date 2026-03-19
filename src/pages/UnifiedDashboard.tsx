@@ -73,25 +73,14 @@ const normalizePhase = (phase?: string | null): PhaseKey => {
 };
 
 // ─── GRADIENT ORB ───
-function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive?: boolean }) {
+function SocrateIcon({ size = 40, isActive = false }: { size?: number; isActive?: boolean }) {
   return (
-    <motion.div
-      className="relative mx-auto"
-      style={{ width: size, height: size / 2, overflow: "hidden" }}
-      animate={isActive ? { scale: [1, 1.03, 1] } : {}}
-      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    <div
+      className="rounded-full bg-foreground flex items-center justify-center"
+      style={{ width: size, height: size }}
     >
-      <div className="absolute rounded-full" style={{
-        width: size, height: size, top: 0, left: 0,
-        background: "radial-gradient(circle at 35% 40%, #f5a623 0%, #e94e77 25%, #7b61ff 50%, #4a90d9 75%, #7b61ff 100%)",
-        filter: "blur(1px)",
-      }} />
-      <div className="absolute rounded-full opacity-30" style={{
-        width: size * 1.4, height: size * 1.4, top: -(size * 0.2), left: -(size * 0.2),
-        background: "radial-gradient(circle, rgba(245,166,35,0.3) 0%, rgba(123,97,255,0.15) 40%, transparent 70%)",
-        filter: "blur(30px)",
-      }} />
-    </motion.div>
+      <span className="font-display font-bold text-background" style={{ fontSize: size * 0.4 }}>S</span>
+    </div>
   );
 }
 
