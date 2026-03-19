@@ -459,9 +459,8 @@ function ChatOverlay({
     >
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
         <SocrateCoin size={32} interactive={false} />
-        </div>
         <div className="flex-1">
-          <p className="text-sm font-bold text-foreground">Socrate</p>
+          <p className="text-sm font-bold text-foreground font-display">Socrate</p>
           <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
         </div>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
