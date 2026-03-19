@@ -1914,7 +1914,7 @@ function DemoDashboard() {
       </div>
 
       {/* Cards grid */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
+      <div className="flex-1 min-h-0 overflow-hidden px-4 lg:px-8 xl:px-16 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
           {cards.map(card => (
             <motion.div key={card.key + currentPhase} className={card.colSpan || ""} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: card.delay }}>
