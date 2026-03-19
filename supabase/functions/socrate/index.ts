@@ -1817,8 +1817,8 @@ COME USARE I PATTERN:
         const studentData = studentRes.status === "fulfilled" ? (studentRes.value as any)?.data : null;
         const career = studentData?.career_distribution;
         const currentPhase = studentData?.current_phase;
-        const selectedSup = (studentRes as any)?.data?.selected_supervisor_id;
-        const supMotivation = (studentRes as any)?.data?.supervisor_motivation;
+        const selectedSup = studentData?.selected_supervisor_id;
+        const supMotivation = studentData?.supervisor_motivation;
 
         if (career && Object.keys(career).length > 0) {
           const sorted = Object.entries(career).sort(([,a], [,b]) => (b as number) - (a as number));
