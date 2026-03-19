@@ -811,7 +811,7 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground">Prof. Marco Rossi</p>
-              <p className="text-[10px] text-accent">Invito inviato · marco.rossi@ethz.ch</p>
+              <p className="text-[10px] text-accent">Invite sent · marco.rossi@ethz.ch</p>
             </div>
           </div>
           <div className="space-y-1.5 pl-1">
