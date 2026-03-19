@@ -893,7 +893,7 @@ function DemoRoadmap() {
                     {task.completed ? <CheckCircle2 className="w-3 h-3 text-accent" /> : <Circle className="w-3 h-3 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />}
                   </button>
                   <span className={`text-[11px] flex-1 ${task.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>{task.title}</span>
-                  {task.due_date && <span className="text-[9px] text-muted-foreground">{new Date(task.due_date).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>}
+                  {task.due_date && <span className="text-[9px] text-muted-foreground">{new Date(task.due_date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}</span>}
                 </div>
               ))}
             </div>
