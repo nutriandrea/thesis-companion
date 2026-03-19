@@ -5,6 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries - 1;
+      if (isLastAttempt) throw error;
+      console.warn(`Attempt ${attempt + 1} failed, retrying in ${(attempt + 1) * 500}ms...`, error);
+      await new Promise((r) => setTimeout(r, (attempt + 1) * 500));
+    }
+  }
+  throw new Error("Unreachable");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -18,12 +33,13 @@ serve(async (req) => {
       });
     }
 
-    const response = await fetch(
+    const response = await fetchWithRetry(
       "https://api.elevenlabs.io/v1/single-use-token/realtime_scribe",
       {
         method: "POST",
         headers: {
           "xi-api-key": ELEVENLABS_API_KEY,
+          "Content-Type": "application/json",
         },
       }
     );
