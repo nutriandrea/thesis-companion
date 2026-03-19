@@ -1262,7 +1262,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
           </p>
           {!showSaved && (
             <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
-              Generate references →
+              Genera riferimenti →
             </button>
           )}
         </div>
