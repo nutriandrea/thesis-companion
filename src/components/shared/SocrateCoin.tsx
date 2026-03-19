@@ -1,6 +1,16 @@
 import { motion } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import socrateCoinImg from "@/assets/socrate-coin.png";
+
+// Preload image globally so it's cached before any component mounts
+const preloadedImg = new Image();
+preloadedImg.src = socrateCoinImg;
+let imgReady = false;
+const imgPromise = new Promise<void>((resolve) => {
+  if (preloadedImg.complete) { imgReady = true; resolve(); return; }
+  preloadedImg.onload = () => { imgReady = true; resolve(); };
+  preloadedImg.onerror = () => { imgReady = true; resolve(); };
+});
 
 interface SocrateCoinProps {
   size?: number;
@@ -19,6 +29,11 @@ export default function SocrateCoin({
 }: SocrateCoinProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [ripple, setRipple] = useState(false);
+  const [loaded, setLoaded] = useState(imgReady);
+
+  useEffect(() => {
+    if (!loaded) { imgPromise.then(() => setLoaded(true)); }
+  }, [loaded]);
 
   const handleClick = useCallback(() => {
     setRipple(true);
@@ -63,12 +78,14 @@ export default function SocrateCoin({
         alt="Socrate"
         className="w-full h-full rounded-full object-cover"
         style={{ filter: "contrast(1.1) grayscale(100%)" }}
+        initial={{ opacity: 0 }}
         animate={{
+          opacity: loaded ? 1 : 0,
           rotate: isActive ? [0, 2, -2, 0] : 0,
         }}
         transition={
           isActive
-            ? { duration: 3, repeat: Infinity, ease: "easeInOut" }
+            ? { duration: 3, repeat: Infinity, ease: "easeInOut", opacity: { duration: 0.3 } }
             : { duration: 0.3 }
         }
       />
