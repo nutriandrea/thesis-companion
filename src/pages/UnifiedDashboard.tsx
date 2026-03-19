@@ -1686,7 +1686,23 @@ export default function UnifiedDashboard() {
       const assistantId = `a-${Date.now()}`;
       setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
       const assistantContent = await streamResponse(resp, assistantId);
-      if (assistantContent) await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: assistantContent });
+      if (assistantContent) {
+        // Check for vulnerability resolution markers
+        const vulnResolvedMatches = assistantContent.matchAll(/<!--\s*VULN_RESOLVED:\s*(.+?)\s*-->/g);
+        for (const match of vulnResolvedMatches) {
+          const vulnId = match[1].trim();
+          await supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId);
+          setVulnerabilities(prev => prev.filter(v => v.id !== vulnId));
+          toast({ title: "Vulnerabilità risolta", description: "Socrate ha validato la tua comprensione." });
+        }
+        // Strip markers before saving
+        const cleanContent = assistantContent.replace(/<!--\s*VULN_RESOLVED:\s*.+?\s*-->/g, "").trim();
+        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: cleanContent });
+        // Update displayed message without markers
+        if (cleanContent !== assistantContent) {
+          setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: cleanContent } : m));
+        }
+      }
       if (!profile?.socrate_done) await updateProfile({ socrate_done: true });
       exchangeCountRef.current += 1;
       if (exchangeCountRef.current % 3 === 0) runBackgroundExtraction([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
