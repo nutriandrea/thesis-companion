@@ -24,6 +24,7 @@ import type { Supervisor, Company, Expert, Field } from "@/types/data";
 
 const supervisors = supervisorsData as Supervisor[];
 const companies = companiesData as Company[];
+const experts = expertsData as Expert[];
 const fields = fieldsData as Field[];
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
