@@ -136,13 +136,14 @@ Massimo 6 settori.`,
 
     // ─── EVALUATE PHASE TRANSITION ───
     if (mode === "evaluate_phase") {
-      const [profileRes, studentRes, tasksRes, vulnsRes, memRes, affinityRes] = await Promise.all([
+      const [profileRes, studentRes, tasksRes, vulnsRes, memRes, affinityRes, roadmapRes] = await Promise.all([
         supabase.from("profiles").select("thesis_topic, journey_state, skills").eq("user_id", userId).single(),
         supabase.from("student_profiles").select("current_phase, phase_confidence, phase_history, overall_completion, thesis_quality_score, thesis_stage, selected_supervisor_id, supervisor_motivation").eq("user_id", userId).single(),
         supabase.from("socrate_tasks").select("title, status, section, priority").eq("user_id", userId).limit(30),
         supabase.from("vulnerabilities").select("title, severity").eq("user_id", userId).eq("resolved", false).limit(10),
         supabase.from("memory_entries").select("type, title").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
         supabase.from("affinity_scores").select("entity_type, entity_name, score").eq("user_id", userId).order("score", { ascending: false }).limit(10),
+        supabase.from("roadmap_items").select("phase_key, completed").eq("user_id", userId),
       ]);
 
       const profile = profileRes.data;
@@ -151,6 +152,7 @@ Massimo 6 settori.`,
       const vulns = vulnsRes.data || [];
       const memories = memRes.data || [];
       const affinities = affinityRes.data || [];
+      const roadmapItems = roadmapRes.data || [];
       const rawPhase = student?.current_phase || "orientation";
 
       const CANONICAL_PHASES = ["orientation", "topic_supervisor", "planning", "execution", "writing"];
@@ -168,6 +170,18 @@ Massimo 6 settori.`,
       const completedTasks = tasks.filter((t: any) => t.status === "completed").length;
       const pendingTasks = tasks.filter((t: any) => t.status !== "completed").length;
       const criticalVulns = vulns.filter((v: any) => v.severity === "critical").length;
+
+      // Compute roadmap completion per phase (same logic as the UI)
+      const roadmapByPhase: Record<string, { total: number; completed: number }> = {};
+      roadmapItems.forEach((item: any) => {
+        if (!roadmapByPhase[item.phase_key]) roadmapByPhase[item.phase_key] = { total: 0, completed: 0 };
+        roadmapByPhase[item.phase_key].total++;
+        if (item.completed) roadmapByPhase[item.phase_key].completed++;
+      });
+      const totalRoadmap = roadmapItems.length;
+      const completedRoadmap = roadmapItems.filter((i: any) => i.completed).length;
+      const roadmapCompletionPct = totalRoadmap > 0 ? Math.round((completedRoadmap / totalRoadmap) * 100) : 0;
+      const roadmapPerPhase = Object.entries(roadmapByPhase).map(([k, v]) => `${k}: ${v.completed}/${v.total} (${v.total > 0 ? Math.round(v.completed / v.total * 100) : 0}%)`).join(", ");
       const hasSupervisor = !!student?.selected_supervisor_id;
 
       // Build all valid phase options including hybrid
@@ -203,10 +217,13 @@ STATO ATTUALE:
 - Prossima fase possibile: ${nextPhase}
 - Topic tesi: ${profile?.thesis_topic || "Non definito"}
 - Supervisore scelto: ${hasSupervisor ? "Sì" : "No"}
-- Completamento: ${student?.overall_completion || 0}%
+- Completamento roadmap: ${roadmapCompletionPct}% (${completedRoadmap}/${totalRoadmap} task completati)
+- Dettaglio roadmap per fase: ${roadmapPerPhase || "Nessuna roadmap generata"}
 - Qualità tesi: ${student?.thesis_quality_score || 0}/10
-- Task completati: ${completedTasks}/${completedTasks + pendingTasks}
+- Task laterali completati: ${completedTasks}/${completedTasks + pendingTasks}
 - Vulnerabilità critiche: ${criticalVulns}
+
+IMPORTANTE: Il valore di "completion_estimate" che restituisci DEVE essere coerente con il completamento roadmap (${roadmapCompletionPct}%). Usa questo come base e aggiusta leggermente in base a task laterali e qualità. Nel tuo "socrate_comment", se rifiuti l'avanzamento, cita la percentuale di completamento roadmap (${roadmapCompletionPct}%) come dato principale.
 
 MEMORIE RECENTI: ${JSON.stringify(memories.slice(0, 10).map((m: any) => m.title))}
 AFFINITÀ: ${JSON.stringify(affinities.slice(0, 5).map((a: any) => ({ type: a.entity_type, name: a.entity_name, score: a.score })))}
