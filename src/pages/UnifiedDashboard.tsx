@@ -1350,7 +1350,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
           <div className="flex items-center gap-2 p-2.5 bg-secondary/50">
             <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-foreground">Collegato</p>
+              <p className="text-xs font-medium text-foreground">Connected</p>
               <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
               {lastSyncTime && (
                 <p className="text-[9px] text-muted-foreground mt-0.5">
