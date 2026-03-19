@@ -1,30 +1,24 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Send, Mic, PenTool, Loader2, Brain, Zap, FileText,
-  ShieldAlert, Flame, Target, Users, Building2, ChevronRight,
-  CheckCircle2, Circle, AlertTriangle, GraduationCap, LogOut,
-  ChevronDown, ChevronUp, Sparkles, MessageCircle
+  Send, Loader2, ShieldAlert, Flame, Target, Users, Building2,
+  CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
+  ChevronLeft, ChevronRight, X
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useSocrateTasks, type SocrateTask } from "@/hooks/useSocrateTasks";
+import { useSocrateTasks } from "@/hooks/useSocrateTasks";
 import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
-import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from "react-markdown";
-import socrateImg from "@/assets/socrate.png";
 import supervisorsData from "@/data/supervisors.json";
 import companiesData from "@/data/companies.json";
 import fieldsData from "@/data/fields.json";
-import topicsData from "@/data/topics.json";
-import type { Supervisor, Company, Field, Topic } from "@/types/data";
+import type { Supervisor, Company, Field } from "@/types/data";
 
 const supervisors = supervisorsData as Supervisor[];
 const companies = companiesData as Company[];
 const fields = fieldsData as Field[];
-const topics = topicsData as Topic[];
-function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; }
@@ -32,133 +26,190 @@ interface Vulnerability { id: string; type: string; title: string; description: 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
 const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
 
-function GradientOrb({ size = "sm" }: { size?: "sm" | "md" }) {
-  const dim = size === "md" ? "w-10 h-10" : "w-7 h-7";
+const STAGES = [
+  { key: "exploration", label: "Esplorazione" },
+  { key: "topic_chosen", label: "Topic" },
+  { key: "structuring", label: "Struttura" },
+  { key: "writing", label: "Scrittura" },
+  { key: "revision", label: "Revisione" },
+];
+
+// ─── GRADIENT ORB ───
+function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive?: boolean }) {
   return (
-    <div className={`${dim} rounded-full shrink-0`} style={{
-      background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)",
-    }} />
+    <motion.div
+      className="relative mx-auto"
+      style={{ width: size, height: size / 2, overflow: "hidden" }}
+      animate={isActive ? { scale: [1, 1.03, 1] } : {}}
+      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: size,
+          height: size,
+          top: 0,
+          left: 0,
+          background: "radial-gradient(circle at 35% 40%, #f5a623 0%, #e94e77 25%, #7b61ff 50%, #4a90d9 75%, #7b61ff 100%)",
+          filter: "blur(1px)",
+        }}
+      />
+      {/* Glow */}
+      <div
+        className="absolute rounded-full opacity-30"
+        style={{
+          width: size * 1.4,
+          height: size * 1.4,
+          top: -(size * 0.2),
+          left: -(size * 0.2),
+          background: "radial-gradient(circle, rgba(245,166,35,0.3) 0%, rgba(123,97,255,0.15) 40%, transparent 70%)",
+          filter: "blur(30px)",
+        }}
+      />
+    </motion.div>
   );
 }
 
-// ─── COMPACT TASK PANEL ───
-function TaskPanel({ userId }: { userId: string }) {
-  const { tasks, updateTaskStatus } = useSocrateTasks(userId);
-  const activeTasks = tasks.filter(t => t.status !== "completed").slice(0, 6);
-  const completedCount = tasks.filter(t => t.status === "completed").length;
+// ─── CARD COMPONENT ───
+function DashboardCard({
+  title, icon: Icon, children, badge, action, className = ""
+}: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  badge?: number | null;
+  action?: { label: string; onClick: () => void; loading?: boolean };
+  className?: string;
+}) {
+  return (
+    <div className={`bg-card/60 backdrop-blur-sm border border-border rounded-xl flex flex-col h-full ${className}`}>
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+        <Icon className="w-4 h-4 text-accent" />
+        <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
+        {badge != null && badge > 0 && (
+          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+        )}
+        {action && (
+          <button
+            onClick={action.onClick}
+            disabled={action.loading}
+            className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40"
+          >
+            {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+          </button>
+        )}
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-3">
+        {children}
+      </div>
+    </div>
+  );
+}
 
+// ─── TASK PANEL ───
+function TaskContent({ userId }: { userId: string }) {
+  const { tasks, updateTaskStatus } = useSocrateTasks(userId);
+  const activeTasks = tasks.filter(t => t.status !== "completed").slice(0, 5);
+  const completedCount = tasks.filter(t => t.status === "completed").length;
   const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   const sorted = [...activeTasks].sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
 
+  if (sorted.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessun task. Parla con Socrate.</p>;
+
   return (
-    <div className="space-y-1.5">
-      {sorted.length === 0 ? (
-        <p className="text-[10px] text-muted-foreground text-center py-3">Nessun task. Parla con Socrate.</p>
-      ) : sorted.map(task => (
-        <button
-          key={task.id}
-          onClick={() => updateTaskStatus(task.id, "completed")}
-          className="w-full flex items-start gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors text-left group"
-        >
+    <div className="space-y-2">
+      {sorted.map(task => (
+        <button key={task.id} onClick={() => updateTaskStatus(task.id, "completed")}
+          className="w-full flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/50 transition-colors text-left group">
           <Circle className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
             task.priority === "critical" ? "text-destructive" : task.priority === "high" ? "text-warning" : "text-muted-foreground"
           } group-hover:text-success transition-colors`} />
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium text-foreground leading-tight truncate">{task.title}</p>
-            <p className="text-[9px] text-muted-foreground truncate">{task.description}</p>
+            <p className="text-xs font-medium text-foreground leading-tight">{task.title}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>
           </div>
         </button>
       ))}
-      {completedCount > 0 && (
-        <p className="text-[9px] text-success text-center pt-1">✓ {completedCount} completati</p>
-      )}
+      {completedCount > 0 && <p className="text-[10px] text-success text-center pt-1">✓ {completedCount} completati</p>}
     </div>
   );
 }
 
-// ─── COMPACT CONTACTS PANEL ───
-function ContactsPanel({ userId }: { userId: string }) {
+// ─── CONTACTS PANEL ───
+function ContactsContent({ userId }: { userId: string }) {
   const { affinities } = useAffinityScores(userId, "supervisor");
-  const topSupervisors = useMemo(() => {
+  const items = useMemo(() => {
     if (affinities.length > 0) {
-      return affinities.slice(0, 4).map(a => {
+      return affinities.slice(0, 5).map(a => {
         const sup = supervisors.find(s => s.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, reason: a.reasoning, fields: sup?.researchInterests?.slice(0, 2) || [] };
+        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [] };
       });
     }
-    return supervisors.slice(0, 4).map(s => ({
-      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, reason: null, fields: s.researchInterests.slice(0, 2),
+    return supervisors.slice(0, 5).map(s => ({
+      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2),
     }));
   }, [affinities]);
 
   return (
-    <div className="space-y-1.5">
-      {topSupervisors.map(sup => (
-        <div key={sup.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
-          <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-            <GraduationCap className="w-3 h-3 text-accent" />
+    <div className="space-y-2">
+      {items.map(sup => (
+        <div key={sup.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+          <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+            <GraduationCap className="w-3.5 h-3.5 text-accent" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium text-foreground truncate">{sup.name}</p>
-            <p className="text-[9px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
+            <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
           </div>
-          {sup.score !== null && (
-            <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
-          )}
+          {sup.score !== null && <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>}
         </div>
       ))}
     </div>
   );
 }
 
-// ─── COMPACT COMPANIES PANEL ───
-function CompaniesPanel({ userId }: { userId: string }) {
+// ─── COMPANIES PANEL ───
+function CompaniesContent({ userId }: { userId: string }) {
   const { affinities } = useAffinityScores(userId, "company");
-  const topCompanies = useMemo(() => {
+  const items = useMemo(() => {
     if (affinities.length > 0) {
-      return affinities.slice(0, 4).map(a => {
+      return affinities.slice(0, 5).map(a => {
         const comp = companies.find(c => c.id === a.entity_id);
         return { id: a.entity_id, name: a.entity_name, score: a.score, domains: comp?.domains?.slice(0, 2) || [] };
       });
     }
-    return companies.slice(0, 4).map(c => ({
-      id: c.id, name: c.name, score: null, domains: c.domains.slice(0, 2),
-    }));
+    return companies.slice(0, 5).map(c => ({ id: c.id, name: c.name, score: null, domains: c.domains.slice(0, 2) }));
   }, [affinities]);
 
   return (
-    <div className="space-y-1.5">
-      {topCompanies.map(comp => (
-        <div key={comp.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
-          <div className="w-6 h-6 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
-            <Building2 className="w-3 h-3 text-warning" />
+    <div className="space-y-2">
+      {items.map(comp => (
+        <div key={comp.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+          <div className="w-7 h-7 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+            <Building2 className="w-3.5 h-3.5 text-warning" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium text-foreground truncate">{comp.name}</p>
-            <p className="text-[9px] text-muted-foreground truncate">{comp.domains.join(", ")}</p>
+            <p className="text-xs font-medium text-foreground truncate">{comp.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{comp.domains.join(", ")}</p>
           </div>
-          {comp.score !== null && (
-            <span className="text-[10px] font-bold text-warning shrink-0">{comp.score}%</span>
-          )}
+          {comp.score !== null && <span className="text-[10px] font-bold text-warning shrink-0">{comp.score}%</span>}
         </div>
       ))}
     </div>
   );
 }
 
-// ─── VULNERABILITIES MINI ───
-function VulnerabilitiesPanel({ vulnerabilities }: { vulnerabilities: Vulnerability[] }) {
-  if (vulnerabilities.length === 0) return (
-    <p className="text-[10px] text-muted-foreground text-center py-3">Nessuna vulnerabilità. Lancia una scansione.</p>
-  );
+// ─── VULNERABILITIES PANEL ───
+function VulnerabilitiesContent({ vulnerabilities }: { vulnerabilities: Vulnerability[] }) {
+  if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
   return (
-    <div className="space-y-1.5">
-      {vulnerabilities.slice(0, 4).map(v => (
-        <div key={v.id} className="flex items-start gap-2 p-2 rounded-md bg-destructive/[0.03]">
+    <div className="space-y-2">
+      {vulnerabilities.slice(0, 5).map(v => (
+        <div key={v.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/[0.04]">
           <ShieldAlert className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${v.severity === "critical" ? "text-destructive" : "text-warning"}`} />
           <div className="min-w-0">
-            <p className="text-[11px] font-medium text-foreground leading-tight">{v.title}</p>
-            <p className="text-[9px] text-muted-foreground leading-snug line-clamp-2">{v.description}</p>
+            <p className="text-xs font-medium text-foreground leading-tight">{v.title}</p>
+            <p className="text-[10px] text-muted-foreground leading-snug line-clamp-2 mt-0.5">{v.description}</p>
           </div>
         </div>
       ))}
@@ -166,33 +217,109 @@ function VulnerabilitiesPanel({ vulnerabilities }: { vulnerabilities: Vulnerabil
   );
 }
 
-// ─── MAIN UNIFIED DASHBOARD ───
+// ─── CHAT OVERLAY ───
+function ChatOverlay({
+  messages, input, setInput, sendMessage, isStreaming, onClose
+}: {
+  messages: ChatMsg[];
+  input: string;
+  setInput: (v: string) => void;
+  sendMessage: (text: string) => void;
+  isStreaming: boolean;
+  onClose: () => void;
+}) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 40 }}
+      className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden"
+    >
+      {/* Chat header */}
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
+        <div className="w-8 h-8 rounded-full" style={{
+          background: "radial-gradient(circle at 35% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)"
+        }} />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-foreground">Socrate</p>
+          <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
+        </div>
+        <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+          <X className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        {messages.map(msg => (
+          <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[80%] px-4 py-3 text-sm rounded-xl ${
+              msg.role === "assistant"
+                ? "bg-secondary/50 border border-border"
+                : "bg-accent/10 border border-accent/20"
+            }`}>
+              {msg.content === "" && isStreaming ? (
+                <div className="flex gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.3s" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.6s" }} />
+                </div>
+              ) : (
+                <div className="prose prose-sm prose-invert max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
+              )}
+            </div>
+          </motion.div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-border px-5 py-3 flex items-center gap-3">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
+          placeholder="Rispondi a Socrate..."
+          disabled={isStreaming}
+          className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+        />
+        <button
+          onClick={() => sendMessage(input)}
+          disabled={!input.trim() || isStreaming}
+          className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── MAIN DASHBOARD ───
 export default function UnifiedDashboard() {
-  const { profile, user, updateProfile, signOut, inputMode, setInputMode } = useApp();
+  const { profile, user, updateProfile, signOut } = useApp();
   const { toast } = useToast();
 
-  // Chat state
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [severita, setSeverita] = useState<number | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const exchangeCountRef = useRef(0);
-  const memoryRef = useRef<any[]>([]);
-
-  // Side panel state
+  const [chatOpen, setChatOpen] = useState(false);
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [isScanning, setIsScanning] = useState(false);
-  const [expandedPanel, setExpandedPanel] = useState<string | null>("tasks");
   const [studentProfile, setStudentProfile] = useState<any>(null);
+  const exchangeCountRef = useRef(0);
+  const memoryRef = useRef<any[]>([]);
 
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
     : "";
-  // Google Docs will be the source of thesis content — no local LaTeX
   const thesisContent = "";
 
-  // Load initial data
+  // Load data
   useEffect(() => {
     if (!user) return;
     Promise.all([
@@ -215,15 +342,10 @@ export default function UnifiedDashboard() {
         supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: welcome.content });
       }
       if (memRes.data) memoryRef.current = memRes.data;
-      if ((spRes as any).data) {
-        setStudentProfile((spRes as any).data);
-        setSeverita((spRes as any).data.severita);
-      }
+      if ((spRes as any).data) setStudentProfile((spRes as any).data);
       if ((vulnRes as any).data) setVulnerabilities((vulnRes as any).data);
     });
   }, [user]);
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
@@ -270,29 +392,21 @@ export default function UnifiedDashboard() {
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Errore" }));
         toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
-        setIsStreaming(false);
-        return;
+        setIsStreaming(false); return;
       }
       const assistantId = `a-${Date.now()}`;
       setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
       const assistantContent = await streamResponse(resp, assistantId);
       if (assistantContent) await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: assistantContent });
       if (!profile?.socrate_done) await updateProfile({ socrate_done: true });
-
       exchangeCountRef.current += 1;
-      // Auto-extract every 3 exchanges
-      if (exchangeCountRef.current % 3 === 0) {
-        runBackgroundExtraction([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
-      }
+      if (exchangeCountRef.current % 3 === 0) runBackgroundExtraction([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
-    } finally {
-      setIsStreaming(false);
-    }
+    } finally { setIsStreaming(false); }
   }, [isStreaming, user, messages, studentContext, thesisContent, profile, updateProfile, toast, streamResponse]);
 
-  // Background extraction
   const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
     if (!user) return;
     const recentMsgs = msgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
@@ -304,7 +418,6 @@ export default function UnifiedDashboard() {
     } catch {}
   }, [user, studentContext, thesisContent]);
 
-  // Vulnerability scan
   const scanVulnerabilities = useCallback(async () => {
     if (!user || isScanning) return;
     setIsScanning(true);
@@ -323,172 +436,140 @@ export default function UnifiedDashboard() {
     finally { setIsScanning(false); }
   }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
-  // Progress metrics
+  // Progress
   const completion = studentProfile?.overall_completion || 0;
   const stage = studentProfile?.thesis_stage || profile?.journey_state || "exploration";
-  const stageLabels: Record<string, string> = { exploration: "Esplorazione", topic_chosen: "Topic scelto", structuring: "Struttura", writing: "Scrittura", revision: "Revisione" };
-
-  const togglePanel = (id: string) => setExpandedPanel(prev => prev === id ? null : id);
-
+  const currentStageIndex = STAGES.findIndex(s => s.key === stage);
   const name = profile?.first_name || "Studente";
-
-  // Panel config
-  const panels = [
-    { id: "tasks", label: "Task", icon: Target, badge: null, content: <TaskPanel userId={user?.id || ""} /> },
-    { id: "vulns", label: "Vulnerabilità", icon: ShieldAlert, badge: vulnerabilities.length || null, content: <VulnerabilitiesPanel vulnerabilities={vulnerabilities} />, action: { label: isScanning ? "..." : "Scan", icon: isScanning ? Loader2 : Flame, onClick: scanVulnerabilities } },
-    { id: "contacts", label: "Supervisori", icon: Users, badge: null, content: <ContactsPanel userId={user?.id || ""} /> },
-    { id: "companies", label: "Aziende", icon: Building2, badge: null, content: <CompaniesPanel userId={user?.id || ""} /> },
-  ];
+  const lastMessage = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* ─── HEADER ─── */}
-      <header className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-card/50 shrink-0">
-        <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-accent/20 shrink-0">
-          <img src={socrateImg} alt="S" className="w-full h-full object-cover" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-bold text-foreground truncate">{name}</h1>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium shrink-0">
-              {stageLabels[stage] || stage}
-            </span>
-            {severita !== null && (
-              <div className="flex gap-0.5 ml-1">
-                {[0.2, 0.4, 0.6, 0.8, 1.0].map((t, i) => (
-                  <div key={i} className={`w-1 h-2.5 rounded-sm ${severita >= t ? (severita >= 0.8 ? "bg-destructive" : severita >= 0.6 ? "bg-warning" : "bg-accent") : "bg-border"}`} />
-                ))}
-              </div>
-            )}
-          </div>
-          <p className="text-[10px] text-muted-foreground truncate max-w-md">
+    <div className="h-screen bg-background flex flex-col overflow-hidden relative">
+      {/* ─── TOP: Orb + Identity ─── */}
+      <div className="flex flex-col items-center pt-8 pb-4 shrink-0 relative">
+        {/* Logout */}
+        <button onClick={signOut} className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+          <LogOut className="w-4 h-4" />
+        </button>
+
+        {/* Orb */}
+        <GradientOrb size={140} isActive={isStreaming} />
+
+        {/* Identity */}
+        <motion.div className="text-center mt-4 space-y-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <h1 className="text-lg font-bold text-foreground font-display">{name}</h1>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto px-4 truncate">
             {profile?.thesis_topic || "Tesi non definita"}
           </p>
+        </motion.div>
+
+        {/* Talk to Socrate button */}
+        <motion.button
+          onClick={() => setChatOpen(true)}
+          className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <MessageCircle className="w-4 h-4" />
+          Parla con Socrate
+        </motion.button>
+
+        {/* Last Socrate message preview */}
+        {lastMessage && !chatOpen && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-[11px] text-muted-foreground max-w-lg mx-auto px-6 mt-3 text-center line-clamp-2 italic"
+          >
+            "{lastMessage.slice(0, 120)}…"
+          </motion.p>
+        )}
+      </div>
+
+      {/* ─── CARDS GRID ─── */}
+      <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-6xl mx-auto">
+          {/* Card 1: Tasks */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <DashboardCard title="Task" icon={Target}>
+              <TaskContent userId={user?.id || ""} />
+            </DashboardCard>
+          </motion.div>
+
+          {/* Card 2: Vulnerabilità */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <DashboardCard
+              title="Vulnerabilità"
+              icon={ShieldAlert}
+              badge={vulnerabilities.length}
+              action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}
+            >
+              <VulnerabilitiesContent vulnerabilities={vulnerabilities} />
+            </DashboardCard>
+          </motion.div>
+
+          {/* Card 3: Supervisori */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <DashboardCard title="Supervisori" icon={Users}>
+              <ContactsContent userId={user?.id || ""} />
+            </DashboardCard>
+          </motion.div>
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right">
-            <p className="text-xs font-bold text-foreground">{completion}%</p>
-            <p className="text-[9px] text-muted-foreground">completamento</p>
-          </div>
-          <div className="w-20">
-            <Progress value={completion} className="h-1.5" />
-          </div>
-        </div>
+        {/* Companies row */}
+        <motion.div className="max-w-6xl mx-auto mt-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <DashboardCard title="Aziende" icon={Building2}>
+            <CompaniesContent userId={user?.id || ""} />
+          </DashboardCard>
+        </motion.div>
+      </div>
 
-        {/* Mode toggle */}
-        <div className="flex bg-secondary rounded-md p-0.5 shrink-0">
-          <button onClick={() => setInputMode("text")} className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${inputMode === "text" ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}>
-            <PenTool className="w-3 h-3" />
-          </button>
-          <button onClick={() => setInputMode("voice")} className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${inputMode === "voice" ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}>
-            <Mic className="w-3 h-3" />
-          </button>
-        </div>
-
-        <button onClick={signOut} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-          <LogOut className="w-3.5 h-3.5" />
-        </button>
-      </header>
-
-      {/* ─── MAIN CONTENT ─── */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* ─── CHAT (DOMINANT) ─── */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 lg:px-8 py-4 space-y-4">
-            {messages.map(msg => (
-              <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] lg:max-w-[70%] px-4 py-3 text-sm ${
-                  msg.role === "assistant"
-                    ? "bg-card border border-border rounded-lg"
-                    : "bg-secondary border border-border rounded-lg"
-                }`}>
-                  {msg.content === "" && isStreaming ? (
-                    <div className="flex gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.3s" }} />
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.6s" }} />
-                    </div>
-                  ) : (
-                    <div className="prose prose-sm max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Input */}
-          <div className="border-t border-border px-4 lg:px-8 py-3 flex items-center gap-3 bg-card/30">
-            <GradientOrb size="sm" />
-            <div className="flex-1 flex gap-2">
-              <input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-                placeholder="Rispondi a Socrate..."
-                disabled={isStreaming}
-                className="flex-1 bg-card border border-border rounded-md px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-              />
-              <button
-                onClick={() => sendMessage(input)}
-                disabled={!input.trim() || isStreaming}
-                className="px-4 py-2.5 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ─── RIGHT PANEL ─── */}
-        <aside className="hidden lg:flex w-72 xl:w-80 border-l border-border flex-col bg-card/30 overflow-y-auto">
-          {panels.map(panel => {
-            const isOpen = expandedPanel === panel.id;
+      {/* ─── BOTTOM STEPPER ─── */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border py-3 px-8">
+        <div className="flex items-center justify-between max-w-2xl mx-auto">
+          {STAGES.map((s, i) => {
+            const isCompleted = i < currentStageIndex;
+            const isCurrent = i === currentStageIndex;
             return (
-              <div key={panel.id} className="border-b border-border">
-                <button
-                  onClick={() => togglePanel(panel.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-secondary/50 transition-colors"
-                >
-                  <panel.icon className={`w-3.5 h-3.5 ${panel.id === "vulns" ? "text-destructive" : "text-accent"}`} />
-                  <span className="text-[11px] font-semibold text-foreground uppercase tracking-wider flex-1 text-left">{panel.label}</span>
-                  {panel.badge && (
-                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-destructive/20 text-destructive">{panel.badge}</span>
-                  )}
-                  {panel.action && (
-                    <button
-                      onClick={e => { e.stopPropagation(); panel.action!.onClick(); }}
-                      className="p-1 rounded hover:bg-destructive/10 text-destructive transition-colors"
-                    >
-                      <panel.action.icon className={`w-3 h-3 ${isScanning ? "animate-spin" : ""}`} />
-                    </button>
-                  )}
-                  {isOpen ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
-                </button>
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-3 pb-3">
-                        {panel.content}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              <div key={s.key} className="flex flex-col items-center gap-1.5 flex-1">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                  isCompleted
+                    ? "bg-accent text-accent-foreground"
+                    : isCurrent
+                      ? "bg-accent/20 text-accent border border-accent/40"
+                      : "bg-secondary text-muted-foreground"
+                }`}>
+                  {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : i + 1}
+                </div>
+                <span className={`text-[9px] font-medium ${isCurrent ? "text-accent" : isCompleted ? "text-foreground" : "text-muted-foreground"}`}>
+                  {s.label}
+                </span>
               </div>
             );
           })}
-        </aside>
+        </div>
       </div>
+
+      {/* ─── CHAT OVERLAY ─── */}
+      <AnimatePresence>
+        {chatOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
+              onClick={() => setChatOpen(false)}
+            />
+            <ChatOverlay
+              messages={messages}
+              input={input}
+              setInput={setInput}
+              sendMessage={sendMessage}
+              isStreaming={isStreaming}
+              onClose={() => setChatOpen(false)}
+            />
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
