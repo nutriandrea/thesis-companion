@@ -5,7 +5,7 @@ import {
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
   ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw,
   TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3, Mic,
-  BookOpen, ExternalLink, Mail
+  BookOpen, ExternalLink, Mail, UserPlus
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import VoiceConversation from "@/components/voice/VoiceConversation";
