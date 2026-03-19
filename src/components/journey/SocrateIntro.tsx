@@ -114,7 +114,7 @@ export default function SocrateIntro({ onComplete }: Props) {
                 animate={{ scale: 0.45 }}
                 transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               >
-                <SocrateCoin size={280} interactive={false} />
+                <SocrateCoin size={400} interactive={false} />
               </motion.div>
             </motion.div>
 
