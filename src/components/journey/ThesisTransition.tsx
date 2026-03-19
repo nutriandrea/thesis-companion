@@ -8,14 +8,14 @@ interface Props {
 }
 
 const lines = [
-  { text: "La tesi è stata scelta.", delay: 0 },
-  { text: "Ora si costruisce.", delay: 2000 },
-  { text: "Preparati.", delay: 4000 },
+  { text: "The thesis has been chosen.", delay: 0 },
+  { text: "Now we build.", delay: 2000 },
+  { text: "Get ready.", delay: 4000 },
 ];
 
 export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
   const [currentLine, setCurrentLine] = useState(0);
-  const [phase, setPhase] = useState<"lines" | "topic" | "ignite">("lines");
+  const [phase, setPhase] = useState<"lines" | "topic" | "ignite" | "fade-out">("lines");
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -26,13 +26,21 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
 
     timers.push(setTimeout(() => setPhase("topic"), 6000));
     timers.push(setTimeout(() => setPhase("ignite"), 8500));
-    timers.push(setTimeout(() => onComplete(), 10500));
+    // Start fade-out phase before calling onComplete
+    timers.push(setTimeout(() => setPhase("fade-out"), 10000));
 
     return () => timers.forEach(clearTimeout);
-  }, [onComplete]);
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden">
+    <motion.div
+      className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden"
+      animate={{ opacity: phase === "fade-out" ? 0 : 1 }}
+      transition={{ duration: 0.8, ease: "easeInOut" }}
+      onAnimationComplete={() => {
+        if (phase === "fade-out") onComplete();
+      }}
+    >
       {/* Ambient glow */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -59,7 +67,7 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.6 }}
-                className="text-white text-xl md:text-2xl font-bold tracking-wide"
+                className="font-display text-white text-xl md:text-2xl font-medium tracking-wide italic"
               >
                 {lines[currentLine].text}
               </motion.p>
@@ -79,14 +87,14 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
             <div className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-6 ring-2 ring-accent/30">
               <img src={socrateCoinImg} alt="Socrate" className="w-full h-full object-cover" style={{ filter: "contrast(1.1) grayscale(100%)" }} />
             </div>
-            <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-3">La tua tesi</p>
-            <h1 className="text-white text-2xl md:text-3xl font-bold tracking-wide leading-tight">
+            <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-3">Your thesis</p>
+            <h1 className="font-display text-white text-2xl md:text-3xl font-medium tracking-wide leading-tight italic">
               {thesisTopic}
             </h1>
           </motion.div>
         )}
 
-        {phase === "ignite" && (
+        {(phase === "ignite" || phase === "fade-out") && (
           <motion.div
             key="ignite"
             initial={{ opacity: 0 }}
@@ -106,13 +114,13 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-white text-lg font-bold tracking-[0.15em] uppercase"
+              className="text-white text-lg font-medium tracking-[0.15em] uppercase"
             >
-              Dashboard attivata
+              Dashboard activated
             </motion.p>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
