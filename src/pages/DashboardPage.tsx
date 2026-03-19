@@ -1,15 +1,17 @@
 import { useApp } from "@/contexts/AppContext";
 import { motion } from "framer-motion";
-import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText, Building2, GraduationCap, Activity, Timer } from "lucide-react";
+import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText, Building2, GraduationCap, Activity, Timer, AlertTriangle, ShieldAlert, Copy, Eye, Flame, CircleX, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionStats } from "@/hooks/useSessionStats";
+import { useToast } from "@/hooks/use-toast";
 
 interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; }
 interface AffinityScore { id: string; entity_type: string; entity_id: string; entity_name: string; score: number; reasoning: string; matched_traits: string[]; }
+interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; resolved: boolean; created_at: string; }
 
 export default function DashboardPage() {
   const { roadmap, toggleTask, profile, overallProgress, setActiveSection, user } = useApp();
