@@ -103,7 +103,7 @@ export default function SocrateIntro({ onComplete }: Props) {
             <motion.div
               initial={{ x: 0, y: 0 }}
               animate={{
-                x: typeof window !== "undefined" ? window.innerWidth / 2 - 250 : 300,
+                x: typeof window !== "undefined" ? window.innerWidth / 2 - 280 : 300,
                 y: typeof window !== "undefined" ? window.innerHeight / 2 - 370 : 0,
               }}
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
