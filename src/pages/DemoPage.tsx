@@ -92,9 +92,9 @@ const MOCK_ROADMAP: RoadmapPhase[] = [
 ];
 
 const MOCK_SUPERVISORS: MockSupervisor[] = [
-  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Analisi Codice"], score: 92, reasoning: "Esperto NLP applicato all'ingegneria del software.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
-  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Ricerca attiva sul rilevamento vulnerabilità.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
-  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Ingegneria Software", "Testing"], score: 78, reasoning: "Focus su testing automatizzato e qualità del codice.", email: "luigi.verdi@uzh.ch", university: "UZH" },
+  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Analisi Codice"], score: 92, reasoning: "Il Prof. Rossi è uno dei principali ricercatori europei in NLP applicato all'ingegneria del software. Ha pubblicato oltre 40 paper sull'analisi automatica del codice e supervisionato 12 tesi magistrali su tematiche affini alla tua. La sua esperienza con modelli transformer per il code understanding lo rende il candidato ideale per guidarti nella parte sperimentale.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
+  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "La Prof.ssa Bianchi ha una ricerca attiva sul rilevamento automatico di vulnerabilità tramite tecniche di machine learning. Il suo laboratorio ha sviluppato strumenti open-source per l'analisi statica del codice che potresti integrare come baseline nel tuo lavoro. La sua competenza nel dominio della cybersecurity è complementare al tuo focus sugli LLM.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
+  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Ingegneria Software", "Testing"], score: 78, reasoning: "Considerando che sei nella fase di pianificazione, l'esperienza del Prof. Verdi in ingegneria del software e testing automatizzato potrebbe aiutarti a strutturare la pipeline sperimentale. Tuttavia, il suo focus è più orientato al testing funzionale che al rilevamento di vulnerabilità, il che potrebbe limitare il supporto nella parte più specifica della tesi.", email: "luigi.verdi@uzh.ch", university: "UZH" },
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
