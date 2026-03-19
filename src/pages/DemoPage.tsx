@@ -1171,38 +1171,128 @@ function DemoCareerTree() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const COLORS = ["hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)", "hsl(var(--warning))", "hsl(270 60% 55%)"];
 
+  // Mock companies per sector
+  const MOCK_COMPANIES: Record<string, { name: string; domains: string[] }[]> = {
+    "AI & Machine Learning": [
+      { name: "DeepMind", domains: ["AI Research", "Machine Learning"] },
+      { name: "OpenAI", domains: ["Large Language Models", "AI Safety"] },
+      { name: "Anthropic", domains: ["AI Safety", "LLMs"] },
+    ],
+    "Cybersecurity": [
+      { name: "CrowdStrike", domains: ["Endpoint Security", "Threat Intelligence"] },
+      { name: "Palo Alto Networks", domains: ["Network Security", "Cloud Security"] },
+    ],
+    "DevOps & Automation": [
+      { name: "HashiCorp", domains: ["Infrastructure", "Automation"] },
+      { name: "GitLab", domains: ["DevOps", "CI/CD"] },
+    ],
+    "Academic Research": [
+      { name: "ETH AI Center", domains: ["AI Research", "NLP"] },
+      { name: "EPFL IC", domains: ["Computer Science", "Security"] },
+    ],
+    "Tech Consulting": [
+      { name: "McKinsey Digital", domains: ["Digital Transformation", "AI Strategy"] },
+    ],
+  };
+
   if (loading) return <DemoLoadingSkeleton lines={4} />;
+
+  const sorted = [...sectors].sort((a, b) => b.percentage - a.percentage);
 
   return (
     <div className="space-y-1">
+      {/* Trunk label */}
       <div className="flex items-center gap-2 pb-2">
         <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
         <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
         <div className="flex-1 h-px bg-border" />
       </div>
-      {sectors.map((sector, i) => {
+
+      {sorted.map((sector, i) => {
         const color = COLORS[i % COLORS.length];
         const isExpanded = expanded === sector.name;
+        const comps = MOCK_COMPANIES[sector.name] || [];
+
         return (
           <div key={sector.name} className="relative">
+            {/* Vertical connector line */}
             <div className="absolute left-[7px] top-0 bottom-0 w-px bg-border" />
-            <button onClick={() => setExpanded(isExpanded ? null : sector.name)}
-              className={`relative w-full flex items-center gap-3 pl-5 pr-3 py-2.5 rounded-lg transition-all text-left ${isExpanded ? "bg-secondary/60" : "hover:bg-secondary/30"}`}>
+
+            {/* Branch */}
+            <button
+              onClick={() => setExpanded(isExpanded ? null : sector.name)}
+              className={`relative w-full flex items-center gap-3 pl-5 pr-3 py-2.5 rounded-lg transition-all text-left group ${
+                isExpanded ? "bg-secondary/60" : "hover:bg-secondary/30"
+              }`}
+            >
+              {/* Branch node */}
               <div className="absolute left-[3px] top-1/2 -translate-y-1/2 flex items-center">
                 <div className="w-[9px] h-[9px] rounded-full border-2 shrink-0" style={{ borderColor: color, backgroundColor: isExpanded ? color : "transparent" }} />
                 <div className="w-3 h-px" style={{ backgroundColor: color }} />
               </div>
+
+              {/* Sector info */}
               <div className="flex-1 min-w-0 ml-2">
-                <span className="text-xs font-semibold text-foreground">{sector.name}</span>
-                {sector.reasoning && <p className="text-[10px] text-muted-foreground mt-0.5">{sector.reasoning}</p>}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-foreground">{sector.name}</span>
+                  {sector.reasoning && (
+                    <span className="text-[9px] text-muted-foreground truncate max-w-[180px] hidden lg:inline">
+                      {sector.reasoning}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* Percentage bar */}
               <div className="flex items-center gap-2 shrink-0">
                 <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
-                  <motion.div className="h-full rounded-full" style={{ backgroundColor: color }} initial={{ width: 0 }} animate={{ width: `${sector.percentage}%` }} transition={{ duration: 0.6, delay: i * 0.08 }} />
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: color }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${sector.percentage}%` }}
+                    transition={{ duration: 0.6, delay: i * 0.08 }}
+                  />
                 </div>
                 <span className="text-[11px] font-bold w-8 text-right" style={{ color }}>{sector.percentage}%</span>
               </div>
+
+              {/* Expand indicator */}
+              <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             </button>
+
+            {/* Expanded: companies under this branch */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pl-8 pr-2 pb-2 space-y-1">
+                    {comps.length === 0 ? (
+                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">No companies matched</p>
+                    ) : (
+                      comps.map((comp, j) => (
+                        <div key={j} className="relative flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
+                          {/* Leaf connector */}
+                          <div className="absolute left-0 top-1/2 w-3 h-px" style={{ backgroundColor: `${color}40` }} />
+                          <div className="w-5 h-5 rounded bg-secondary flex items-center justify-center shrink-0">
+                            <Building2 className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-medium text-foreground truncate">{comp.name}</p>
+                            <p className="text-[9px] text-muted-foreground truncate">{comp.domains.join(", ")}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
