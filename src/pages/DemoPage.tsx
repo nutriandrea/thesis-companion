@@ -832,7 +832,7 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
           <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
             <ShieldAlert className="w-3 h-3 text-muted-foreground shrink-0" />
             <p className="text-[10px] text-muted-foreground leading-snug">
-              Le conversazioni con Socrate restano <strong className="text-foreground">private</strong> e non sono visibili al relatore.
+              Conversations with Socrates remain <strong className="text-foreground">private</strong> and are not visible to the supervisor.
             </p>
           </div>
         </div>
