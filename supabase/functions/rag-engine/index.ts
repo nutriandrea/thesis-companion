@@ -19,6 +19,18 @@ async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
   return data.data[0].embedding;
 }
 
+async function getBatchEmbeddings(texts: string[], apiKey: string): Promise<number[][]> {
+  const inputs = texts.map(t => t.slice(0, 8000));
+  const resp = await fetch(OPENAI_EMBED_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: EMBED_MODEL, input: inputs }),
+  });
+  if (!resp.ok) throw new Error(`Embedding API error: ${resp.status}`);
+  const data = await resp.json();
+  return data.data.sort((a: any, b: any) => a.index - b.index).map((d: any) => d.embedding);
+}
+
 function chunkText(text: string, maxChars = 1500, overlap = 200): string[] {
   const chunks: string[] = [];
   let start = 0;
