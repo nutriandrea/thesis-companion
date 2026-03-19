@@ -162,6 +162,9 @@ export default function ProfilePage() {
         )}
       </motion.div>
 
+      {/* Google Doc Configuration */}
+      <GoogleDocConfig />
+
       {/* Socrate's Intellectual Profile */}
       {studentProfile && studentProfile.reasoning_style && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
