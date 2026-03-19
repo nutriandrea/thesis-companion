@@ -943,6 +943,8 @@ function DemoTasks({ phase }: { phase: string }) {
   };
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
+
   return (
     <div className="space-y-1.5">
       {tasks.map(task => {
