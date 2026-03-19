@@ -257,7 +257,16 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
   const [aiCompanies, setAiCompanies] = useState<any[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
 
-  // Load AI companies when sector is clicked
+  const defaultItems = useMemo(() => {
+    if (affinities.length > 0) {
+      return affinities.slice(0, 5).map(a => {
+        const comp = companies.find(c => c.id === a.entity_id);
+        return { id: a.entity_id, name: a.entity_name, score: a.score, domains: comp?.domains?.slice(0, 2) || [] };
+      });
+    }
+    return companies.slice(0, 5).map(c => ({ id: c.id, name: c.name, score: null, domains: c.domains.slice(0, 2) }));
+  }, [affinities]);
+
   useEffect(() => {
     if (!activeSector || !userId) return;
     setLoadingAi(true);
@@ -269,7 +278,6 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
     }).catch(() => {}).finally(() => setLoadingAi(false));
   }, [activeSector, userId]);
 
-  // Show AI-suggested companies for active sector, otherwise affinity-based
   if (activeSector) {
     if (loadingAi) return (
       <div className="flex items-center justify-center py-6">
@@ -308,20 +316,9 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
     );
   }
 
-  // Default: affinity-based
-  const items = useMemo(() => {
-    if (affinities.length > 0) {
-      return affinities.slice(0, 5).map(a => {
-        const comp = companies.find(c => c.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, domains: comp?.domains?.slice(0, 2) || [] };
-      });
-    }
-    return companies.slice(0, 5).map(c => ({ id: c.id, name: c.name, score: null, domains: c.domains.slice(0, 2) }));
-  }, [affinities]);
-
   return (
     <div className="space-y-2">
-      {items.map(comp => (
+      {defaultItems.map(comp => (
         <div key={comp.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
           <div className="w-7 h-7 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
             <Building2 className="w-3.5 h-3.5 text-warning" />
