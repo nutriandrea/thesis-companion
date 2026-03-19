@@ -462,7 +462,7 @@ function DemoChat() {
     <div className="space-y-3">
       {MOCK_MESSAGES.map(msg => (
         <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-          <div className={`max-w-[85%] px-3 py-2 text-xs rounded-lg ${msg.role === "assistant" ? "bg-secondary/30 border border-border" : "bg-accent/5 border border-accent/20"}`}>
+          <div className={`max-w-[80%] px-4 py-3 text-xs rounded-2xl ${msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"}`}>
             <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
           </div>
         </div>
