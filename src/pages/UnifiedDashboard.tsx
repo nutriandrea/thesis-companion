@@ -302,7 +302,7 @@ export default function UnifiedDashboard() {
         fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "extract_suggestions" }) }),
       ]);
     } catch {}
-  }, [user, studentContext, latexContent]);
+  }, [user, studentContext, thesisContent]);
 
   // Vulnerability scan
   const scanVulnerabilities = useCallback(async () => {
