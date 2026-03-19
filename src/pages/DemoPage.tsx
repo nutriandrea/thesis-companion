@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Target, Users, Building2, CheckCircle2, Circle, GraduationCap,
   MessageCircle, ChevronRight, ShieldAlert, BarChart3, BookOpen,
