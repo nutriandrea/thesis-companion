@@ -2000,6 +2000,7 @@ export default function UnifiedDashboard() {
               Invita relatore
             </button>
           )}
+          <LanguageSwitch />
           <button onClick={signOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
             <LogOut className="w-3.5 h-3.5" />
           </button>
