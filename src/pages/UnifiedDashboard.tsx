@@ -20,7 +20,8 @@ import supervisorsData from "@/data/supervisors.json";
 import companiesData from "@/data/companies.json";
 import expertsData from "@/data/experts.json";
 import fieldsData from "@/data/fields.json";
-import type { Supervisor, Company, Expert, Field } from "@/types/data";
+import type { Supervisor, Company, Expert, Field, RoadmapPhase, RoadmapTask } from "@/types/data";
+import { mockRoadmap } from "@/data/mock-roadmap";
 
 const supervisors = supervisorsData as Supervisor[];
 const companies = companiesData as Company[];
@@ -546,7 +547,110 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
   );
 }
 
-// ─── VULNERABILITIES PANEL ───
+// ─── CONFIRMED TRACK SUMMARY (planning phase) ───
+function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
+  supervisorId: string | null; sectors: CareerSector[]; thesisTopic?: string | null;
+}) {
+  const sup = supervisorId ? supervisors.find(s => s.id === supervisorId) : null;
+  const topSectors = sectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 3);
+
+  return (
+    <div className="space-y-3">
+      {thesisTopic && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Topic</p>
+          <p className="text-xs font-medium text-foreground">{thesisTopic}</p>
+        </div>
+      )}
+      {sup && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Supervisore</p>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
+              <GraduationCap className="w-3 h-3 text-accent" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-foreground">{sup.title} {sup.firstName} {sup.lastName}</p>
+              <p className="text-[10px] text-muted-foreground">{sup.researchInterests.slice(0, 2).join(", ")}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {topSectors.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Direzione</p>
+          <div className="space-y-1">
+            {topSectors.map(s => (
+              <div key={s.name} className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-full bg-accent rounded-full" style={{ width: `${s.percentage}%` }} />
+                </div>
+                <span className="text-[10px] text-foreground font-medium w-24 truncate">{s.name}</span>
+                <span className="text-[10px] text-muted-foreground font-bold w-8 text-right">{s.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!sup && topSectors.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-4 italic">Conferma supervisore e orientamento per procedere.</p>
+      )}
+    </div>
+  );
+}
+
+// ─── ROADMAP CARD ───
+function RoadmapCard({ currentPhase }: { currentPhase: PhaseKey }) {
+  const isEditable = currentPhase === "planning";
+
+  const roadmapPhases = mockRoadmap;
+
+  // Filter: in planning show from planning onward; in execution/writing show all with progress
+  const visiblePhases = roadmapPhases.filter((_: RoadmapPhase, i: number) => i >= 2); // planning, execution, writing
+
+  return (
+    <div className="space-y-3">
+      {visiblePhases.map((phase: RoadmapPhase) => (
+        <div key={phase.id} className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{phase.title}</span>
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[10px] font-bold text-foreground">{phase.progress}%</span>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-accent rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${phase.progress}%` }}
+              transition={{ duration: 0.8 }}
+            />
+          </div>
+          {/* Tasks */}
+          <div className="space-y-1 pl-2">
+            {phase.tasks.map((task: RoadmapTask) => (
+              <div key={task.id} className="flex items-center gap-2 py-0.5">
+                {task.completed ? (
+                  <CheckCircle2 className="w-3 h-3 text-accent shrink-0" />
+                ) : (
+                  <Circle className="w-3 h-3 text-muted-foreground/40 shrink-0" />
+                )}
+                <span className={`text-[11px] flex-1 ${task.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                  {task.title}
+                </span>
+                {isEditable && !task.completed && (
+                  <span className="text-[9px] text-muted-foreground">{new Date(task.dueDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -1190,52 +1294,80 @@ export default function UnifiedDashboard() {
 
       {/* Google Doc auto-syncs from profile settings */}
 
-      {/* ─── CARDS GRID ─── */}
+      {/* ─── CARDS GRID (phase-gated) ─── */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
-          {/* Career Distribution */}
-          <motion.div data-tutor-id="career" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}>
-              <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
-            </DashboardCard>
-          </motion.div>
 
-          {/* Tasks */}
-          <motion.div data-tutor-id="tasks" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+          {/* ── ALWAYS VISIBLE: Tasks ── */}
+          <motion.div data-tutor-id="tasks" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <DashboardCard title="Task" icon={Target}>
               <TaskContent userId={user?.id || ""} />
             </DashboardCard>
           </motion.div>
 
-          {/* Vulnerabilities */}
-          <motion.div data-tutor-id="vulnerabilities" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          {/* ── ALWAYS VISIBLE: Vulnerabilità ── */}
+          <motion.div data-tutor-id="vulnerabilities" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
             <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
               action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
               <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
             </DashboardCard>
           </motion.div>
 
-          {/* Supervisors */}
-          <motion.div data-tutor-id="supervisor" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-            <DashboardCard title="Supervisore" icon={Users}>
-              <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
-            </DashboardCard>
-          </motion.div>
-
-          {/* Interview Partners / Experts */}
-          <motion.div data-tutor-id="experts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          {/* ── ALWAYS VISIBLE: Interview Partners / Rubrica ── */}
+          <motion.div data-tutor-id="experts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
             <DashboardCard title="Interview Partners" icon={Users}>
               <ExpertSuggestions userId={user?.id || ""} />
             </DashboardCard>
           </motion.div>
 
+          {/* ── TOPIC & SUPERVISOR: Supervisors ── */}
+          {currentPhase === "topic_supervisor" && (
+            <motion.div data-tutor-id="supervisor" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+              <DashboardCard title="Supervisore" icon={GraduationCap}>
+                <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
+              </DashboardCard>
+            </motion.div>
+          )}
 
-          <motion.div data-tutor-id="companies" className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
-            <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
-              action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
-              <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
-            </DashboardCard>
-          </motion.div>
+          {/* ── TOPIC & SUPERVISOR: Orientamento Lavorativo + Aziende ── */}
+          {currentPhase === "topic_supervisor" && (
+            <>
+              <motion.div data-tutor-id="career" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+                <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}>
+                  <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
+                </DashboardCard>
+              </motion.div>
+              <motion.div data-tutor-id="companies" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+                <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
+                  action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
+                  <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
+                </DashboardCard>
+              </motion.div>
+            </>
+          )}
+
+          {/* ── PLANNING: Confirmed track + supervisor summary ── */}
+          {currentPhase === "planning" && (
+            <motion.div data-tutor-id="confirmed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+              <DashboardCard title="Track Confermato" icon={CheckCircle2}>
+                <ConfirmedTrackSummary
+                  supervisorId={selectedSupervisorId}
+                  sectors={careerSectors}
+                  thesisTopic={profile?.thesis_topic}
+                />
+              </DashboardCard>
+            </motion.div>
+          )}
+
+          {/* ── PLANNING + EXECUTION + WRITING: Roadmap ── */}
+          {(currentPhase === "planning" || currentPhase === "execution" || currentPhase === "writing") && (
+            <motion.div data-tutor-id="roadmap" className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+              <DashboardCard title={currentPhase === "planning" ? "Roadmap (in costruzione)" : "Roadmap"} icon={BarChart3}>
+                <RoadmapCard currentPhase={currentPhase} />
+              </DashboardCard>
+            </motion.div>
+          )}
+
         </div>
       </div>
 
