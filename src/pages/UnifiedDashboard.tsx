@@ -1371,6 +1371,8 @@ export default function UnifiedDashboard() {
         fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "evaluate_phase" }) }),
         // Match experts and supervisors
         fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "match_people", expertsData, supervisorsData: supervisors, fieldsData: fields }) }),
+        // Update roadmap if in planning+ phase
+        fetch(TASK_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "generate_roadmap", thesis_content: thesisContent?.substring(0, 3000) || "" }) }),
       ]);
     } catch {}
   }, [user, studentContext, thesisContent]);
