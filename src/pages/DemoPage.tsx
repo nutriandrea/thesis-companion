@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Target, Users, Building2, CheckCircle2, Circle, GraduationCap,
   MessageCircle, ChevronRight, ShieldAlert, BarChart3, BookOpen,
@@ -331,101 +331,201 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
 }
 
 // ══════════════════════════════════════════════════════
-// STEP 2: DEMO ONBOARDING
+// STEP 2: DEMO ONBOARDING (matches real OnboardingFlow)
 // ══════════════════════════════════════════════════════
 const JOURNEY_OPTIONS = [
-  { key: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet." },
-  { key: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine it." },
-  { key: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write about." },
-  { key: "writing", icon: PenTool, title: "I'm already writing", desc: "I need support for writing and revision." },
+  { key: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet. I need inspiration." },
+  { key: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine and structure it." },
+  { key: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write about. I need a roadmap, timeline and supervisor." },
+  { key: "writing", icon: PenTool, title: "I'm already writing", desc: "I've started. I need support for writing, revision and defense." },
 ];
 
 function DemoOnboarding({ onNext }: { onNext: () => void }) {
+  const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  const [degree, setDegree] = useState("MSc Computer Science");
+  const [university, setUniversity] = useState("ETH Zurich");
+  const [skills, setSkills] = useState("Python, machine learning, NLP, data analysis");
+  const [topicInput, setTopicInput] = useState("");
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl text-center space-y-8">
-        <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
-          <Sparkles className="w-8 h-8 text-accent" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground font-display">Welcome, Marco</h1>
-          <p className="text-muted-foreground mt-2">Where are you in your thesis journey?</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
-          {JOURNEY_OPTIONS.map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => setSelected(opt.key)}
-              className={`flex items-start gap-3 p-4 rounded-lg border text-left transition-all ${
-                selected === opt.key
-                  ? "border-accent bg-accent/5"
-                  : "border-border hover:border-foreground/20 hover:bg-secondary/30"
-              }`}
-            >
-              <opt.icon className={`w-5 h-5 mt-0.5 shrink-0 ${selected === opt.key ? "text-accent" : "text-muted-foreground"}`} />
-              <div>
-                <p className="text-sm font-semibold text-foreground">{opt.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl">
+        <AnimatePresence mode="wait">
+          {step === 0 && (
+            <motion.div key="welcome" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="text-center space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
+                <Sparkles className="w-8 h-8 text-accent" />
               </div>
-            </button>
-          ))}
-        </div>
+              <div>
+                <h1 className="text-3xl font-bold font-display">Hi, Marco!</h1>
+                <p className="text-muted-foreground mt-2 text-lg">Before we begin, Socrates wants to get to know you. Answer a few questions.</p>
+              </div>
+              <button onClick={() => setStep(1)} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors inline-flex items-center gap-2">
+                Let's begin <ArrowRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
 
-        {selected && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <button onClick={onNext} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors">
-              Continue <ArrowRight className="w-4 h-4 inline ml-2" />
-            </button>
-          </motion.div>
-        )}
+          {step === 1 && (
+            <motion.div key="about" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold font-display">Tell us about yourself</h2>
+                <p className="text-muted-foreground mt-1">This info will help Socrates challenge you better</p>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Degree program</label>
+                    <input value={degree} onChange={e => setDegree(e.target.value)} placeholder="e.g. MSc Computer Science"
+                      className="w-full bg-card border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">University</label>
+                    <input value={university} onChange={e => setUniversity(e.target.value)} placeholder="e.g. ETH Zurich"
+                      className="w-full bg-card border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Skills (comma separated)</label>
+                  <input value={skills} onChange={e => setSkills(e.target.value)} placeholder="e.g. Python, machine learning, NLP, data analysis"
+                    className="w-full bg-card border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => setStep(2)} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors inline-flex items-center gap-2">
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div key="state" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold font-display">Where are you?</h2>
+                <p className="text-muted-foreground mt-1">Select the state that best describes you</p>
+              </div>
+              <div className="space-y-3">
+                {JOURNEY_OPTIONS.map(opt => (
+                  <button key={opt.key} onClick={() => setSelected(opt.key)}
+                    className={`w-full flex items-start gap-4 p-4 rounded-xl border transition-all text-left
+                      ${selected === opt.key
+                        ? "border-accent bg-accent/5 shadow-md ring-2 ring-accent/20"
+                        : "border-border bg-card hover:border-accent/40 hover:shadow-sm"}`}>
+                    <div className={`p-2.5 rounded-lg shrink-0 ${selected === opt.key ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+                      <opt.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{opt.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => setStep(3)} disabled={!selected} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors inline-flex items-center gap-2 disabled:opacity-30">
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div key="topic" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold font-display">Do you have a topic in mind?</h2>
+                <p className="text-muted-foreground mt-1">Even a vague idea. Socrates will help you develop it.</p>
+              </div>
+              <textarea value={topicInput} onChange={e => setTopicInput(e.target.value)}
+                placeholder="e.g. 'Applying NLP to automate knowledge discovery' or 'something related to AI and medicine'..."
+                className="w-full h-32 bg-card border rounded-xl p-4 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent" />
+              <div className="flex justify-between">
+                <button onClick={() => setStep(2)} className="px-6 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                <button onClick={onNext} className="px-8 py-3 bg-accent text-accent-foreground text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors inline-flex items-center gap-2">
+                  Meet Socrates <Sparkles className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
 }
 
 // ══════════════════════════════════════════════════════
-// STEP 3: DEMO SOCRATE INTRO (abbreviated)
+// STEP 3: DEMO SOCRATE INTRO (1:1 with SocrateIntro)
 // ══════════════════════════════════════════════════════
 function DemoIntro({ onNext }: { onNext: () => void }) {
-  const [phase, setPhase] = useState<"coin" | "text" | "choice">("coin");
-  const [subtitle, setSubtitle] = useState("");
+  const [phase, setPhase] = useState<"coin-reveal" | "coin-translate" | "text-appear" | "mode-choice">("coin-reveal");
+  const [currentSubtitle, setCurrentSubtitle] = useState("");
 
   const subtitles = [
-    { text: "\"True wisdom lies in knowing you know nothing.\"", delay: 0 },
-    { text: "\"An unexamined thesis is not worth writing.\"", delay: 2800 },
-    { text: "I am Socrates.", delay: 5600 },
+    { text: "\"True wisdom lies in knowing you know nothing.\"", delay: 0, duration: 2500 },
+    { text: "\"An unexamined thesis is not worth writing.\"", delay: 2800, duration: 2500 },
+    { text: "I am Socrates.", delay: 5600, duration: 2000 },
   ];
 
+  const introText = "Marco, I am here for one reason only: to challenge every idea you have, find the weak points, and push you to build a thesis worth defending.\n\nI will not give you easy answers. Instead, I will ask you the questions no one else dares to ask.";
+
   useEffect(() => {
-    if (phase !== "coin") return;
+    if (phase !== "coin-reveal") return;
     const timers: ReturnType<typeof setTimeout>[] = [];
-    subtitles.forEach(s => timers.push(setTimeout(() => setSubtitle(s.text), s.delay)));
-    timers.push(setTimeout(() => setPhase("text"), 7500));
+    subtitles.forEach((sub) => {
+      timers.push(setTimeout(() => setCurrentSubtitle(sub.text), sub.delay));
+    });
+    timers.push(setTimeout(() => setPhase("coin-translate"), 8500));
     return () => timers.forEach(clearTimeout);
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== "text") return;
-    const t = setTimeout(() => setPhase("choice"), 2000);
-    return () => clearTimeout(t);
+    if (phase !== "coin-translate") return;
+    const timer = setTimeout(() => setPhase("text-appear"), 1500);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "text-appear") return;
+    const timer = setTimeout(() => setPhase("mode-choice"), 2000);
+    return () => clearTimeout(timer);
   }, [phase]);
 
   return (
     <div className="fixed inset-0 z-50 bg-foreground overflow-hidden flex items-center justify-center">
       <AnimatePresence mode="wait">
-        {phase === "coin" && (
-          <motion.div key="coin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 2, ease: "easeOut" }}>
+        {phase === "coin-reveal" && (
+          <motion.div
+            key="coin-reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            className="relative flex flex-col items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 2, ease: "easeOut" }}
+            >
               <SocrateCoin size={280} interactive={false} />
             </motion.div>
             <div className="mt-12 h-20 flex items-center justify-center">
               <AnimatePresence mode="wait">
-                {subtitle && (
-                  <motion.p key={subtitle} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight">
-                    {subtitle}
+                {currentSubtitle && (
+                  <motion.p
+                    key={currentSubtitle}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.6 }}
+                    className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight"
+                  >
+                    {currentSubtitle}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -433,32 +533,93 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
           </motion.div>
         )}
 
-        {(phase === "text" || phase === "choice") && (
-          <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center max-w-xl px-8">
-            <motion.div initial={{ scale: 1 }} animate={{ scale: 0.35 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} className="mb-8">
-              <SocrateCoin size={200} interactive={false} />
+        {(phase === "coin-translate" || phase === "text-appear" || phase === "mode-choice") && (
+          <motion.div
+            key="main-layout"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            className="fixed inset-0 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ x: 0, y: 0 }}
+              animate={{
+                x: typeof window !== "undefined" ? window.innerWidth / 2 - 160 : 300,
+                y: typeof window !== "undefined" ? window.innerHeight / 2 - 370 : 0,
+              }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute z-10"
+            >
+              <motion.div
+                initial={{ scale: 1 }}
+                animate={{ scale: 0.45 }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <SocrateCoin size={400} interactive={false} />
+              </motion.div>
             </motion.div>
 
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] text-center mb-10">
-              Marco, I'm here to challenge your ideas, find weak points and push you toward a thesis worth defending. Choose how you want to interact.
-            </motion.p>
+            <LayoutGroup>
+              <motion.div
+                layout
+                transition={{ layout: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
+                className="flex flex-col items-center max-w-xl px-8 mt-32"
+              >
+                {(phase === "text-appear" || phase === "mode-choice") && (
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, ease: "easeOut", layout: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
+                    className="text-center mb-6"
+                  >
+                    {introText.split("\n\n").map((paragraph, i) => (
+                      <motion.p
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.4, duration: 0.8 }}
+                        className="font-display text-background/60 text-base md:text-lg leading-[1.8] mb-5 last:mb-0"
+                      >
+                        {paragraph}
+                      </motion.p>
+                    ))}
+                  </motion.div>
+                )}
 
-            {phase === "choice" && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex gap-14">
-                <button onClick={onNext} className="group flex flex-col items-center gap-3">
-                  <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
-                    <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
-                  </div>
-                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voice</span>
-                </button>
-                <button onClick={onNext} className="group flex flex-col items-center gap-3">
-                  <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
-                    <PenTool className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
-                  </div>
-                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Text</span>
-                </button>
+                {phase === "mode-choice" && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.3 }}
+                    className="flex gap-14 mt-4"
+                  >
+                    <button
+                      onClick={onNext}
+                      className="group flex flex-col items-center gap-3 transition-all"
+                    >
+                      <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
+                        <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
+                      </div>
+                      <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">
+                        Voice
+                      </span>
+                    </button>
+                    <button
+                      onClick={onNext}
+                      className="group flex flex-col items-center gap-3 transition-all"
+                    >
+                      <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
+                        <PenTool className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
+                      </div>
+                      <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">
+                        Text
+                      </span>
+                    </button>
+                  </motion.div>
+                )}
               </motion.div>
-            )}
+            </LayoutGroup>
           </motion.div>
         )}
       </AnimatePresence>
@@ -590,18 +751,26 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
       </div>
 
       {/* Input bar */}
-      <form onSubmit={handleSubmit} className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Reply to Socrates..."
-          disabled={isStreaming}
-          className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent/30 transition-colors disabled:opacity-50"
-        />
-        <button type="submit" disabled={isStreaming || !input.trim()} className="p-2.5 bg-accent text-accent-foreground rounded-full disabled:opacity-50 hover:bg-accent/90 transition-colors">
-          {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        </button>
-      </form>
+      <div className="border-t border-border pt-4 pb-4 px-5 flex items-center gap-3 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-bold text-foreground">M</span>
+        </div>
+        <div className="flex-1 flex gap-2">
+          <input value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e as any); } }}
+            placeholder="Reply to Socrates..." disabled={isStreaming}
+            className="flex-1 bg-card border border-border rounded-full px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          <button onClick={() => setMode("voice")}
+            className="px-3 py-3 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Switch to voice mode">
+            <Mic className="w-4 h-4" />
+          </button>
+          <button onClick={() => handleSubmit({ preventDefault: () => {} } as any)} disabled={!input.trim() || isStreaming}
+            className="px-4 py-3 bg-accent text-accent-foreground rounded-full hover:bg-accent/90 transition-colors disabled:opacity-30">
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
       {/* Skip button */}
       <motion.div
@@ -1031,68 +1200,132 @@ function DemoCareerTree() {
 function DemoSupervisors() {
   const { data, loading } = useDemoEngine<{ supervisors: MockSupervisor[] }>("match_supervisors");
   const sups = data?.supervisors?.length ? data.supervisors : MOCK_SUPERVISORS;
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<string | null>(null);
+  const [confirmedName, setConfirmedName] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [motivation, setMotivation] = useState("");
 
   if (loading) return <DemoLoadingSkeleton lines={3} />;
 
+  // Confirmation animation
+  if (confirming && confirmedName) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-8 space-y-4"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: [0, 1.2, 1] }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-14 h-14 rounded-full bg-accent/15 flex items-center justify-center"
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <CheckCircle2 className="w-7 h-7 text-accent" />
+          </motion.div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center space-y-1"
+        >
+          <p className="text-xs font-bold text-foreground">Supervisor confirmed</p>
+          <p className="text-[11px] text-accent font-medium">{confirmedName}</p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+          className="flex items-center gap-2 text-[10px] text-muted-foreground"
+        >
+          <motion.div
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <ArrowRight className="w-3 h-3" />
+          </motion.div>
+          <span>Moving to next phase...</span>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  const handleConfirm = (sup: MockSupervisor) => {
+    setConfirming(true);
+    setConfirmedName(sup.name);
+    setTimeout(() => {
+      setConfirmed(sup.id);
+      setSelecting(null);
+      setMotivation("");
+    }, 2200);
+  };
+
   return (
     <div className="space-y-2">
-      {sups.map(sup => {
-        const isSelected = selected === sup.id;
-        return (
-          <div key={sup.id}>
-            <div
-              className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-colors cursor-pointer ${isSelected ? "bg-accent/10 border border-accent/20" : "hover:bg-secondary/50"}`}
-              onClick={() => setSelected(isSelected ? null : sup.id)}
-            >
-              <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                {isSelected ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <GraduationCap className="w-3.5 h-3.5 text-accent" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-foreground">{sup.name}</p>
-                <p className="text-[10px] text-muted-foreground">{sup.fields.join(", ")}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Mail className="w-2.5 h-2.5 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">{sup.email}</span>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
+      {sups.map(sup => (
+        <div key={sup.id}>
+          <div
+            className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors cursor-pointer ${
+              confirmed === sup.id ? "bg-accent/10 border border-accent/20" : "hover:bg-secondary/50"
+            }`}
+            onClick={() => setSelecting(selecting === sup.id ? null : sup.id)}
+          >
+            <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+              {confirmed === sup.id ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <GraduationCap className="w-3.5 h-3.5 text-accent" />}
             </div>
-
-            <AnimatePresence>
-              {isSelected && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="overflow-hidden"
-                >
-                  <div className="px-3 pt-2 pb-3 space-y-3">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{sup.reasoning}</p>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium text-muted-foreground">Why this supervisor?</label>
-                      <textarea
-                        value={motivation}
-                        onChange={e => setMotivation(e.target.value)}
-                        placeholder="Explain your motivation..."
-                        className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:border-accent/30 transition-colors"
-                        rows={2}
-                      />
-                    </div>
-
-                    <button className="px-4 py-2 bg-accent text-accent-foreground text-[10px] font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors">
-                      Confirm selection
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground">{sup.name}</p>
+              <p className="text-[10px] text-muted-foreground">{sup.fields.join(", ")}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Mail className="w-2.5 h-2.5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">{sup.email}</span>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
           </div>
-        );
-      })}
+
+          {/* Motivation input */}
+          <AnimatePresence>
+            {selecting === sup.id && confirmed !== sup.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-2 py-2 space-y-2">
+                  {sup.reasoning && (
+                    <div className="rounded-lg border border-border bg-secondary/40 px-3 py-2">
+                      <p className="text-[10px] text-muted-foreground mb-1">Suggested reasoning</p>
+                      <p className="text-[11px] text-foreground/80 leading-relaxed break-words whitespace-pre-wrap">{sup.reasoning}</p>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">Why this supervisor?</p>
+                  <textarea
+                    value={motivation}
+                    onChange={e => setMotivation(e.target.value)}
+                    placeholder="Explain your motivation..."
+                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-accent"
+                    rows={2}
+                  />
+                  <button
+                    onClick={() => handleConfirm(sup)}
+                    disabled={!motivation.trim()}
+                    className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30"
+                  >
+                    Confirm selection
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1127,6 +1360,8 @@ function DemoExperts() {
 function DemoReferences() {
   const { data, loading } = useDemoEngine<{ references: MockReference[] }>("generate_references");
   const refs = data?.references?.length ? data.references : MOCK_REFERENCES;
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [savedUrls, setSavedUrls] = useState<Set<string>>(new Set());
   const categoryLabel: Record<string, { text: string; cls: string }> = {
     foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
     methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
@@ -1140,14 +1375,57 @@ function DemoReferences() {
     <div className="space-y-1.5">
       {refs.map((ref, i) => {
         const cat = categoryLabel[ref.category] || categoryLabel.foundational;
+        const isExpanded = expandedIdx === i;
+        const isSaved = savedUrls.has(ref.url + i);
         return (
-          <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
-            <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{ref.authors} ({ref.year})</p>
+          <div key={i} className="rounded-lg hover:bg-secondary/30 transition-colors">
+            <div className="flex items-start">
+              <button
+                onClick={() => setExpandedIdx(isExpanded ? null : i)}
+                className="flex-1 flex items-start gap-2.5 p-2.5 text-left"
+              >
+                <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{ref.authors} ({ref.year})</p>
+                </div>
+                <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>{cat.text}</span>
+              </button>
+              <button
+                onClick={() => setSavedUrls(prev => {
+                  const next = new Set(prev);
+                  const key = ref.url + i;
+                  if (next.has(key)) next.delete(key); else next.add(key);
+                  return next;
+                })}
+                className={`p-2.5 shrink-0 transition-colors ${isSaved ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"}`}
+              >
+                {isSaved ? <span className="text-sm">⭐</span> : <span className="text-sm opacity-50">☆</span>}
+              </button>
             </div>
-            <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>{cat.text}</span>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-2.5 pb-2.5 pt-0 space-y-2 pl-8">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ref.relevance}</p>
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Open source
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
@@ -1155,9 +1433,10 @@ function DemoReferences() {
   );
 }
 
-function DemoVulnerabilities() {
+function DemoVulnerabilities({ onResolve }: { onResolve?: (title: string) => void }) {
   const { data, loading } = useDemoEngine<{ vulnerabilities: MockVulnerability[] }>("extract_vulnerabilities");
   const vulns = data?.vulnerabilities?.length ? data.vulnerabilities : MOCK_VULNERABILITIES;
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const ranked = [...vulns].sort((a, b) => {
     const order: Record<string, number> = { critical: 0, high: 1, medium: 2 };
     return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
@@ -1168,18 +1447,47 @@ function DemoVulnerabilities() {
   return (
     <div className="space-y-1.5">
       {ranked.map((v, i) => {
+        const isExpanded = expandedId === v.id;
         const severityColor = v.severity === "critical" ? "text-destructive" : v.severity === "high" ? "text-warning" : "text-muted-foreground";
         const severityBg = v.severity === "critical" ? "bg-destructive/[0.06]" : v.severity === "high" ? "bg-warning/[0.06]" : "bg-muted/30";
         return (
-          <div key={v.id} className={`rounded-lg p-2.5 ${severityBg}`}>
-            <div className="flex items-start gap-2.5">
+          <div key={v.id} className={`rounded-lg transition-colors ${severityBg}`}>
+            <button
+              onClick={() => setExpandedId(isExpanded ? null : v.id)}
+              className="w-full flex items-start gap-2.5 p-2.5 text-left"
+            >
               <span className={`text-[10px] font-bold mt-0.5 shrink-0 w-4 text-center ${severityColor}`}>{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-foreground leading-tight">{v.title}</p>
-                <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">{v.description}</p>
+                {!isExpanded && (
+                  <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1 mt-0.5">{v.description}</p>
+                )}
               </div>
               <ShieldAlert className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${severityColor}`} />
-            </div>
+            </button>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-2.5 pb-2.5 pt-0 space-y-2">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed pl-6">{v.description}</p>
+                    {onResolve && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onResolve(v.title); }}
+                        className="ml-6 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
+                      >
+                        Tell Socrates it's resolved →
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}
@@ -1383,6 +1691,7 @@ function DemoChatOverlay({ onClose }: { onClose: () => void }) {
 function DemoDashboard() {
   const [currentPhaseIdx, setCurrentPhaseIdx] = useState(2);
   const [showChat, setShowChat] = useState(false);
+  const [chatMode, setChatMode] = useState<"text" | "voice">("text");
   const currentPhase = PHASES[currentPhaseIdx].key;
   const confidence = PHASE_CONFIDENCE[currentPhase] || 0;
 
@@ -1391,28 +1700,33 @@ function DemoDashboard() {
   const showExecution = currentPhase === "execution";
   const showWriting = currentPhase === "writing";
 
+  const handleResolveVuln = (vulnTitle: string) => {
+    setShowChat(true);
+    setChatMode("text");
+  };
+
   const cards: { key: string; component: React.ReactNode; colSpan?: string; delay: number }[] = [];
   let delay = 0.1;
 
   if (showPlanning || showExecution || showWriting) {
-    cards.push({ key: "roadmap", colSpan: "md:col-span-2 lg:col-span-2", delay, component: <DemoCard title="Roadmap" icon={BarChart3}><DemoRoadmap /></DemoCard> });
+    const roadmapTitle = showPlanning && !showExecution ? "Roadmap (in progress)" : "Roadmap";
+    cards.push({ key: "roadmap", colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined, delay, component: <DemoCard title={roadmapTitle} icon={BarChart3}><DemoRoadmap /></DemoCard> });
     delay += 0.05;
   }
   if (showTopicSupervisor) {
     cards.push({ key: "supervisors", delay, component: <DemoCard title="Suggested Supervisors" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
     delay += 0.05;
-    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
+    cards.push({ key: "career-tree", colSpan: !showPlanning ? "md:col-span-2" : undefined, delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
-  // Invite supervisor is now inline in the header, not a card
   cards.push({ key: "tasks", delay, component: <DemoCard title="Tasks" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "rubrica", delay, component: <DemoCard title="Contacts" icon={Users}><DemoExperts /></DemoCard> });
+  cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
   cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
   delay += 0.05;
   if (showExecution || showWriting) {
-    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
+    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities onResolve={handleResolveVuln} /></DemoCard> });
   }
 
   return (
@@ -1458,7 +1772,10 @@ function DemoDashboard() {
         )}
 
         <motion.button
-          onClick={() => setShowChat(!showChat)}
+          onClick={() => {
+            setChatMode("voice");
+            setShowChat(true);
+          }}
           className="flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
@@ -1512,12 +1829,44 @@ function DemoDashboard() {
               </div>
             );
           })}
+          <button
+            onClick={() => {
+              const nextIdx = Math.min(currentPhaseIdx + 1, PHASES.length - 1);
+              setCurrentPhaseIdx(nextIdx);
+            }}
+            className="ml-4 p-2 rounded-full bg-foreground/10 text-foreground hover:bg-foreground/20 transition-colors shrink-0"
+            title="Evaluate phase"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
       {/* Chat overlay */}
       <AnimatePresence>
-        {showChat && <DemoChatOverlay onClose={() => setShowChat(false)} />}
+        {showChat && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/10 z-40"
+              onClick={() => setShowChat(false)}
+            />
+            {chatMode === "voice" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+              >
+                <DemoVoiceView
+                  messages={MOCK_SOCRATE_MESSAGES}
+                  onSwitchToText={() => setChatMode("text")}
+                  onSkip={() => setShowChat(false)}
+                />
+              </motion.div>
+            ) : (
+              <DemoChatOverlay onClose={() => setShowChat(false)} />
+            )}
+          </>
+        )}
       </AnimatePresence>
     </div>
   );
