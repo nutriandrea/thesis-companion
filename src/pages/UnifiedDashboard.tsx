@@ -135,7 +135,7 @@ function TaskContent({ userId }: { userId: string }) {
           </div>
         </button>
       ))}
-      {completedCount > 0 && <p className="text-[10px] text-success text-center pt-1">✓ {completedCount} completati</p>}
+      {completedCount > 0 && <p className="text-[10px] text-success text-center pt-1">{completedCount} completati</p>}
     </div>
   );
 }
