@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff, GraduationCap, MapPin, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSwitch from "@/components/shared/LanguageSwitch";
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(true);
@@ -16,6 +18,7 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +43,7 @@ export default function AuthPage() {
         if (error) throw error;
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Errore", description: err.message });
+      toast({ variant: "destructive", title: t("error"), description: err.message });
     } finally {
       setLoading(false);
     }
@@ -48,6 +51,11 @@ export default function AuthPage() {
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden">
+      {/* Language switch */}
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitch />
+      </div>
+
       {/* Subtle ambient glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/[0.02] blur-[100px]" />
@@ -67,7 +75,7 @@ export default function AuthPage() {
             transition={{ delay: 0.3 }}
             className="text-white text-2xl font-bold tracking-[0.15em] uppercase"
           >
-            CHI SEI?
+            {t("auth.title")}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -75,7 +83,7 @@ export default function AuthPage() {
             transition={{ delay: 0.5 }}
             className="text-white/40 text-sm mt-3"
           >
-            {isSignUp ? "Crea il tuo account per iniziare" : "Bentornato. Continua il duello."}
+            {isSignUp ? t("auth.subtitle_signup") : t("auth.subtitle_login")}
           </motion.p>
         </div>
 
@@ -92,7 +100,7 @@ export default function AuthPage() {
                   <input
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
-                    placeholder="Nome"
+                    placeholder={t("auth.first_name")}
                     required
                     className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
                   />
@@ -101,7 +109,7 @@ export default function AuthPage() {
                   <input
                     value={lastName}
                     onChange={e => setLastName(e.target.value)}
-                    placeholder="Cognome"
+                    placeholder={t("auth.last_name")}
                     required
                     className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
                   />
@@ -113,7 +121,7 @@ export default function AuthPage() {
                 <input
                   value={university}
                   onChange={e => setUniversity(e.target.value)}
-                  placeholder="Università"
+                  placeholder={t("auth.university")}
                   required
                   className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
                 />
@@ -125,7 +133,7 @@ export default function AuthPage() {
                   <input
                     value={degree}
                     onChange={e => setDegree(e.target.value)}
-                    placeholder="Corso di laurea"
+                    placeholder={t("auth.degree")}
                     required
                     className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
                   />
@@ -135,7 +143,7 @@ export default function AuthPage() {
                   <input
                     value={expectedGraduation}
                     onChange={e => setExpectedGraduation(e.target.value)}
-                    placeholder="Laurea prevista (es. Giu 2026)"
+                    placeholder={t("auth.expected_graduation")}
                     className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
                   />
                 </div>
@@ -180,18 +188,18 @@ export default function AuthPage() {
             disabled={loading}
             className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-colors disabled:opacity-30 flex items-center justify-center gap-2 mt-4"
           >
-            {loading ? "..." : isSignUp ? "Registrati" : "Accedi"}
+            {loading ? "..." : isSignUp ? t("auth.signup") : t("auth.login")}
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
         <p className="text-center text-sm text-white/30 mt-6">
-          {isSignUp ? "Hai già un account?" : "Non hai un account?"}{" "}
+          {isSignUp ? t("auth.has_account") : t("auth.no_account")}{" "}
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-white/60 hover:text-white transition-colors underline underline-offset-4"
           >
-            {isSignUp ? "Accedi" : "Registrati"}
+            {isSignUp ? t("auth.login") : t("auth.signup")}
           </button>
         </p>
       </motion.div>

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { AppProvider, useApp } from "@/contexts/AppContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import AuthPage from "@/pages/AuthPage";
 import SocrateIntro from "@/components/journey/SocrateIntro";
 import ThesisTransition from "@/components/journey/ThesisTransition";
@@ -9,6 +10,7 @@ import DemoPage from "@/pages/DemoPage";
 
 function AppContent() {
   const { user, profile, loading, setActiveSection, setInputMode } = useApp();
+  const { t } = useLanguage();
   const [showTransition, setShowTransition] = useState(false);
 
   // Check if URL has ?demo param
@@ -26,7 +28,7 @@ function AppContent() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-muted-foreground">Caricamento...</p>
+          <p className="text-xs text-muted-foreground">{t("loading")}</p>
         </div>
       </div>
     );
