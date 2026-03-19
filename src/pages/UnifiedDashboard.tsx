@@ -990,7 +990,7 @@ export default function UnifiedDashboard() {
       </AnimatePresence>
 
       {/* Socrate Tutor - omnipresent guide */}
-      {!chatOpen && <SocrateTutor activeSection={activeTab || "dashboard"} />}
+      {!chatOpen && <SocrateTutor activeSection="dashboard" />}
     </div>
   );
 }
