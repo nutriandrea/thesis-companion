@@ -369,19 +369,36 @@ function VulnerabilitiesContent({ vulnerabilities }: { vulnerabilities: Vulnerab
   );
 }
 
-// ─── GOOGLE DOC WIDGET ───
-function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updateProfile: any; user: any }) {
+// ─── THESIS DOCUMENT WIDGET ───
+function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updateProfile: any; user: any }) {
   const { toast } = useToast();
   const [docUrl, setDocUrl] = useState(profile?.google_doc_url || "");
   const [syncing, setSyncing] = useState(false);
   const [synced, setSynced] = useState(!!profile?.google_doc_url);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (profile?.google_doc_url) setDocUrl(profile.google_doc_url);
+    if (profile?.google_doc_url) {
+      setDocUrl(profile.google_doc_url);
+      setSynced(true);
+    }
   }, [profile?.google_doc_url]);
+
+  const isValidUrl = (url: string) => {
+    const trimmed = url.trim();
+    return (
+      trimmed.includes("docs.google.com/document") ||
+      trimmed.includes("overleaf.com") ||
+      /^[a-zA-Z0-9_-]{20,}$/.test(trimmed)
+    );
+  };
 
   const saveAndSync = async () => {
     if (!docUrl.trim() || !user) return;
+    if (!isValidUrl(docUrl)) {
+      toast({ variant: "destructive", title: "Link non valido", description: "Inserisci un link Google Docs o Overleaf valido." });
+      return;
+    }
     setSyncing(true);
     try {
       await updateProfile({ google_doc_url: docUrl.trim() } as any);
@@ -392,7 +409,8 @@ function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updat
       if (resp.ok) {
         const data = await resp.json();
         setSynced(true);
-        toast({ title: "Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri. Sync automatico attivo.` });
+        setLastSyncTime(new Date());
+        toast({ title: "Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri sincronizzati.` });
         if (data.content?.length > 100) {
           fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
             method: "POST", headers: AUTH_HEADERS,
@@ -400,40 +418,64 @@ function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updat
           }).catch(console.error);
         }
       } else {
-        toast({ variant: "destructive", title: "Errore", description: "Impossibile leggere il doc. Assicurati che sia condiviso." });
+        toast({ variant: "destructive", title: "Errore", description: "Impossibile leggere il documento. Assicurati che sia condiviso con 'Chiunque abbia il link'." });
       }
     } catch {
       toast({ variant: "destructive", title: "Errore", description: "Connessione fallita." });
     } finally { setSyncing(false); }
   };
 
+  const disconnect = async () => {
+    await updateProfile({ google_doc_url: "" } as any);
+    setDocUrl("");
+    setSynced(false);
+    setLastSyncTime(null);
+    toast({ title: "Documento scollegato" });
+  };
+
   return (
     <div className="space-y-3">
       {synced ? (
-        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/[0.06]">
-          <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-foreground">Documento collegato</p>
-            <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 p-2.5 bg-secondary/50">
+            <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground">Collegato</p>
+              <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
+              {lastSyncTime && (
+                <p className="text-[9px] text-muted-foreground mt-0.5">
+                  Ultimo sync: {lastSyncTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              )}
+            </div>
+            <button onClick={saveAndSync} disabled={syncing}
+              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Risincronizza">
+              {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            </button>
           </div>
-          <button onClick={saveAndSync} disabled={syncing}
-            className="text-[10px] font-medium px-2 py-1 rounded-md bg-secondary text-muted-foreground hover:text-foreground transition-colors">
-            {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          <button onClick={disconnect} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            Scollega documento
           </button>
         </div>
       ) : (
         <>
-          <p className="text-xs text-muted-foreground">Collega il tuo Google Doc per analisi automatica della tesi.</p>
+          <div className="flex items-center gap-2 p-2.5 bg-secondary/30">
+            <div className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
+            <p className="text-xs text-muted-foreground">Nessun documento collegato</p>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Collega il tuo documento per consentire a Socrate di analizzare la tua tesi.
+          </p>
           <div className="flex items-center gap-2">
             <input
               value={docUrl} onChange={e => setDocUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveAndSync()}
-              placeholder="https://docs.google.com/document/d/..."
-              className="flex-1 bg-secondary border border-border rounded-md px-3 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+              placeholder="Incolla link Google Docs / Overleaf"
+              className="flex-1 bg-secondary/50 border border-border px-3 py-2.5 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-foreground/20 transition-colors"
             />
             <button onClick={saveAndSync} disabled={!docUrl.trim() || syncing}
-              className="text-[10px] font-medium px-3 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30">
-              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Link2 className="w-3 h-3" />}
+              className="px-3 py-2.5 bg-foreground text-background text-[10px] font-medium uppercase tracking-[0.1em] hover:bg-foreground/90 transition-colors disabled:opacity-20">
+              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Collega"}
             </button>
           </div>
         </>
