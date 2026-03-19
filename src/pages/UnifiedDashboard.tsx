@@ -1131,7 +1131,7 @@ export default function UnifiedDashboard() {
                     <p className="text-sm font-bold text-foreground">Socrate</p>
                     <p className="text-[10px] text-muted-foreground">Modalità vocale</p>
                   </div>
-                  <button onClick={() => { setChatOpen(false); setInputMode("text"); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+                  <button onClick={closeChat} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                     <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
