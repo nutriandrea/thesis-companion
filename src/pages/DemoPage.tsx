@@ -435,7 +435,7 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
           className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-foreground/90 transition-all shadow-lg"
         >
           <SkipForward className="w-3.5 h-3.5" />
-          Vai ai miei progressi
+          Skip to my progress
         </button>
       </motion.div>
     </div>
