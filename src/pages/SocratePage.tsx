@@ -49,9 +49,10 @@ function useLatexContent() {
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
 const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
 
-export default function SocratePage() {
+export default function SocratePage({ explorationMode = false, onThesisConfirmed }: SocratePageProps = {}) {
   const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
   const { toast } = useToast();
+  const [showThesisDialog, setShowThesisDialog] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
