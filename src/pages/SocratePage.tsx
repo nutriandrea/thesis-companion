@@ -322,7 +322,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       // Always run full extraction on report
       await runBackgroundExtraction(messages);
-      toast({ title: "📋 Report generato", description: "I contenuti sono stati distribuiti nelle sezioni del sito." });
+      toast({ title: "Report generato", description: "I contenuti sono stati distribuiti nelle sezioni del sito." });
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Errore", description: "Errore nella generazione del report." });
