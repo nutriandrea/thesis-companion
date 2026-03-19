@@ -116,7 +116,18 @@ export default function VoiceConversation({
     setError(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      if (fnError || !data?.token) { setError("Unable to start transcription"); return; }
+      if (fnError || !data?.token) {
+        const errMsg = typeof fnError === "object" && fnError?.message
+          ? fnError.message
+          : typeof fnError === "string" ? fnError : "";
+        const isConnectionError = errMsg.includes("connection") || errMsg.includes("TLS") || errMsg.includes("close_notify");
+        setError(
+          isConnectionError
+            ? "Voice service temporarily unavailable. Tap to retry."
+            : "Unable to start transcription. Tap to retry."
+        );
+        return;
+      }
       await scribe.connect({
         token: data.token,
         microphone: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
@@ -124,7 +135,14 @@ export default function VoiceConversation({
       setVoiceState("listening");
     } catch (e) {
       console.error("Start listening error:", e);
-      setError("Microphone not available");
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("Permission denied") || msg.includes("NotAllowedError")) {
+        setError("Microphone access denied. Please allow microphone in your browser settings.");
+      } else if (msg.includes("NotFoundError")) {
+        setError("No microphone found. Please connect a microphone and try again.");
+      } else {
+        setError("Could not access microphone. Tap to retry.");
+      }
     }
   }, [scribe]);
 
