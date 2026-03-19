@@ -640,7 +640,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                   <textarea
                     value={motivation}
                     onChange={e => setMotivation(e.target.value)}
-                    placeholder="Explain your motivation..."
+                    placeholder="Spiega la tua motivazione..."
                     className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent resize-none"
                     rows={2}
                   />
