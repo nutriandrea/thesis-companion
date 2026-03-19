@@ -18,11 +18,13 @@ import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import ReactMarkdown from "react-markdown";
 import supervisorsData from "@/data/supervisors.json";
 import companiesData from "@/data/companies.json";
+import expertsData from "@/data/experts.json";
 import fieldsData from "@/data/fields.json";
-import type { Supervisor, Company, Field } from "@/types/data";
+import type { Supervisor, Company, Expert, Field } from "@/types/data";
 
 const supervisors = supervisorsData as Supervisor[];
 const companies = companiesData as Company[];
+const experts = expertsData as Expert[];
 const fields = fieldsData as Field[];
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
@@ -310,11 +312,11 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
         const sup = supervisors.find(s => s.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [] };
+        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [], reasoning: a.reasoning };
       });
     }
     return supervisors.slice(0, 5).map(s => ({
-      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2),
+      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2), reasoning: "",
     }));
   }, [affinities]);
 
@@ -334,6 +336,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
               <p className="text-[10px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
+              {sup.reasoning && <p className="text-[10px] text-foreground/60 line-clamp-1 mt-0.5">{sup.reasoning}</p>}
             </div>
             {sup.score !== null && <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>}
           </div>
@@ -361,6 +364,93 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                   >
                     Conferma scelta
                   </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── EXPERT SUGGESTIONS ───
+function ExpertSuggestions({ userId }: { userId: string }) {
+  const { affinities, loading } = useAffinityScores(userId, "expert");
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const items = useMemo(() => {
+    if (affinities.length > 0) {
+      return affinities.slice(0, 6).map(a => {
+        const exp = experts.find(e => e.id === a.entity_id);
+        return {
+          id: a.entity_id, name: a.entity_name, score: a.score,
+          reasoning: a.reasoning,
+          matched_traits: a.matched_traits || [],
+          title: exp?.title || "",
+          offerInterviews: exp?.offerInterviews ?? false,
+          fieldIds: exp?.fieldIds || [],
+        };
+      });
+    }
+    return [];
+  }, [affinities]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-6">
+      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  if (items.length === 0) return (
+    <p className="text-xs text-muted-foreground text-center py-6 italic">
+      I suggerimenti appariranno dopo le prime conversazioni con Socrate.
+    </p>
+  );
+
+  return (
+    <div className="space-y-1.5">
+      {items.map(exp => (
+        <div key={exp.id}>
+          <div
+            className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+            onClick={() => setExpanded(expanded === exp.id ? null : exp.id)}
+          >
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+              exp.offerInterviews ? "bg-green-500/10" : "bg-accent/10"
+            }`}>
+              <Users className={`w-3.5 h-3.5 ${exp.offerInterviews ? "text-green-500" : "text-accent"}`} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground truncate">{exp.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{exp.title}</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {exp.offerInterviews && (
+                <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Intervista</span>
+              )}
+              <span className="text-[10px] font-bold text-accent">{exp.score}%</span>
+            </div>
+          </div>
+          <AnimatePresence>
+            {expanded === exp.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-2 pb-2 space-y-1.5">
+                  <p className="text-[11px] text-foreground/80 leading-relaxed">{exp.reasoning}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {exp.matched_traits.slice(0, 4).map((t: string) => (
+                      <span key={t} className="text-[8px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">{t}</span>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {exp.fieldIds.map(fid => {
+                      const f = fields.find(ff => ff.id === fid);
+                      return f ? <span key={fid} className="text-[8px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{f.name}</span> : null;
+                    })}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -897,6 +987,8 @@ export default function UnifiedDashboard() {
         fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "compute_career", thesis_content: thesisContent?.substring(0, 3000) || "" }) }),
         // Evaluate phase transition
         fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "evaluate_phase" }) }),
+        // Match experts and supervisors
+        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "match_people", expertsData, supervisorsData: supervisors, fieldsData: fields }) }),
       ]);
     } catch {}
   }, [user, studentContext, thesisContent]);
@@ -1130,8 +1222,14 @@ export default function UnifiedDashboard() {
             </DashboardCard>
           </motion.div>
 
+          {/* Interview Partners / Experts */}
+          <motion.div data-tutor-id="experts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <DashboardCard title="Interview Partners" icon={Users}>
+              <ExpertSuggestions userId={user?.id || ""} />
+            </DashboardCard>
+          </motion.div>
 
-          {/* Companies (spans remaining cols) */}
+
           <motion.div data-tutor-id="companies" className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
             <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
               action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
