@@ -984,13 +984,12 @@ function DemoTasks({ phase }: { phase: string }) {
 }
 
 function DemoCareerTree() {
+  const { data, loading } = useDemoEngine<{ sectors: CareerSector[] }>("compute_career");
+  const sectors = data?.sectors?.length ? data.sectors : MOCK_SECTORS;
   const [expanded, setExpanded] = useState<string | null>(null);
   const COLORS = ["hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)", "hsl(var(--warning))", "hsl(270 60% 55%)"];
-  const mockCompanies: Record<string, string[]> = {
-    "AI & Machine Learning": ["Google DeepMind", "OpenAI", "Anthropic", "Meta AI", "Mistral AI"],
-    "Cybersecurity": ["CrowdStrike", "Palo Alto Networks", "Snyk", "Checkmarx"],
-    "DevOps & Automazione": ["GitHub", "GitLab", "HashiCorp", "Docker"],
-  };
+
+  if (loading) return <DemoLoadingSkeleton lines={4} />;
 
   return (
     <div className="space-y-1">
@@ -999,10 +998,9 @@ function DemoCareerTree() {
         <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
         <div className="flex-1 h-px bg-border" />
       </div>
-      {MOCK_SECTORS.map((sector, i) => {
+      {sectors.map((sector, i) => {
         const color = COLORS[i % COLORS.length];
         const isExpanded = expanded === sector.name;
-        const comps = mockCompanies[sector.name] || [];
         return (
           <div key={sector.name} className="relative">
             <div className="absolute left-[7px] top-0 bottom-0 w-px bg-border" />
@@ -1014,6 +1012,7 @@ function DemoCareerTree() {
               </div>
               <div className="flex-1 min-w-0 ml-2">
                 <span className="text-xs font-semibold text-foreground">{sector.name}</span>
+                {sector.reasoning && <p className="text-[10px] text-muted-foreground mt-0.5">{sector.reasoning}</p>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -1021,22 +1020,7 @@ function DemoCareerTree() {
                 </div>
                 <span className="text-[11px] font-bold w-8 text-right" style={{ color }}>{sector.percentage}%</span>
               </div>
-              <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             </button>
-            <AnimatePresence>
-              {isExpanded && comps.length > 0 && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="pl-8 pr-2 pb-2 space-y-1">
-                    {comps.map((c, j) => (
-                      <div key={j} className="flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
-                        <Building2 className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-[11px] font-medium text-foreground">{c}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         );
       })}
@@ -1045,6 +1029,8 @@ function DemoCareerTree() {
 }
 
 function DemoSupervisors() {
+  const { data, loading } = useDemoEngine<{ supervisors: MockSupervisor[] }>("match_supervisors");
+  const sups = data?.supervisors?.length ? data.supervisors : MOCK_SUPERVISORS;
   const [selected, setSelected] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
 
