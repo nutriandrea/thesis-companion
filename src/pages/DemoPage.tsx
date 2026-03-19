@@ -1156,10 +1156,14 @@ function DemoReferences() {
 }
 
 function DemoVulnerabilities() {
-  const ranked = [...MOCK_VULNERABILITIES].sort((a, b) => {
+  const { data, loading } = useDemoEngine<{ vulnerabilities: MockVulnerability[] }>("extract_vulnerabilities");
+  const vulns = data?.vulnerabilities?.length ? data.vulnerabilities : MOCK_VULNERABILITIES;
+  const ranked = [...vulns].sort((a, b) => {
     const order: Record<string, number> = { critical: 0, high: 1, medium: 2 };
     return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
   });
+
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
 
   return (
     <div className="space-y-1.5">
