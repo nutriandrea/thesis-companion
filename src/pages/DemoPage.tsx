@@ -12,8 +12,8 @@ interface CareerSector { name: string; percentage: number; reasoning?: string; }
 interface MockTask { id: string; title: string; description: string; priority: string; status: string; estimated_minutes: number; }
 interface MockVulnerability { id: string; type: string; title: string; description: string; severity: string; }
 interface MockReference { title: string; authors: string; year: string; url: string; category: string; relevance: string; }
-interface MockSupervisor { id: string; name: string; fields: string[]; score: number; reasoning: string; }
-interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; }
+interface MockSupervisor { id: string; name: string; fields: string[]; score: number; reasoning: string; email: string; university: string; }
+interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; email: string; }
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
 
 // ─── MOCK DATA ───
