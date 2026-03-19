@@ -1458,7 +1458,7 @@ export default function UnifiedDashboard() {
     finally { setPhaseEvalLoading(false); }
   }, [user, phaseEvalLoading, toast]);
 
-  // (auto-advance logic moved after currentPhase declaration)
+
 
   // Select supervisor
   const handleSelectSupervisor = useCallback(async (supId: string, supName: string, motivation: string) => {
