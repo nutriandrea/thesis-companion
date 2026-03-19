@@ -12,7 +12,7 @@ import SocrateCoin from "@/components/shared/SocrateCoin";
 import ReactMarkdown from "react-markdown";
 
 // ─── DEMO STEPS ───
-type DemoStep = "login" | "onboarding" | "intro" | "socrate" | "dashboard";
+type DemoStep = "intro" | "socrate" | "dashboard";
 
 // ─── TYPES ───
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
@@ -461,7 +461,7 @@ function DemoOnboarding({ onNext }: { onNext: () => void }) {
 // ══════════════════════════════════════════════════════
 // STEP 3: DEMO SOCRATE INTRO (1:1 with SocrateIntro)
 // ══════════════════════════════════════════════════════
-function DemoIntro({ onNext }: { onNext: () => void }) {
+function DemoIntro({ onNext }: { onNext: (mode: "voice" | "text") => void }) {
   const [phase, setPhase] = useState<"coin-reveal" | "coin-translate" | "text-appear" | "mode-choice">("coin-reveal");
   const [currentSubtitle, setCurrentSubtitle] = useState("");
 
@@ -595,7 +595,7 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
                     className="flex gap-14 mt-4"
                   >
                     <button
-                      onClick={onNext}
+                      onClick={() => onNext("voice")}
                       className="group flex flex-col items-center gap-3 transition-all"
                     >
                       <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
@@ -606,7 +606,7 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
                       </span>
                     </button>
                     <button
-                      onClick={onNext}
+                      onClick={() => onNext("text")}
                       className="group flex flex-col items-center gap-3 transition-all"
                     >
                       <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
@@ -642,8 +642,8 @@ const DEMO_CONVERSATION_HISTORY: ChatMsg[] = [
   { id: "s5", role: "assistant", content: "Strong choice. CoT prompting as an **audit mechanism** for detection confidence. Here's your thesis taking shape:\n\n> **\"Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code\"**\n\nThis is focused, novel, and testable. You have a clear research question: *Does CoT prompting improve both detection accuracy and human trust in LLM-based vulnerability analysis?*\n\nI'd say you're ready to move forward. 🎯" },
 ];
 
-function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
-  const [mode, setMode] = useState<"text" | "voice">("text");
+function DemoSocrateChat({ onSkip, initialMode = "text" }: { onSkip: () => void; initialMode?: "text" | "voice" }) {
+  const [mode, setMode] = useState<"text" | "voice">(initialMode);
   const [visibleCount, setVisibleCount] = useState(0);
   const [autoPlaying, setAutoPlaying] = useState(true);
   const { messages, setMessages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([]);
@@ -1876,28 +1876,19 @@ function DemoDashboard() {
 // MAIN DEMO ORCHESTRATOR
 // ══════════════════════════════════════════════════════
 export default function DemoPage() {
-  const [step, setStep] = useState<DemoStep>("login");
+  const [step, setStep] = useState<DemoStep>("intro");
+  const [demoMode, setDemoMode] = useState<"text" | "voice">("text");
 
   return (
     <AnimatePresence mode="wait">
-      {step === "login" && (
-        <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoLogin onNext={() => setStep("onboarding")} />
-        </motion.div>
-      )}
-      {step === "onboarding" && (
-        <motion.div key="onboarding" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoOnboarding onNext={() => setStep("intro")} />
-        </motion.div>
-      )}
       {step === "intro" && (
         <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoIntro onNext={() => setStep("socrate")} />
+          <DemoIntro onNext={(mode) => { setDemoMode(mode); setStep("socrate"); }} />
         </motion.div>
       )}
       {step === "socrate" && (
         <motion.div key="socrate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoSocrateChat onSkip={() => setStep("dashboard")} />
+          <DemoSocrateChat onSkip={() => setStep("dashboard")} initialMode={demoMode} />
         </motion.div>
       )}
       {step === "dashboard" && (
