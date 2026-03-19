@@ -465,7 +465,7 @@ function CareerTree({ sectors, userId, loading }: {
 
   if (sorted.length === 0) return (
     <p className="text-xs text-muted-foreground text-center py-8 italic">
-      Talk to Socrate to discover possible directions for your thesis.
+      Parla con Socrate per scoprire le direzioni possibili per la tua tesi.
     </p>
   );
 
