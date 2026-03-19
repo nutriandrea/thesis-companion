@@ -325,9 +325,11 @@ export type Database = {
       }
       student_profiles: {
         Row: {
+          career_distribution: Json | null
           career_interests: Json | null
           created_at: string | null
           critical_thinking: string | null
+          current_phase: string | null
           deep_interests: Json | null
           estimated_days_remaining: number | null
           id: string
@@ -337,11 +339,16 @@ export type Database = {
           latex_sections_analyzed: Json | null
           methodology_awareness: string | null
           overall_completion: number | null
+          phase_confidence: number | null
+          phase_history: Json | null
           reasoning_style: string | null
           research_maturity: string | null
           sections_progress: Json | null
+          selected_supervisor_id: string | null
           severita: number | null
           strengths: Json | null
+          supervisor_motivation: string | null
+          supervisor_selected_at: string | null
           thesis_quality_score: number | null
           thesis_stage: string | null
           total_exchanges: number | null
@@ -353,9 +360,11 @@ export type Database = {
           writing_quality: string | null
         }
         Insert: {
+          career_distribution?: Json | null
           career_interests?: Json | null
           created_at?: string | null
           critical_thinking?: string | null
+          current_phase?: string | null
           deep_interests?: Json | null
           estimated_days_remaining?: number | null
           id?: string
@@ -365,11 +374,16 @@ export type Database = {
           latex_sections_analyzed?: Json | null
           methodology_awareness?: string | null
           overall_completion?: number | null
+          phase_confidence?: number | null
+          phase_history?: Json | null
           reasoning_style?: string | null
           research_maturity?: string | null
           sections_progress?: Json | null
+          selected_supervisor_id?: string | null
           severita?: number | null
           strengths?: Json | null
+          supervisor_motivation?: string | null
+          supervisor_selected_at?: string | null
           thesis_quality_score?: number | null
           thesis_stage?: string | null
           total_exchanges?: number | null
@@ -381,9 +395,11 @@ export type Database = {
           writing_quality?: string | null
         }
         Update: {
+          career_distribution?: Json | null
           career_interests?: Json | null
           created_at?: string | null
           critical_thinking?: string | null
+          current_phase?: string | null
           deep_interests?: Json | null
           estimated_days_remaining?: number | null
           id?: string
@@ -393,11 +409,16 @@ export type Database = {
           latex_sections_analyzed?: Json | null
           methodology_awareness?: string | null
           overall_completion?: number | null
+          phase_confidence?: number | null
+          phase_history?: Json | null
           reasoning_style?: string | null
           research_maturity?: string | null
           sections_progress?: Json | null
+          selected_supervisor_id?: string | null
           severita?: number | null
           strengths?: Json | null
+          supervisor_motivation?: string | null
+          supervisor_selected_at?: string | null
           thesis_quality_score?: number | null
           thesis_stage?: string | null
           total_exchanges?: number | null
