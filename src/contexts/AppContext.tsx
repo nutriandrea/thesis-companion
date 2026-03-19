@@ -99,6 +99,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: data.email,
         degree: data.degree || "",
         university: data.university || "",
+        expected_graduation: (data as any).expected_graduation || "",
         skills: data.skills || [],
         field_ids: data.field_ids || [],
         thesis_topic: data.thesis_topic || "",
