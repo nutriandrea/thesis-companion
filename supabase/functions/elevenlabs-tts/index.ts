@@ -36,7 +36,7 @@ serve(async (req) => {
     const stability = 0.4 + sev * 0.35;       // 0.4-0.75
     const similarityBoost = 0.7 + sev * 0.15;  // 0.7-0.85
     const style = 0.2 + (1 - sev) * 0.3;       // 0.2-0.5 (more expressive when less severe)
-    const speed = 0.85 + sev * 0.15;            // 0.85-1.0
+    const speed = 1.05 + sev * 0.2;              // 1.05-1.25
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=mp3_44100_128`,
