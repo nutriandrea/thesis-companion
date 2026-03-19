@@ -719,6 +719,7 @@ export default function UnifiedDashboard() {
   const [showDocModal, setShowDocModal] = useState(false);
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
