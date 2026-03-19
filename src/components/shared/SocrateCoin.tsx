@@ -1,6 +1,16 @@
 import { motion } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import socrateCoinImg from "@/assets/socrate-coin.png";
+
+// Preload image globally so it's cached before any component mounts
+const preloadedImg = new Image();
+preloadedImg.src = socrateCoinImg;
+let imgReady = false;
+const imgPromise = new Promise<void>((resolve) => {
+  if (preloadedImg.complete) { imgReady = true; resolve(); return; }
+  preloadedImg.onload = () => { imgReady = true; resolve(); };
+  preloadedImg.onerror = () => { imgReady = true; resolve(); };
+});
 
 interface SocrateCoinProps {
   size?: number;
