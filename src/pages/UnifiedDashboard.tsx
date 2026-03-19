@@ -267,7 +267,7 @@ function TaskContent({ userId }: { userId: string }) {
     }
   };
 
-  if (sorted.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">No tasks yet. Talk to Socrate.</p>;
+  if (sorted.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessun task. Parla con Socrate.</p>;
 
   return (
     <div className="space-y-1.5">
