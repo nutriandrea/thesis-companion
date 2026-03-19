@@ -628,7 +628,7 @@ function RoadmapCard({ currentPhase }: { currentPhase: PhaseKey }) {
           </div>
           {/* Tasks */}
           <div className="space-y-1 pl-2">
-            {phase.tasks.map((task: import("@/types/data").RoadmapTask) => (
+            {phase.tasks.map((task: RoadmapTask) => (
               <div key={task.id} className="flex items-center gap-2 py-0.5">
                 {task.completed ? (
                   <CheckCircle2 className="w-3 h-3 text-accent shrink-0" />
