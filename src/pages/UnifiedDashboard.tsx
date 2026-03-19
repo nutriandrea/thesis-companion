@@ -1495,7 +1495,59 @@ export default function UnifiedDashboard() {
   const name = profile?.first_name || "Studente";
   const lastMessage = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
 
-  return (
+  // ─── AUTO-ADVANCE: when all roadmap tasks + critical side tasks are done ───
+  const autoAdvanceTriggered = useRef(false);
+  useEffect(() => {
+    if (currentPhase !== "planning") {
+      autoAdvanceTriggered.current = false;
+    }
+  }, [currentPhase]);
+
+  useEffect(() => {
+    if (currentPhase !== "planning" || !user?.id || phaseEvalLoading || autoAdvanceTriggered.current) return;
+
+    const checkAutoAdvance = async () => {
+      const { data: roadmapItems } = await supabase
+        .from("roadmap_items" as any)
+        .select("completed")
+        .eq("user_id", user.id);
+
+      if (!roadmapItems || roadmapItems.length === 0) return;
+      const allRoadmapDone = roadmapItems.every((item: any) => item.completed);
+      if (!allRoadmapDone) return;
+
+      const { data: criticalTasks } = await supabase
+        .from("socrate_tasks")
+        .select("id, status, priority")
+        .eq("user_id", user.id)
+        .eq("priority", "critical")
+        .eq("status", "pending");
+
+      if (criticalTasks && criticalTasks.length > 0) return;
+
+      autoAdvanceTriggered.current = true;
+      toast({ title: "🎉 Tutte le task completate!", description: "Valutazione automatica dell'avanzamento in corso..." });
+      evaluatePhase();
+    };
+
+    const roadmapChannel = supabase
+      .channel(`auto-advance-roadmap-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "roadmap_items", filter: `user_id=eq.${user.id}` }, () => checkAutoAdvance())
+      .subscribe();
+
+    const tasksChannel = supabase
+      .channel(`auto-advance-tasks-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "socrate_tasks", filter: `user_id=eq.${user.id}` }, () => checkAutoAdvance())
+      .subscribe();
+
+    checkAutoAdvance();
+
+    return () => {
+      supabase.removeChannel(roadmapChannel);
+      supabase.removeChannel(tasksChannel);
+    };
+  }, [currentPhase, user?.id, phaseEvalLoading, evaluatePhase, toast]);
+
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* ─── TOP: Orb + Identity ─── */}
       <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
