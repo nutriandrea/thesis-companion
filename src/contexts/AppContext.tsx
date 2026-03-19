@@ -19,6 +19,7 @@ export interface Profile {
   journey_state: JourneyState;
   onboarding_done: boolean;
   socrate_done: boolean;
+  google_doc_url: string;
 }
 
 interface AppState {
