@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, ShieldAlert, Flame, Target, Users, Building2,
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
-  ChevronLeft, ChevronRight, X
+  ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
