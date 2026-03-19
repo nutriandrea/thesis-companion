@@ -91,6 +91,7 @@ export default function VoiceConversation({
   const mutedRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const unmountedRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => { mutedRef.current = muted; }, [muted]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -147,6 +148,11 @@ export default function VoiceConversation({
 
     scribe.disconnect();
     stopAudio();
+    // Abort any previous in-flight TTS fetch
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setVoiceState("speaking");
     isSpeakingRef.current = true;
 
@@ -159,6 +165,7 @@ export default function VoiceConversation({
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ text: cleanText, severity }),
+        signal: controller.signal,
       });
       if (unmountedRef.current) return;
       if (!response.ok) {
@@ -189,6 +196,7 @@ export default function VoiceConversation({
       if (unmountedRef.current) { URL.revokeObjectURL(audioUrl); return; }
       await audio.play();
     } catch (e) {
+      if ((e as any)?.name === "AbortError") return; // Expected on close
       console.error("TTS playback error:", e);
       isSpeakingRef.current = false;
       if (!unmountedRef.current) {
@@ -211,6 +219,7 @@ export default function VoiceConversation({
   useEffect(() => {
     return () => {
       unmountedRef.current = true;
+      abortRef.current?.abort();
       try { scribe.disconnect(); } catch(e) {}
       stopAudio();
     };
@@ -284,6 +293,8 @@ export default function VoiceConversation({
             </button>
           )}
           <button onClick={() => {
+            unmountedRef.current = true;
+            abortRef.current?.abort();
             try { scribe.disconnect(); } catch(e) {}
             stopAudio();
             setVoiceState("idle");
