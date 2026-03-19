@@ -114,6 +114,7 @@ export type Database = {
           email: string
           field_ids: string[] | null
           first_name: string
+          google_doc_url: string | null
           id: string
           journey_state: string
           last_name: string
@@ -131,6 +132,7 @@ export type Database = {
           email?: string
           field_ids?: string[] | null
           first_name?: string
+          google_doc_url?: string | null
           id?: string
           journey_state?: string
           last_name?: string
@@ -148,6 +150,7 @@ export type Database = {
           email?: string
           field_ids?: string[] | null
           first_name?: string
+          google_doc_url?: string | null
           id?: string
           journey_state?: string
           last_name?: string
