@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp, JourneyState } from "@/contexts/AppContext";
 import { Mic, PenTool, ArrowRight, GraduationCap, MapPin } from "lucide-react";
-import socrateImg from "@/assets/socrate.png";
+import SocrateCoin from "@/components/shared/SocrateCoin";
 
 type InteractionMode = "voice" | "text";
 
@@ -26,13 +26,11 @@ const subtitles = [
 export default function SocrateIntro({ onComplete }: Props) {
   const { profile, updateProfile } = useApp();
   const [phase, setPhase] = useState(0);
-  // 0=STATO + UNIVERSITÀ, 1=Socrate reveal+subtitles, 2=COME VUOI COMUNICARE, 3=Voice orb
   const [university, setUniversity] = useState(profile?.university || "");
   const [degree, setDegree] = useState(profile?.degree || "");
   const [selectedState, setSelectedState] = useState<JourneyState | null>(null);
   const [currentSubtitle, setCurrentSubtitle] = useState("");
 
-  // Phase 1: Socrate subtitles
   useEffect(() => {
     if (phase !== 1) return;
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -45,11 +43,7 @@ export default function SocrateIntro({ onComplete }: Props) {
 
   const handleContinue = async () => {
     if (!university.trim() || !selectedState) return;
-    await updateProfile({
-      university,
-      degree,
-      journey_state: selectedState,
-    });
+    await updateProfile({ university, degree, journey_state: selectedState });
     setPhase(1);
   };
 
@@ -70,15 +64,10 @@ export default function SocrateIntro({ onComplete }: Props) {
   const canContinue = university.trim() && selectedState;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black overflow-hidden flex items-center justify-center">
-      {/* Subtle ambient */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/[0.015] blur-[120px]" />
-      </div>
-
+    <div className="fixed inset-0 z-50 bg-foreground overflow-hidden flex items-center justify-center">
       <AnimatePresence mode="wait">
 
-        {/* Phase 0: STATO DI AVANZAMENTO + UNIVERSITÀ */}
+        {/* Phase 0: Info collection */}
         {phase === 0 && (
           <motion.div
             key="info-collect"
@@ -86,62 +75,56 @@ export default function SocrateIntro({ onComplete }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center px-6 w-full max-w-md"
+            className="flex flex-col items-center px-6 w-full max-w-sm"
           >
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-white/30 text-xs tracking-[0.3em] uppercase mb-3"
+              className="text-background/30 text-[10px] tracking-[0.3em] uppercase mb-3"
             >
               Benvenuto, {name}
             </motion.p>
-            <h2 className="text-white text-2xl font-bold tracking-[0.1em] uppercase mb-10 text-center">
-              A CHE PUNTO SEI?
+            <h2 className="font-display text-background text-3xl font-bold tracking-tight mb-10 text-center">
+              A che punto sei?
             </h2>
 
-            {/* University & Degree inputs */}
             <div className="w-full space-y-3 mb-8">
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-background/20" />
                 <input
                   value={university}
                   onChange={e => setUniversity(e.target.value)}
                   placeholder="La tua università"
-                  className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-white/20 transition-colors"
+                  className="w-full bg-background/[0.06] border border-background/[0.08] px-4 pl-10 py-3 text-sm text-background placeholder-background/25 focus:outline-none focus:border-background/20 transition-colors"
                 />
               </div>
               <div className="relative">
-                <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-background/20" />
                 <input
                   value={degree}
                   onChange={e => setDegree(e.target.value)}
                   placeholder="Corso di laurea"
-                  className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-white/20 transition-colors"
+                  className="w-full bg-background/[0.06] border border-background/[0.08] px-4 pl-10 py-3 text-sm text-background placeholder-background/25 focus:outline-none focus:border-background/20 transition-colors"
                 />
               </div>
             </div>
 
-            {/* Journey state */}
-            <div className="w-full space-y-2 mb-8">
+            <div className="w-full space-y-1.5 mb-8">
               {journeyOptions.map((opt) => (
                 <button
                   key={opt.state}
                   onClick={() => setSelectedState(opt.state)}
-                  className={`w-full text-left px-4 py-3.5 transition-all border ${
+                  className={`w-full text-left px-4 py-3 transition-all border ${
                     selectedState === opt.state
-                      ? "border-white/30 bg-white/[0.08]"
-                      : "border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05]"
+                      ? "border-background/30 bg-background/[0.08]"
+                      : "border-background/[0.05] bg-background/[0.02] hover:bg-background/[0.05]"
                   }`}
                 >
-                  <p className={`text-sm font-medium ${
-                    selectedState === opt.state ? "text-white" : "text-white/60"
-                  }`}>
+                  <p className={`text-sm font-medium ${selectedState === opt.state ? "text-background" : "text-background/50"}`}>
                     {opt.label}
                   </p>
-                  <p className={`text-xs mt-0.5 ${
-                    selectedState === opt.state ? "text-white/50" : "text-white/25"
-                  }`}>
+                  <p className={`text-[11px] mt-0.5 ${selectedState === opt.state ? "text-background/40" : "text-background/20"}`}>
                     {opt.description}
                   </p>
                 </button>
@@ -151,7 +134,7 @@ export default function SocrateIntro({ onComplete }: Props) {
             <button
               onClick={handleContinue}
               disabled={!canContinue}
-              className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-all disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-background text-foreground py-3.5 text-sm font-medium uppercase tracking-[0.15em] hover:bg-background/90 transition-all disabled:opacity-15 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               Continua
               <ArrowRight className="w-4 h-4" />
@@ -159,7 +142,7 @@ export default function SocrateIntro({ onComplete }: Props) {
           </motion.div>
         )}
 
-        {/* Phase 1: Socrate reveal with subtitles */}
+        {/* Phase 1: Socrate reveal */}
         {phase === 1 && (
           <motion.div
             key="socrate-reveal"
@@ -167,20 +150,17 @@ export default function SocrateIntro({ onComplete }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.5 }}
-            className="relative w-full h-full flex items-center justify-center"
+            className="relative flex flex-col items-center justify-center"
           >
-            <motion.img
-              src={socrateImg}
-              alt="Socrate"
-              initial={{ scale: 1.1, opacity: 0 }}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 2.5, ease: "easeOut" }}
-              className="max-w-[480px] w-full h-auto object-contain"
-            />
-            {/* Gradient fade at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent" />
-            {/* Subtitles */}
-            <div className="absolute bottom-[10%] left-0 right-0 flex justify-center">
+              transition={{ duration: 2, ease: "easeOut" }}
+            >
+              <SocrateCoin size={200} interactive={false} />
+            </motion.div>
+
+            <div className="mt-10 h-16 flex items-center justify-center">
               <AnimatePresence mode="wait">
                 {currentSubtitle && (
                   <motion.p
@@ -189,7 +169,7 @@ export default function SocrateIntro({ onComplete }: Props) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.6 }}
-                    className="text-white text-lg md:text-xl font-bold tracking-wide text-center px-6"
+                    className="font-display text-background text-xl md:text-2xl font-medium text-center px-6 italic"
                   >
                     {currentSubtitle}
                   </motion.p>
@@ -199,7 +179,7 @@ export default function SocrateIntro({ onComplete }: Props) {
           </motion.div>
         )}
 
-        {/* Phase 2: COME VUOI COMUNICARE */}
+        {/* Phase 2: Mode choice */}
         {phase === 2 && (
           <motion.div
             key="mode-choice"
@@ -209,36 +189,36 @@ export default function SocrateIntro({ onComplete }: Props) {
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center px-6"
           >
-            <h2 className="text-white text-2xl font-bold tracking-[0.1em] uppercase mb-3 text-center">
-              COME VUOI COMUNICARE
+            <h2 className="font-display text-background text-3xl font-bold tracking-tight mb-2 text-center">
+              Come vuoi comunicare?
             </h2>
-            <p className="text-white/30 text-sm mb-10 text-center max-w-xs">
-              Scegli come affrontare il duello con Socrate
+            <p className="text-background/25 text-sm mb-10 text-center">
+              Scegli come affrontare il duello
             </p>
-            <div className="flex gap-5">
+            <div className="flex gap-6">
               <button
                 onClick={() => handleModeChoice("voice")}
-                className="group bg-white/[0.04] border border-white/[0.08] hover:border-white/20 hover:bg-white/[0.07] transition-all px-10 py-6 flex flex-col items-center gap-3"
+                className="group border border-background/[0.08] hover:border-background/20 hover:bg-background/[0.04] transition-all px-12 py-8 flex flex-col items-center gap-4"
               >
-                <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center group-hover:bg-white/[0.1] transition-colors">
-                  <Mic className="w-5 h-5 text-white/70" />
+                <div className="w-14 h-14 rounded-full border border-background/15 flex items-center justify-center group-hover:border-background/30 transition-colors">
+                  <Mic className="w-5 h-5 text-background/60" />
                 </div>
-                <span className="text-white/70 text-sm font-medium tracking-wide">Parlare</span>
+                <span className="text-background/60 text-sm font-medium tracking-[0.1em] uppercase">Parlare</span>
               </button>
               <button
                 onClick={() => handleModeChoice("text")}
-                className="group bg-white/[0.04] border border-white/[0.08] hover:border-white/20 hover:bg-white/[0.07] transition-all px-10 py-6 flex flex-col items-center gap-3"
+                className="group border border-background/[0.08] hover:border-background/20 hover:bg-background/[0.04] transition-all px-12 py-8 flex flex-col items-center gap-4"
               >
-                <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center group-hover:bg-white/[0.1] transition-colors">
-                  <PenTool className="w-5 h-5 text-white/70" />
+                <div className="w-14 h-14 rounded-full border border-background/15 flex items-center justify-center group-hover:border-background/30 transition-colors">
+                  <PenTool className="w-5 h-5 text-background/60" />
                 </div>
-                <span className="text-white/70 text-sm font-medium tracking-wide">Scrivere</span>
+                <span className="text-background/60 text-sm font-medium tracking-[0.1em] uppercase">Scrivere</span>
               </button>
             </div>
           </motion.div>
         )}
 
-        {/* Phase 3: Voice orb */}
+        {/* Phase 3: Voice coin */}
         {phase === 3 && (
           <motion.div
             key="voice-orb"
@@ -251,19 +231,17 @@ export default function SocrateIntro({ onComplete }: Props) {
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ duration: 1.2, ease: "easeOut" }}
-              className="relative w-64 h-64 md:w-80 md:h-80 mb-8"
             >
-              <div
-                className="w-full h-full rounded-full"
-                style={{
-                  background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 40%, #7b61ff 70%, #4a90d9 100%)",
-                  animation: "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                }}
-              />
+              <SocrateCoin size={240} interactive={false} isActive />
             </motion.div>
-            <h2 className="text-white text-lg font-bold tracking-[0.15em] uppercase text-center leading-relaxed">
-              SPEAK WITH<br />ME
-            </h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 font-display text-background text-lg italic"
+            >
+              Parla con me
+            </motion.p>
           </motion.div>
         )}
 
