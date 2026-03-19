@@ -1877,7 +1877,7 @@ export default function UnifiedDashboard() {
         <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-lg font-bold text-foreground font-display">
-              {profile?.thesis_topic || "Thesis not defined"}
+              {profile?.thesis_topic || "Tesi non definita"}
             </h1>
             {profile?.google_doc_url ? (
               <a
