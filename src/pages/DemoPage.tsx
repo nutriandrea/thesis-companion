@@ -742,7 +742,82 @@ function DemoVulnerabilities() {
   );
 }
 
-function DemoRoadmap() {
+function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
+  const [invited, setInvited] = useState(false);
+
+  return (
+    <div className="space-y-3">
+      {!confirmed ? (
+        <>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Una volta scelto il relatore, potrai invitarlo sulla piattaforma per condividere i tuoi progressi in tempo reale.
+          </p>
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/5 border border-accent/10">
+            <Share2 className="w-3.5 h-3.5 text-accent shrink-0" />
+            <p className="text-[11px] text-foreground leading-snug">
+              Il relatore potrà <strong>visualizzare roadmap, task e avanzamenti</strong>, ma non avrà accesso a Socrate.
+            </p>
+          </div>
+        </>
+      ) : invited ? (
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5 p-3 rounded-lg bg-accent/5 border border-accent/20">
+            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground">Prof. Marco Rossi</p>
+              <p className="text-[10px] text-accent">Invito inviato · marco.rossi@ethz.ch</p>
+            </div>
+          </div>
+          <div className="space-y-1.5 pl-1">
+            <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Cosa può vedere il relatore:</p>
+            <div className="flex items-center gap-2 py-1">
+              <EyeIcon className="w-3 h-3 text-accent shrink-0" />
+              <span className="text-[11px] text-muted-foreground">Roadmap e progressi generali</span>
+            </div>
+            <div className="flex items-center gap-2 py-1">
+              <BarChart className="w-3 h-3 text-accent shrink-0" />
+              <span className="text-[11px] text-muted-foreground">Task completati e in corso</span>
+            </div>
+            <div className="flex items-center gap-2 py-1">
+              <BookOpen className="w-3 h-3 text-accent shrink-0" />
+              <span className="text-[11px] text-muted-foreground">Riferimenti e vulnerabilità</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+            <ShieldAlert className="w-3 h-3 text-muted-foreground shrink-0" />
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              Le conversazioni con Socrate restano <strong className="text-foreground">private</strong> e non sono visibili al relatore.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Invita il tuo relatore a seguire i tuoi progressi. Potrà visualizzare roadmap, task e avanzamenti, ma <strong className="text-foreground">non potrà accedere a Socrate</strong>.
+          </p>
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/50 border border-border">
+            <GraduationCap className="w-4 h-4 text-accent shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground">Prof. Marco Rossi</p>
+              <p className="text-[10px] text-muted-foreground">marco.rossi@ethz.ch</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setInvited(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Invita il relatore
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
   const [items, setItems] = useState(MOCK_ROADMAP);
   const toggleTask = (phaseKey: string, taskId: string) => {
     setItems(prev => prev.map(phase =>
