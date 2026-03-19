@@ -850,7 +850,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
     <div className="space-y-3">
       {thesisTopic && (
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Topic</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Argomento</p>
           <p className="text-xs font-medium text-foreground">{thesisTopic}</p>
         </div>
       )}
