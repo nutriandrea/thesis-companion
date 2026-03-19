@@ -26,10 +26,11 @@ serve(async (req) => {
 
     let userId: string | null = null;
     if (authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
       const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!,
         { global: { headers: { Authorization: authHeader } } });
-      const { data: { user } } = await anonClient.auth.getUser();
-      userId = user?.id || null;
+      const { data, error: claimsErr } = await anonClient.auth.getClaims(token);
+      if (!claimsErr && data?.claims?.sub) userId = data.claims.sub as string;
     }
 
     const aiHeaders = { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" };
