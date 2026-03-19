@@ -6,6 +6,7 @@ import {
   ExternalLink, ArrowRight, TrendingUp, Link2, Loader2, Mic,
   Mail, Lock, User, Eye, EyeOff, MapPin, Calendar,
   Compass, Lightbulb, PenTool, Sparkles, SkipForward, X,
+  UserPlus, Share2, BarChart, Eye as EyeIcon,
 } from "lucide-react";
 import SocrateCoin from "@/components/shared/SocrateCoin";
 
