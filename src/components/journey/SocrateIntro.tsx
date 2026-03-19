@@ -82,7 +82,7 @@ export default function SocrateIntro({ onComplete }: Props) {
               </motion.div>
             </motion.div>
 
-            <div className="flex flex-col items-center max-w-xl px-8 mt-8">
+            <div className="flex flex-col items-center justify-center max-w-xl px-8 mt-32">
               {(phase === "text-appear" || phase === "mode-choice") && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: "easeOut" }} className="text-center mb-16">
                   {introText.split("\n\n").map((paragraph, i) => (
