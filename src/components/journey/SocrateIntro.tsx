@@ -99,7 +99,7 @@ export default function SocrateIntro({ onComplete }: Props) {
                     <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
                       <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
                     </div>
-                    <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voice</span>
+                    <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voce</span>
                   </button>
                   <button onClick={() => handleModeChoice("text")} className="group flex flex-col items-center gap-3 transition-all">
                     <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
