@@ -223,6 +223,88 @@ Esempio: "Stai riscrivendo Wikipedia, non stai facendo ricerca."`,
       return new Response(JSON.stringify({ vulnerabilities }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ─── SUGGEST REFERENCES ───
+    if (currentMode === "suggest_references") {
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei un ricercatore esperto. Basandoti sul contesto dello studente, suggerisci paper accademici, articoli e risorse fondamentali da leggere per la sua tesi.
+
+CONTESTO STUDENTE:
+${studentContext || "Non disponibile"}
+
+${latexContent ? `CONTENUTO LATEX:\n${latexContent.substring(0, 2000)}` : ""}
+
+CONVERSAZIONE RECENTE:
+${JSON.stringify((messages as any[]).slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 300) })))}
+
+Regole:
+- Suggerisci 4-6 riferimenti REALI e verificabili (paper, articoli, libri)
+- Includi link diretti quando possibile (DOI, arXiv, Google Scholar, siti ufficiali)
+- Per ogni riferimento spiega BREVEMENTE perché è rilevante per la tesi dello studente
+- Categorie: "foundational" (basi teoriche), "methodology" (approccio metodologico), "recent" (stato dell'arte recente), "contrarian" (prospettive opposte)
+- Se non conosci un link preciso, usa il formato Google Scholar search: https://scholar.google.com/scholar?q=QUERY
+- Prioritizza paper seminali e survey recenti`,
+            },
+            { role: "user", content: "Suggerisci i riferimenti principali per la mia tesi." },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "suggest_references",
+              description: "Return academic references with links",
+              parameters: {
+                type: "object",
+                properties: {
+                  references: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string", description: "Paper/article title" },
+                        authors: { type: "string", description: "Author names" },
+                        year: { type: "string", description: "Publication year" },
+                        url: { type: "string", description: "Direct link (DOI, arXiv, or Google Scholar search)" },
+                        category: { type: "string", enum: ["foundational", "methodology", "recent", "contrarian"] },
+                        relevance: { type: "string", description: "Why this is relevant (1-2 sentences)" },
+                      },
+                      required: ["title", "authors", "url", "category", "relevance"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["references"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "suggest_references" } },
+        }),
+      });
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: "Errore suggerimento riferimenti" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      let references: any[] = [];
+      if (toolCall?.function?.arguments) {
+        try { references = JSON.parse(toolCall.function.arguments).references || []; } catch { references = []; }
+      }
+
+      await logEvent("reference_suggestion", { count: references.length });
+
+      return new Response(JSON.stringify({ references }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ─── FULL PROFILE EXTRACTION + PERSISTENCE ───
     if (currentMode === "extract_suggestions") {
       const response = await fetch(AI_URL, {
