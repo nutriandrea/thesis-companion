@@ -206,7 +206,7 @@ export default function EditorPage() {
       setShowPanel(true);
 
       toast({
-        title: "📝 Analisi LaTeX completata",
+        title: "Analisi LaTeX completata",
         description: `${result.summary.sectionsAnalyzed} sezioni · Punteggio: ${result.summary.overallScore}/10 · ${result.summary.tasksGenerated} task generati`,
       });
     } catch (e) {
