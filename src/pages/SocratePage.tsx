@@ -445,8 +445,21 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         <div ref={bottomRef} />
       </div>
 
+      {/* Thesis confirmation button (exploration mode only) */}
+      {explorationMode && messages.length >= 6 && (
+        <div className="border-t border-border pt-3 pb-1 flex justify-center">
+          <button
+            onClick={() => setShowThesisDialog(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-accent/10 border border-accent/20 text-xs font-semibold text-accent hover:bg-accent/20 transition-colors"
+          >
+            <Target className="w-4 h-4" />
+            Ho scelto la mia tesi
+          </button>
+        </div>
+      )}
+
       {/* Input */}
-      <div className="border-t border-border pt-4 flex items-center gap-3">
+      <div className={`border-t border-border pt-4 flex items-center gap-3 ${explorationMode ? "max-w-3xl mx-auto w-full" : ""}`}>
         <div className="w-8 h-8 rounded bg-secondary border border-border flex items-center justify-center shrink-0">
           <span className="text-[10px] font-bold text-foreground">{profile?.first_name?.[0] || "U"}</span>
         </div>
@@ -461,6 +474,18 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
           </button>
         </div>
       </div>
+
+      {/* Thesis confirm dialog */}
+      <ThesisConfirmDialog
+        open={showThesisDialog}
+        onClose={() => setShowThesisDialog(false)}
+        initialTopic={profile?.thesis_topic || ""}
+        onConfirm={async (topic) => {
+          setShowThesisDialog(false);
+          await updateProfile({ thesis_topic: topic, journey_state: "topic_chosen" });
+          onThesisConfirmed?.();
+        }}
+      />
     </div>
   );
 }
