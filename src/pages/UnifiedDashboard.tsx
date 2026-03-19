@@ -242,7 +242,7 @@ function TaskContent({ userId }: { userId: string }) {
         toast({ title: "Task completed", description: result.feedback || "Well done." });
       } else {
         setRejectedIds(prev => new Set(prev).add(taskId));
-        toast({ variant: "destructive", title: "Not yet", description: result.feedback || "Socrate is not convinced. Try again." });
+        toast({ variant: "destructive", title: "Not yet", description: result.feedback || "Socrate is not convinced. Try again.", duration: 10000 });
       }
     } catch {
       await updateTaskStatus(taskId, "completed");
@@ -1831,9 +1831,9 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         if (data.can_advance) {
-          toast({ title: "Phase advanced", description: data.socrate_comment?.substring(0, 100) || "You have moved to the next phase." });
+          toast({ title: "Phase advanced", description: data.socrate_comment || "You have moved to the next phase." });
         } else {
-          toast({ title: "Not yet", description: data.socrate_comment?.substring(0, 100) || "There are blockers to resolve." });
+          toast({ title: "Not yet", description: data.socrate_comment || "There are blockers to resolve.", duration: 10000 });
         }
         // Refresh student profile
         const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
