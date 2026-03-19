@@ -9,11 +9,11 @@ import {
 } from "lucide-react";
 
 const journeyStages = [
-  { id: "orientation", label: "Orientamento", icon: Compass, weeks: "1-4" },
-  { id: "topic-search", label: "Topic & Supervisore", icon: Search, weeks: "2-8" },
-  { id: "planning", label: "Pianificazione", icon: Map, weeks: "4-10" },
-  { id: "execution", label: "Esecuzione", icon: FlaskConical, weeks: "6-20" },
-  { id: "writing", label: "Scrittura", icon: FileText, weeks: "16-24" },
+  { id: "orientation", label: "Orientation", icon: Compass, weeks: "1-4" },
+  { id: "topic-search", label: "Topic & Supervisor", icon: Search, weeks: "2-8" },
+  { id: "planning", label: "Planning", icon: Map, weeks: "4-10" },
+  { id: "execution", label: "Execution", icon: FlaskConical, weeks: "6-20" },
+  { id: "writing", label: "Writing", icon: FileText, weeks: "16-24" },
 ];
 
 const buildingBlocks = [
