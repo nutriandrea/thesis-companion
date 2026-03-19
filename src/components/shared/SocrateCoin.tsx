@@ -50,6 +50,9 @@ export default function SocrateCoin({
       onClick={interactive ? handleClick : undefined}
       whileHover={interactive ? { scale: 1.05 } : undefined}
       whileTap={interactive ? { scale: 0.95 } : undefined}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: loaded ? 1 : 0 }}
+      transition={{ duration: 0.4 }}
     >
       {/* Pulse ring when active */}
       {isActive && (
@@ -73,21 +76,11 @@ export default function SocrateCoin({
       />
 
       {/* Coin image */}
-      <motion.img
+      <img
         src={socrateCoinImg}
         alt="Socrate"
         className="w-full h-full rounded-full object-cover"
         style={{ filter: "contrast(1.1) grayscale(100%)" }}
-        initial={{ opacity: 0 }}
-        animate={{
-          opacity: loaded ? 1 : 0,
-          rotate: isActive ? [0, 2, -2, 0] : 0,
-        }}
-        transition={
-          isActive
-            ? { duration: 3, repeat: Infinity, ease: "easeInOut", opacity: { duration: 0.3 } }
-            : { duration: 0.3 }
-        }
       />
 
       {/* Ripple on click */}
