@@ -1218,7 +1218,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
                   className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
-                  Open reference
+                  Apri riferimento
                 </a>
               </div>
             </motion.div>
