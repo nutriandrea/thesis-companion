@@ -97,10 +97,10 @@ const MOCK_SUPERVISORS: MockSupervisor[] = [
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
-  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Esperto di fuzzing e vulnerability research, potrebbe dare insight pratici.", offerInterviews: true },
-  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Ha pubblicato su LLM per code generation, conosce le limitazioni.", offerInterviews: true },
-  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Esperienza industriale nell'applicazione di AI alla cybersecurity.", offerInterviews: false },
-  { id: "e4", name: "Prof. James Chen", title: "Stanford University", score: 71, reasoning: "Autore del framework VulnBench, reference nella vulnerability detection.", offerInterviews: false },
+  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Esperto di fuzzing e vulnerability research, potrebbe dare insight pratici.", offerInterviews: true, email: "p.ferretti@google.com" },
+  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Ha pubblicato su LLM per code generation, conosce le limitazioni.", offerInterviews: true, email: "m.conti@deepmind.com" },
+  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Esperienza industriale nell'applicazione di AI alla cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
+  { id: "e4", name: "Prof. James Chen", title: "Stanford University", score: 71, reasoning: "Autore del framework VulnBench, reference nella vulnerability detection.", offerInterviews: false, email: "jchen@stanford.edu" },
 ];
 
 const MOCK_REFERENCES: MockReference[] = [
