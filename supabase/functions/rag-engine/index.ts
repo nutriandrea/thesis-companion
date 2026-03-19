@@ -81,8 +81,6 @@ Deno.serve(async (req) => {
       if (!content) throw new Error("content required");
 
       const chunks = chunkText(content);
-      const embeddings: any[] = [];
-
       const vectors = await getBatchEmbeddings(chunks, OPENAI_API_KEY);
       const embeddings = chunks.map((chunk, i) => ({
         user_id: userId,
