@@ -853,7 +853,7 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            Invita il relatore
+            Invite supervisor
           </button>
         </div>
       )}
