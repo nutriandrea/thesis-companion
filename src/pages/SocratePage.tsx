@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles, Zap, Target } from "lucide-react";
+import VoiceConversation from "@/components/voice/VoiceConversation";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
