@@ -170,7 +170,7 @@ function DashboardCard({
                   onClick={() => setExpanded(true)}
                   className="w-full text-center text-[10px] font-medium text-accent hover:text-accent/80 transition-colors py-1"
                 >
-                  Show more
+                  Mostra tutto
                 </button>
               </div>
             </div>
