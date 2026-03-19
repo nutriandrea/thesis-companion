@@ -461,7 +461,7 @@ function ChatOverlay({
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-      className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden"
+      className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
     >
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
         <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
