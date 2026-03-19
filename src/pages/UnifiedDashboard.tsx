@@ -118,15 +118,20 @@ const normalizePhase = (phase?: string | null): PhaseKey => normalizeSinglePhase
 
 // ─── CARD COMPONENT with overflow detection & expand dialog ───
 function DashboardCard({
-  title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200,
+  title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200, closeRef,
 }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
   badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
-  maxContentHeight?: number;
+  maxContentHeight?: number; closeRef?: React.MutableRefObject<(() => void) | null>;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
+  // Expose close function via ref
+  useEffect(() => {
+    if (closeRef) closeRef.current = () => setExpanded(false);
+  }, [closeRef]);
 
   useEffect(() => {
     const el = contentRef.current;
@@ -1124,7 +1129,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
 }
 
 
-function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
+function VulnerabilitiesContent({ vulnerabilities, onResolve, onCloseExpanded }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void; onCloseExpanded?: () => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
@@ -1171,7 +1176,7 @@ function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilitie
                     <p className="text-[11px] text-muted-foreground leading-relaxed pl-6">{v.description}</p>
                     {onResolve && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); onResolve(v.id); }}
+                        onClick={(e) => { e.stopPropagation(); onCloseExpanded?.(); onResolve(v.id); }}
                         className="ml-6 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
                       >
                         Comunica a Socrate che è risolta →
@@ -1549,6 +1554,7 @@ export default function UnifiedDashboard() {
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
+  const vulnCardCloseRef = useRef<(() => void) | null>(null);
 
   // New state
   const [careerSectors, setCareerSectors] = useState<CareerSector[]>([]);
@@ -1776,13 +1782,14 @@ export default function UnifiedDashboard() {
   const resolveVulnerability = useCallback((vulnId: string) => {
     const vuln = vulnerabilities.find(v => v.id === vulnId);
     if (!vuln) return;
-    const msg = `I resolved the vulnerability "${vuln.title}". Here's why it's no longer an issue: `;
-    setInput(msg);
+    // Close any expanded card, open chat and auto-send the resolution message
     setChatOpen(true);
-    supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId).then(() => {
-      setVulnerabilities(prev => prev.filter(v => v.id !== vulnId));
-    });
-  }, [vulnerabilities]);
+    const resolveMsg = `Ho risolto questa vulnerabilità: "${vuln.title}" — ${vuln.description}`;
+    // Small delay to let chat mount, then auto-send
+    setTimeout(() => {
+      sendMessage(resolveMsg);
+    }, 300);
+  }, [vulnerabilities, sendMessage]);
 
   // Compute career on demand
   const computeCareer = useCallback(async () => {
@@ -2165,8 +2172,8 @@ export default function UnifiedDashboard() {
               delay: delay,
               component: (
                 <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-                  <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }} closeRef={vulnCardCloseRef}>
+                  <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} onCloseExpanded={() => vulnCardCloseRef.current?.()} />
                 </DashboardCard>
               ),
             });
