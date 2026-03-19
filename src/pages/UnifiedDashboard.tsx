@@ -1701,113 +1701,109 @@ export default function UnifiedDashboard() {
       {/* ─── CARDS GRID — strict phase-gated ─── */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
 
-        {/* ═══ ORIENTATION: minimal — Tasks, Rubrica, Vulnerabilità ═══ */}
-        {currentPhase === "orientation" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-5xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <DashboardCard title="Task" icon={Target}>
-                <TaskContent userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-              <DashboardCard title="Rubrica" icon={Users}>
-                <ExpertSuggestions userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
-              </DashboardCard>
-            </motion.div>
-          </div>
-        )}
+        {/* ═══ PHASE CONTENT — supports hybrid phases ═══ */}
+        {(() => {
+          const showOrientation = phaseActive(parsedPhase, "orientation");
+          const showTopicSupervisor = phaseActive(parsedPhase, "topic_supervisor");
+          const showPlanning = phaseActive(parsedPhase, "planning");
+          const showExecution = phaseActive(parsedPhase, "execution");
+          const showWriting = phaseActive(parsedPhase, "writing");
 
-        {/* ═══ TOPIC & SUPERVISOR: Supervisors + Career Tree + base ═══ */}
-        {currentPhase === "topic_supervisor" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <DashboardCard title="Supervisori suggeriti" icon={GraduationCap}>
-                <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-              <DashboardCard title="Direzioni possibili" icon={TrendingUp}>
-                <CareerTree sectors={careerSectors} userId={user?.id || ""} loading={careerLoading} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <DashboardCard title="Task" icon={Target}>
-                <TaskContent userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-              <DashboardCard title="Interview Partners" icon={Users}>
-                <ExpertSuggestions userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
-              </DashboardCard>
-            </motion.div>
-          </div>
-        )}
+          // Collect cards to render based on active phases
+          const cards: { key: string; component: React.ReactNode; colSpan?: string; delay: number }[] = [];
+          let delay = 0.3;
 
-        {/* ═══ PLANNING: roadmap + rubrica + tasks + vulnerabilità ═══ */}
-        {currentPhase === "planning" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
-            <motion.div className="md:col-span-2 lg:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <DashboardCard title="Roadmap (in costruzione)" icon={BarChart3}>
-                <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-              <DashboardCard title="Task" icon={Target}>
-                <TaskContent userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <DashboardCard title="Rubrica" icon={Users}>
-                <ExpertSuggestions userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
-              </DashboardCard>
-            </motion.div>
-          </div>
-        )}
+          // Roadmap: planning, execution, writing
+          if (showPlanning || showExecution || showWriting) {
+            const roadmapTitle = showPlanning && !showExecution ? "Roadmap (in costruzione)" : "Roadmap";
+            cards.push({
+              key: "roadmap",
+              colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined,
+              delay: delay,
+              component: (
+                <DashboardCard title={roadmapTitle} icon={BarChart3}>
+                  <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
+                </DashboardCard>
+              ),
+            });
+            delay += 0.05;
+          }
 
-        {/* ═══ EXECUTION / WRITING: roadmap principale + tasks + vulnerabilità ═══ */}
-        {(currentPhase === "execution" || currentPhase === "writing") && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-6xl mx-auto">
-            <motion.div className="md:col-span-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <DashboardCard title="Roadmap" icon={BarChart3}>
-                <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-              <DashboardCard title="Rubrica" icon={Users}>
-                <ExpertSuggestions userId={user?.id || ""} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          // Supervisors: topic_supervisor phase
+          if (showTopicSupervisor) {
+            cards.push({
+              key: "supervisors",
+              delay: delay,
+              component: (
+                <DashboardCard title="Supervisori suggeriti" icon={GraduationCap}>
+                  <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
+                </DashboardCard>
+              ),
+            });
+            delay += 0.05;
+          }
+
+          // Career Tree: topic_supervisor phase
+          if (showTopicSupervisor) {
+            cards.push({
+              key: "career-tree",
+              colSpan: !showPlanning ? "md:col-span-2" : undefined,
+              delay: delay,
+              component: (
+                <DashboardCard title="Direzioni possibili" icon={TrendingUp}>
+                  <CareerTree sectors={careerSectors} userId={user?.id || ""} loading={careerLoading} />
+                </DashboardCard>
+              ),
+            });
+            delay += 0.05;
+          }
+
+          // Tasks: always shown
+          cards.push({
+            key: "tasks",
+            delay: delay,
+            component: (
               <DashboardCard title="Task" icon={Target}>
                 <TaskContent userId={user?.id || ""} />
               </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+            ),
+          });
+          delay += 0.05;
+
+          // Rubrica: all phases
+          cards.push({
+            key: "rubrica",
+            delay: delay,
+            component: (
+              <DashboardCard title={showTopicSupervisor ? "Interview Partners" : "Rubrica"} icon={Users}>
+                <ExpertSuggestions userId={user?.id || ""} />
+              </DashboardCard>
+            ),
+          });
+          delay += 0.05;
+
+          // Vulnerabilities: always shown
+          cards.push({
+            key: "vulnerabilities",
+            delay: delay,
+            component: (
               <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
                 action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
                 <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
               </DashboardCard>
-            </motion.div>
-          </div>
-        )}
+            ),
+          });
+
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
+              {cards.map(card => (
+                <motion.div key={card.key} className={card.colSpan || ""} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: card.delay }}>
+                  {card.component}
+                </motion.div>
+              ))}
+            </div>
+          );
+        })()}
 
       </div>
 
