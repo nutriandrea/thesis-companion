@@ -2043,7 +2043,7 @@ export default function UnifiedDashboard() {
             key: "tasks",
             delay: delay,
             component: (
-              <DashboardCard title="Tasks" icon={Target}>
+              <DashboardCard title="Task" icon={Target}>
                 <TaskContent userId={user?.id || ""} />
               </DashboardCard>
             ),
