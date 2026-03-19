@@ -322,7 +322,7 @@ export default function ProfilePage() {
                 <span className="text-xs text-muted-foreground">{new Date(task.dueDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>
               </div>
             ))}
-            {pendingTasks.length === 0 && <p className="text-sm text-muted-foreground">Tutto completato! 🎉</p>}
+            {pendingTasks.length === 0 && <p className="text-sm text-muted-foreground">Tutto completato.</p>}
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-card border rounded-xl p-5 shadow-sm">

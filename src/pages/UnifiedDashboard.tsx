@@ -398,7 +398,7 @@ function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updat
       if (resp.ok) {
         const data = await resp.json();
         setSynced(true);
-        toast({ title: "📄 Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri. Sync automatico attivo.` });
+        toast({ title: "Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri. Sync automatico attivo.` });
         if (data.content?.length > 100) {
           fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
             method: "POST", headers: AUTH_HEADERS,

@@ -175,7 +175,7 @@ export default function ContactsPage() {
                     <Badge variant="secondary" className="text-[10px] bg-ai/10 text-ai">Socrate</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">{sug.detail}</p>
-                  <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">💡 {sug.reason}</p>
+                  <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">{sug.reason}</p>
                 </div>
               </div>
             </motion.div>

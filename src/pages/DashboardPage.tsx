@@ -407,11 +407,11 @@ export default function DashboardPage() {
           <div className="space-y-1.5">
             {sessionData.recentEvents.slice(0, 8).map((ev, i) => {
               const eventLabels: Record<string, string> = {
-                chat_exchange: "💬 Chat con Socrate",
-                latex_analysis: "📝 Analisi LaTeX",
-                fusion_analysis: "🧬 Fusione dati",
-                report_generated: "📋 Report generato",
-                extraction: "🧠 Estrazione profilo",
+                chat_exchange: "Chat con Socrate",
+                latex_analysis: "Analisi LaTeX",
+                fusion_analysis: "Fusione dati",
+                report_generated: "Report generato",
+                extraction: "Estrazione profilo",
               };
               return (
                 <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + i * 0.03 }}

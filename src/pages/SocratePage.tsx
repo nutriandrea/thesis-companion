@@ -408,8 +408,8 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
                 <div key={i} className={`w-1.5 h-3 rounded-sm ${severita >= threshold ? (severita >= 0.8 ? "bg-destructive" : severita >= 0.6 ? "bg-warning" : "bg-accent") : "bg-border"}`} />
               ))}
             </div>
-            <span className="text-[9px] text-muted-foreground">
-              {severita >= 0.8 ? "🔥" : severita >= 0.6 ? "⚡" : severita >= 0.4 ? "🤝" : "💡"}
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
+              {severita >= 0.8 ? "max" : severita >= 0.6 ? "alto" : severita >= 0.4 ? "medio" : "basso"}
             </span>
           </div>
         )}

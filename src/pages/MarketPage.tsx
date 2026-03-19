@@ -161,7 +161,7 @@ export default function MarketPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">{sug.detail}</p>
-                  <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">💡 {sug.reason}</p>
+                  <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">{sug.reason}</p>
                 </div>
               </div>
             </motion.div>
