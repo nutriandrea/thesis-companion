@@ -787,7 +787,7 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
     if (loadingAi) return (
       <div className="flex items-center justify-center py-6">
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        <span className="text-xs text-muted-foreground ml-2">Searching companies in {activeSector}...</span>
+        <span className="text-xs text-muted-foreground ml-2">Ricerca aziende in {activeSector}...</span>
       </div>
     );
 
