@@ -356,6 +356,79 @@ function VulnerabilitiesContent({ vulnerabilities }: { vulnerabilities: Vulnerab
   );
 }
 
+// ─── GOOGLE DOC WIDGET ───
+function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updateProfile: any; user: any }) {
+  const { toast } = useToast();
+  const [docUrl, setDocUrl] = useState(profile?.google_doc_url || "");
+  const [syncing, setSyncing] = useState(false);
+  const [synced, setSynced] = useState(!!profile?.google_doc_url);
+
+  useEffect(() => {
+    if (profile?.google_doc_url) setDocUrl(profile.google_doc_url);
+  }, [profile?.google_doc_url]);
+
+  const saveAndSync = async () => {
+    if (!docUrl.trim() || !user) return;
+    setSyncing(true);
+    try {
+      await updateProfile({ google_doc_url: docUrl.trim() } as any);
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ google_doc_url: docUrl.trim() }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setSynced(true);
+        toast({ title: "📄 Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri. Sync automatico attivo.` });
+        if (data.content?.length > 100) {
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
+            method: "POST", headers: AUTH_HEADERS,
+            body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
+          }).catch(console.error);
+        }
+      } else {
+        toast({ variant: "destructive", title: "Errore", description: "Impossibile leggere il doc. Assicurati che sia condiviso." });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "Errore", description: "Connessione fallita." });
+    } finally { setSyncing(false); }
+  };
+
+  return (
+    <div className="space-y-3">
+      {synced ? (
+        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/[0.06]">
+          <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-foreground">Documento collegato</p>
+            <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
+          </div>
+          <button onClick={saveAndSync} disabled={syncing}
+            className="text-[10px] font-medium px-2 py-1 rounded-md bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+            {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          </button>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs text-muted-foreground">Collega il tuo Google Doc per analisi automatica della tesi.</p>
+          <div className="flex items-center gap-2">
+            <input
+              value={docUrl} onChange={e => setDocUrl(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && saveAndSync()}
+              placeholder="https://docs.google.com/document/d/..."
+              className="flex-1 bg-secondary border border-border rounded-md px-3 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+            <button onClick={saveAndSync} disabled={!docUrl.trim() || syncing}
+              className="text-[10px] font-medium px-3 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30">
+              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Link2 className="w-3 h-3" />}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── CHAT OVERLAY ───
 function ChatOverlay({
   messages, input, setInput, sendMessage, isStreaming, onClose
