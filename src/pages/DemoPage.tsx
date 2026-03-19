@@ -225,10 +225,10 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
 // STEP 2: DEMO ONBOARDING
 // ══════════════════════════════════════════════════════
 const JOURNEY_OPTIONS = [
-  { key: "lost", icon: Compass, title: "Sono perso", desc: "Non ho ancora idea di cosa scrivere." },
-  { key: "vague_idea", icon: Lightbulb, title: "Ho un'idea vaga", desc: "Ho un argomento approssimativo ma devo affinarlo." },
-  { key: "topic_chosen", icon: Target, title: "Ho scelto il tema", desc: "So di cosa voglio scrivere." },
-  { key: "writing", icon: PenTool, title: "Sto già scrivendo", desc: "Ho bisogno di supporto per scrittura e revisione." },
+  { key: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet." },
+  { key: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine it." },
+  { key: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write about." },
+  { key: "writing", icon: PenTool, title: "I'm already writing", desc: "I need support for writing and revision." },
 ];
 
 function DemoOnboarding({ onNext }: { onNext: () => void }) {
