@@ -13,6 +13,7 @@ export interface Profile {
   email: string;
   degree: string;
   university: string;
+  expected_graduation: string;
   skills: string[];
   field_ids: string[];
   thesis_topic: string;
