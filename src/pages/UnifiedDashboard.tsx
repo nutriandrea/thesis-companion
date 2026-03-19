@@ -1096,7 +1096,7 @@ export default function UnifiedDashboard() {
           <motion.div data-tutor-id="vulnerabilities" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
             <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
               action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-              <VulnerabilitiesContent vulnerabilities={vulnerabilities} />
+              <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
             </DashboardCard>
           </motion.div>
 
