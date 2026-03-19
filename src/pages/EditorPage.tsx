@@ -153,7 +153,8 @@ const priorityColors: Record<string, string> = {
 export default function EditorPage() {
   const { user, profile } = useApp();
   const { toast } = useToast();
-  const [latex, setLatex] = useState(() => localStorage.getItem("thesis-latex-content") || SAMPLE_LATEX);
+  const storageKey = user?.id ? `thesis-latex-content-${user.id}` : "thesis-latex-content-anonymous";
+  const [latex, setLatex] = useState(() => localStorage.getItem(storageKey) || SAMPLE_LATEX);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<LatexAnalysis | null>(null);
   const [showPanel, setShowPanel] = useState(true);
