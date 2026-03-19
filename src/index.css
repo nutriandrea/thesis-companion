@@ -237,11 +237,11 @@
 
 /* Card hover */
 .ds-card-hover {
-  transition: border-color 200ms ease, transform 200ms ease;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 .ds-card-hover:hover {
   border-color: hsl(var(--foreground) / 0.2);
-  transform: translateY(-1px);
+  box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.08);
 }
 
 /* ══════════════════════════════════════════════
