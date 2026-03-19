@@ -321,7 +321,7 @@ export default function UnifiedDashboard() {
       }
     } catch { toast({ variant: "destructive", title: "Errore" }); }
     finally { setIsScanning(false); }
-  }, [user, isScanning, messages, studentContext, latexContent, toast]);
+  }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
   // Progress metrics
   const completion = studentProfile?.overall_completion || 0;
