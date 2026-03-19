@@ -1275,6 +1275,8 @@ function DemoRoadmap() {
     ));
   };
 
+  if (loading) return <DemoLoadingSkeleton lines={5} />;
+
   return (
     <div className="space-y-4">
       {items.map(phase => {
