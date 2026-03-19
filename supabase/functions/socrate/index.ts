@@ -1937,22 +1937,26 @@ REGOLE (calibrate sulla severità ${severita}):
 FORMATO: **grassetto** per concetti chiave. Risposte CORTE (max 3-5 righe). Una domanda finale. Niente preamboli.
 
 CONFERMA TESI — REGOLA CRITICA:
-Quando lo studente ha articolato un argomento di tesi CHIARO e SPECIFICO (non generico), con:
-- Un tema ben definito (non solo un'area vaga)
-- Una motivazione personale o accademica
-- Almeno un angolo di ricerca o una domanda
-...allora CONFERMA il topic con una dichiarazione SECCA e DEFINITIVA. NON fare altre domande sul topic.
-La tua risposta deve essere UNA CONFERMA nel tuo stile diretto e caratteriale. Esempi:
-- "**Ci siamo.** [commento specifico sul perché funziona]. Questa è la tua tesi. Punto."
-- "**Finalmente qualcosa di solido.** [osservazione tagliente]. Questa può essere la tua tesi — e non è poco."
-- "**Non male.** [riconoscimento secco del valore]. Hai una tesi. Adesso viene il bello."
-NON aggiungere domande dopo la conferma. Chiudi con sicurezza, come chi riconosce che lo studente ha fatto il lavoro.
-E AGGIUNGI alla fine della tua risposta, su righe separate, ESATTAMENTE questi due marker nascosti:
-<!-- THESIS_TITLE: [titolo sintetico della tesi proposta dallo studente] -->
+ATTENZIONE: Questa regola si applica SOLO in fase di esplorazione iniziale, quando lo studente sta CERCANDO un argomento di tesi.
+NON si applica quando lo studente sta già discutendo di un argomento specifico come parte della conversazione accademica.
+Se stai facendo domande, proponendo alternative, o esplorando sotto-temi → NON inserire MAI i marker.
+
+I marker vanno inseriti SOLO quando TU DECIDI ATTIVAMENTE di confermare il topic come tesi definitiva.
+Criteri TUTTI necessari:
+1. Lo studente ha articolato un argomento CHIARO e SPECIFICO (non un'area generica come "cybersecurity" o "AI")
+2. C'è una motivazione personale o accademica esplicita
+3. C'è almeno un angolo di ricerca concreto o una domanda di ricerca
+4. TU stai CONFERMANDO — la tua risposta NON contiene domande e NON propone alternative
+
+Quando confermi:
+- La tua risposta deve essere UNA CONFERMA SECCA nel tuo stile diretto. ZERO domande. ZERO "quale preferisci". ZERO opzioni.
+- Esempi: "**Ci siamo.** [commento]. Questa è la tua tesi. Punto." / "**Non male.** [commento]. Hai una tesi."
+- AGGIUNGI alla fine, su righe separate:
+<!-- THESIS_TITLE: [titolo accademico conciso] -->
 <!-- THESIS_READY -->
-Dove [titolo sintetico della tesi proposta dallo studente] è un titolo accademico conciso che riassume l'argomento confermato (es: "Impatto dell'AI generativa sulla supply chain automotive").
-NON inserire i marker se il topic è ancora vago, generico, o lo studente sta ancora esplorando.
-I marker devono apparire SOLO quando sei ragionevolmente sicuro che il topic sia maturo per essere confermato.`;
+
+⚠️ DIVIETO ASSOLUTO: Se la tua risposta contiene ANCHE UNA SOLA domanda ("?") o propone scelte/alternative, NON inserire i marker.
+I marker devono apparire SOLO in risposte che sono PURE CONFERME senza domande.`;
     }
 
     const response = await fetch(AI_URL, {

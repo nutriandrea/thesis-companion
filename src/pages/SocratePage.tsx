@@ -250,7 +250,12 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: cleanContent });
 
         // Check if Socrate proposed thesis confirmation
-        if (assistantContent.includes("<!-- THESIS_READY -->")) {
+        // Safety: only trigger if response has marker AND doesn't end with questions
+        const hasMarker = assistantContent.includes("<!-- THESIS_READY -->");
+        const textWithoutMarkers = cleanContent.replace(/\*\*/g, "").trim();
+        const endsWithQuestion = textWithoutMarkers.slice(-100).includes("?");
+        
+        if (hasMarker && !endsWithQuestion) {
           // Extract proposed title
           const titleMatch = assistantContent.match(/<!--\s*THESIS_TITLE:\s*(.*?)\s*-->/);
           const extractedTitle = titleMatch?.[1]?.trim() || "";
