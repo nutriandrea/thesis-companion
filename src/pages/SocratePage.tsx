@@ -23,12 +23,12 @@ interface ChatMsg {
   content: string;
 }
 
-function GradientOrb({ size = "lg" }: { size?: "sm" | "lg" }) {
-  const dim = size === "lg" ? "w-64 h-64 md:w-80 md:h-80" : "w-10 h-10";
+function SocrateIcon({ size = "sm" }: { size?: "sm" | "lg" }) {
+  const dim = size === "lg" ? "w-16 h-16" : "w-8 h-8";
   return (
-    <div className={`${dim} rounded-full shrink-0`} style={{
-      background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)",
-    }} />
+    <div className={`${dim} rounded-full bg-foreground flex items-center justify-center shrink-0`}>
+      <span className={`font-display font-bold text-background ${size === "lg" ? "text-2xl" : "text-xs"}`}>S</span>
+    </div>
   );
 }
 
@@ -376,14 +376,14 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
   if (inputMode === "voice") {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-3rem)] relative">
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1, ease: "easeOut" }} className="animate-subtle-float">
-          <GradientOrb size="lg" />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+          <SocrateIcon size="lg" />
         </motion.div>
-        <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-foreground text-lg font-bold tracking-[0.15em] uppercase mt-8 text-center leading-relaxed">
+        <motion.h2 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-foreground text-lg font-semibold tracking-wide uppercase mt-6 text-center leading-relaxed">
           SPEAK WITH<br />ME
         </motion.h2>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="absolute bottom-8 left-8">
-          <button className="w-10 h-10 bg-secondary border border-border rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="absolute bottom-8 left-8">
+          <button className="w-10 h-10 bg-secondary border border-border rounded flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-150">
             <Mic className="w-4 h-4" />
           </button>
         </motion.div>
@@ -396,10 +396,10 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     <div className={`flex flex-col ${explorationMode ? "h-screen max-w-3xl mx-auto px-6" : "h-[calc(100vh-3rem)]"}`}>
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
-        <GradientOrb size="sm" />
+        <SocrateIcon size="sm" />
         <div>
-          <h1 className="text-sm font-bold text-foreground tracking-wide uppercase">Socrate</h1>
-          <p className="text-[10px] text-muted-foreground">Hub centrale · Profiler silenzioso</p>
+          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Socrate</h2>
+          <p className="ds-caption">Hub centrale</p>
         </div>
         {severita !== null && (
           <div className="flex items-center gap-1.5 ml-2" title={`Severità: ${severita} — ${severita >= 0.8 ? "Spietato" : severita >= 0.6 ? "Critico" : severita >= 0.4 ? "Collaborativo" : "Supportivo"}`}>

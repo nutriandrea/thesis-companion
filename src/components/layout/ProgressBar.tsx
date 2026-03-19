@@ -31,7 +31,6 @@ export default function ProgressBar() {
     fetchProgress();
     if (!user?.id) return;
 
-    // Realtime subscription on student_profiles for instant updates
     const channel = supabase
       .channel("progress-bar")
       .on("postgres_changes", {
@@ -62,7 +61,6 @@ export default function ProgressBar() {
     { label: "W", week: 24, id: "writing" },
   ];
 
-  // Normalize phase names to canonical ones
   const normalizePhase = (p: string): string => {
     switch (p) {
       case "orientation": case "topic_supervisor": case "planning": case "execution": case "writing": return p;
@@ -74,7 +72,6 @@ export default function ProgressBar() {
     }
   };
 
-  // Determine which phases are done/current based on current_phase
   const phaseOrder = ["orientation", "topic_supervisor", "planning", "execution", "writing"];
   const currentPhaseIdx = phaseOrder.indexOf(normalizePhase(currentPhase));
 
@@ -82,24 +79,21 @@ export default function ProgressBar() {
     <div className="fixed right-0 top-0 z-30 h-screen w-12 flex flex-col items-center bg-background border-l border-border">
       {/* Week count */}
       <div className="py-3 border-b border-border w-full flex flex-col items-center">
-        <span className="text-[10px] text-muted-foreground">W</span>
-        <span className="text-sm font-bold text-foreground">{totalWeeks}</span>
+        <span className="ds-caption">W</span>
+        <span className="text-sm font-semibold text-foreground">{totalWeeks}</span>
       </div>
 
       {/* Track */}
       <div className="flex-1 relative w-full flex flex-col items-center py-6">
-        {/* Vertical line */}
         <div className="absolute left-1/2 -translate-x-1/2 top-6 bottom-6 w-px bg-border" />
 
-        {/* Progress fill */}
         <motion.div
-          className="absolute left-1/2 -translate-x-1/2 top-6 w-px bg-accent"
+          className="absolute left-1/2 -translate-x-1/2 top-6 w-px bg-foreground/30"
           initial={{ height: 0 }}
           animate={{ height: `${Math.min(realProgress, 100) * 0.88}%` }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         />
 
-        {/* Stage markers */}
         {stageMarkers.map((marker) => {
           const position = (marker.week / totalWeeks) * 88 + 3;
           const markerIdx = phaseOrder.indexOf(marker.id);
@@ -112,11 +106,11 @@ export default function ProgressBar() {
               className="absolute flex items-center gap-1"
               style={{ top: `${position}%`, right: "6px" }}
             >
-              <div className={`w-2 h-2 rounded-full ${
-                isDone ? "bg-accent" : isCurrent ? "bg-accent animate-pulse" : "bg-border"
+              <div className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                isDone ? "bg-foreground" : isCurrent ? "bg-foreground/60" : "bg-border"
               }`} />
-              <span className={`text-[9px] font-bold ${
-                isDone || isCurrent ? "text-accent" : "text-muted-foreground"
+              <span className={`text-[9px] font-semibold ${
+                isDone || isCurrent ? "text-foreground" : "text-muted-foreground"
               }`}>
                 {marker.week}
               </span>
@@ -126,25 +120,24 @@ export default function ProgressBar() {
 
         {/* Current position dot */}
         <motion.div
-          className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-accent border-2 border-background z-10"
+          className="absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-foreground border-2 border-background z-10"
           initial={{ top: 24 }}
           animate={{ top: `calc(${Math.min(realProgress * 0.88, 85)}% + 24px)` }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          style={{ boxShadow: "0 0 10px hsl(38 50% 60% / 0.5)" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         />
       </div>
 
-      {/* Bottom: ETA or current week */}
+      {/* Bottom */}
       <div className="py-3 border-t border-border w-full flex flex-col items-center">
         {estimatedDays ? (
           <>
-            <span className="text-[10px] text-muted-foreground">ETA</span>
-            <span className="text-xs font-bold text-accent">{estimatedDays}g</span>
+            <span className="ds-caption">ETA</span>
+            <span className="text-xs font-semibold text-foreground">{estimatedDays}g</span>
           </>
         ) : (
           <>
-            <span className="text-[10px] text-muted-foreground">Now</span>
-            <span className="text-xs font-bold text-accent">{currentWeek}</span>
+            <span className="ds-caption">Now</span>
+            <span className="text-xs font-semibold text-foreground">{currentWeek}</span>
           </>
         )}
       </div>
@@ -152,7 +145,7 @@ export default function ProgressBar() {
       {/* Phase indicator */}
       <div className="py-2 border-t border-border w-full flex flex-col items-center">
         <span className="text-[8px] text-muted-foreground">Fase</span>
-        <span className="text-[10px] font-bold text-accent">
+        <span className="text-[10px] font-semibold text-foreground">
           {stageMarkers[currentPhaseIdx]?.label || "O"}
         </span>
       </div>

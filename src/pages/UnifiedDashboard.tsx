@@ -73,25 +73,14 @@ const normalizePhase = (phase?: string | null): PhaseKey => {
 };
 
 // ─── GRADIENT ORB ───
-function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive?: boolean }) {
+function SocrateIcon({ size = 40, isActive = false }: { size?: number; isActive?: boolean }) {
   return (
-    <motion.div
-      className="relative mx-auto"
-      style={{ width: size, height: size / 2, overflow: "hidden" }}
-      animate={isActive ? { scale: [1, 1.03, 1] } : {}}
-      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    <div
+      className="rounded-full bg-foreground flex items-center justify-center"
+      style={{ width: size, height: size }}
     >
-      <div className="absolute rounded-full" style={{
-        width: size, height: size, top: 0, left: 0,
-        background: "radial-gradient(circle at 35% 40%, #f5a623 0%, #e94e77 25%, #7b61ff 50%, #4a90d9 75%, #7b61ff 100%)",
-        filter: "blur(1px)",
-      }} />
-      <div className="absolute rounded-full opacity-30" style={{
-        width: size * 1.4, height: size * 1.4, top: -(size * 0.2), left: -(size * 0.2),
-        background: "radial-gradient(circle, rgba(245,166,35,0.3) 0%, rgba(123,97,255,0.15) 40%, transparent 70%)",
-        filter: "blur(30px)",
-      }} />
-    </motion.div>
+      <span className="font-display font-bold text-background" style={{ fontSize: size * 0.4 }}>S</span>
+    </div>
   );
 }
 
@@ -103,7 +92,7 @@ function DashboardCard({
   badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
 }) {
   return (
-    <div className={`bg-card/60 backdrop-blur-sm border border-border rounded-xl flex flex-col h-full ${className}`}>
+    <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <Icon className="w-4 h-4 text-accent" />
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
@@ -472,12 +461,12 @@ function ChatOverlay({
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-      className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden"
+      className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
     >
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-        <div className="w-8 h-8 rounded-full" style={{
-          background: "radial-gradient(circle at 35% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)"
-        }} />
+        <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
+          <span className="text-xs font-bold text-background font-display">S</span>
+        </div>
         <div className="flex-1">
           <p className="text-sm font-bold text-foreground">Socrate</p>
           <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
@@ -500,7 +489,7 @@ function ChatOverlay({
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.6s" }} />
                 </div>
               ) : (
-                <div className="prose prose-sm prose-invert max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
+                <div className="prose prose-sm max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
               )}
             </div>
           </motion.div>
@@ -796,7 +785,7 @@ export default function UnifiedDashboard() {
         <button onClick={signOut} className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
           <LogOut className="w-4 h-4" />
         </button>
-        <GradientOrb size={120} isActive={isStreaming} />
+        <SocrateIcon size={48} isActive={isStreaming} />
         <motion.div className="text-center mt-3 space-y-0.5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <h1 className="text-lg font-bold text-foreground font-display">{name}</h1>
           <p className="text-xs text-muted-foreground max-w-md mx-auto px-4 truncate">{profile?.thesis_topic || "Tesi non definita"}</p>
@@ -872,7 +861,7 @@ export default function UnifiedDashboard() {
       </div>
 
       {/* ─── BOTTOM PHASE STEPPER ─── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border py-2.5 px-6">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2.5 px-6">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
           {PHASES.map((p, i) => {
             const isCompleted = i < currentPhaseIndex;
@@ -923,7 +912,7 @@ export default function UnifiedDashboard() {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-foreground/10 z-40"
               onClick={() => setChatOpen(false)}
             />
             <ChatOverlay messages={messages} input={input} setInput={setInput}
