@@ -589,6 +589,8 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
   const { affinities } = useAffinityScores(userId, "supervisor");
   const [selecting, setSelecting] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
+  const [confirmedName, setConfirmedName] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const items = useMemo(() => {
     if (affinities.length > 0) {
@@ -601,6 +603,71 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
       id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2), reasoning: "", email: s.email, university: s.universityId,
     }));
   }, [affinities]);
+
+  const handleConfirm = useCallback((sup: typeof items[0]) => {
+    setConfirming(true);
+    setConfirmedName(sup.name);
+    // Delay the actual onSelect to let the animation play
+    setTimeout(() => {
+      onSelect(sup.id, sup.name, motivation);
+      setSelecting(null);
+      setMotivation("");
+    }, 2200);
+  }, [motivation, onSelect]);
+
+  // Show confirmation animation overlay
+  if (confirming && confirmedName) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-8 space-y-4"
+      >
+        {/* Success checkmark */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: [0, 1.2, 1] }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-14 h-14 rounded-full bg-accent/15 flex items-center justify-center"
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <CheckCircle2 className="w-7 h-7 text-accent" />
+          </motion.div>
+        </motion.div>
+
+        {/* Confirmed text */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center space-y-1"
+        >
+          <p className="text-xs font-bold text-foreground">Supervisore confermato</p>
+          <p className="text-[11px] text-accent font-medium">{confirmedName}</p>
+        </motion.div>
+
+        {/* Phase transition indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+          className="flex items-center gap-2 text-[10px] text-muted-foreground"
+        >
+          <motion.div
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <ArrowRight className="w-3 h-3" />
+          </motion.div>
+          <span>Passaggio alla fase successiva...</span>
+        </motion.div>
+      </motion.div>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -651,7 +718,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                     rows={2}
                   />
                   <button
-                    onClick={() => { onSelect(sup.id, sup.name, motivation); setSelecting(null); setMotivation(""); }}
+                    onClick={() => handleConfirm(sup)}
                     disabled={!motivation.trim()}
                     className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30"
                   >
