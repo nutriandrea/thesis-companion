@@ -103,11 +103,8 @@ export default function SocrateIntro({ onComplete }: Props) {
             <motion.div
               initial={{ x: 0, y: 0 }}
               animate={{
-                // Equidistant between right edge of text (max-w-xl ≈ 576px → half = 288px from center) and screen right edge
-                x: typeof window !== "undefined"
-                  ? (288 + window.innerWidth / 2) / 2 - 90
-                  : 300,
-                y: 0,
+                x: typeof window !== "undefined" ? window.innerWidth / 2 - 160 : 300,
+                y: typeof window !== "undefined" ? window.innerHeight / 2 - 370 : 0,
               }}
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               className="absolute z-10"
@@ -125,7 +122,7 @@ export default function SocrateIntro({ onComplete }: Props) {
               <motion.div
                 layout
                 transition={{ layout: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
-                className="flex flex-col items-center max-w-xl px-8"
+                className="flex flex-col items-center max-w-xl px-8 mt-32"
               >
                 {(phase === "text-appear" || phase === "mode-choice") && (
                   <motion.div
