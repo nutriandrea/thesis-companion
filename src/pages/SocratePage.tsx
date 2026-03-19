@@ -362,7 +362,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       const result = await resp.json();
       toast({
-        title: "🧬 Fusione completata",
+        title: "Fusione completata",
         description: `Profilo aggiornato · ${result.summary?.affinitiesComputed || 0} affinità calcolate · ${result.summary?.newSuggestionsGenerated || 0} nuovi suggerimenti`,
       });
     } catch (e) {
