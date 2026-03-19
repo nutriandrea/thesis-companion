@@ -549,7 +549,7 @@ function CareerTree({ sectors, userId, loading }: {
                         <span className="text-[10px] text-muted-foreground">Ricerca aziende...</span>
                       </div>
                     ) : comps.length === 0 ? (
-                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">No companies found for this sector.</p>
+                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">Nessuna azienda trovata per questo settore.</p>
                     ) : (
                       comps.slice(0, 5).map((comp: any, j: number) => (
                         <div key={j} className="relative flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
