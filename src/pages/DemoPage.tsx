@@ -63,30 +63,30 @@ const MOCK_TASKS: Record<string, MockTask[]> = {
 
 const MOCK_ROADMAP: RoadmapPhase[] = [
   {
-    key: "planning", title: "Pianificazione",
+    key: "planning", title: "Planning",
     tasks: [
-      { id: "r1", title: "Definire domande di ricerca finali", completed: true },
-      { id: "r2", title: "Ottenere approvazione relatore", completed: true },
-      { id: "r3", title: "Configurare ambiente cloud (GPU)", completed: false, due_date: "2026-04-15" },
-      { id: "r4", title: "Acquisire dataset di training", completed: false, due_date: "2026-04-20" },
+      { id: "r1", title: "Define final research questions", completed: true },
+      { id: "r2", title: "Get supervisor approval", completed: true },
+      { id: "r3", title: "Set up cloud environment (GPU)", completed: false, due_date: "2026-04-15" },
+      { id: "r4", title: "Acquire training dataset", completed: false, due_date: "2026-04-20" },
     ],
   },
   {
-    key: "execution", title: "Esecuzione",
+    key: "execution", title: "Execution",
     tasks: [
-      { id: "r5", title: "Addestrare modello baseline", completed: false, due_date: "2026-05-01" },
-      { id: "r6", title: "Fine-tune su dati vulnerabilità", completed: false, due_date: "2026-05-15" },
-      { id: "r7", title: "Benchmark comparativo", completed: false, due_date: "2026-06-01" },
-      { id: "r8", title: "Analisi risultati + ablation study", completed: false, due_date: "2026-06-15" },
+      { id: "r5", title: "Train baseline model", completed: false, due_date: "2026-05-01" },
+      { id: "r6", title: "Fine-tune on vulnerability data", completed: false, due_date: "2026-05-15" },
+      { id: "r7", title: "Comparative benchmark", completed: false, due_date: "2026-06-01" },
+      { id: "r8", title: "Results analysis + ablation study", completed: false, due_date: "2026-06-15" },
     ],
   },
   {
-    key: "writing", title: "Scrittura",
+    key: "writing", title: "Writing",
     tasks: [
-      { id: "r9", title: "Capitoli 1-2 (Intro + Stato dell'arte)", completed: false, due_date: "2026-07-01" },
-      { id: "r10", title: "Capitolo 3 (Metodologia)", completed: false, due_date: "2026-07-15" },
-      { id: "r11", title: "Capitoli 4-5 (Risultati + Conclusioni)", completed: false, due_date: "2026-08-01" },
-      { id: "r12", title: "Revisione finale", completed: false, due_date: "2026-08-15" },
+      { id: "r9", title: "Chapters 1-2 (Intro + State of the art)", completed: false, due_date: "2026-07-01" },
+      { id: "r10", title: "Chapter 3 (Methodology)", completed: false, due_date: "2026-07-15" },
+      { id: "r11", title: "Chapters 4-5 (Results + Conclusions)", completed: false, due_date: "2026-08-01" },
+      { id: "r12", title: "Final review", completed: false, due_date: "2026-08-15" },
     ],
   },
 ];
