@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import socrateImg from "@/assets/socrate.png";
+import socrateCoinImg from "@/assets/socrate-coin.png";
 
 interface Props {
   thesisTopic: string;
@@ -77,7 +77,7 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
             className="text-center px-6 max-w-lg"
           >
             <div className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-6 ring-2 ring-accent/30">
-              <img src={socrateImg} alt="Socrate" className="w-full h-full object-cover" />
+              <img src={socrateCoinImg} alt="Socrate" className="w-full h-full object-cover" style={{ filter: "contrast(1.1) grayscale(100%)" }} />
             </div>
             <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-3">La tua tesi</p>
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-wide leading-tight">
