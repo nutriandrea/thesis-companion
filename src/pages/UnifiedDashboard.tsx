@@ -322,7 +322,7 @@ function TaskContent({ userId }: { userId: string }) {
                       ) : (
                         <>
                           <CheckCircle2 className="w-3 h-3" />
-                          Mark as done
+                          Segna come completato
                         </>
                       )}
                     </button>
