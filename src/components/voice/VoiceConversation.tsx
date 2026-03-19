@@ -17,6 +17,7 @@ interface ChatMsg {
 interface VoiceConversationProps {
   onTranscript: (text: string) => void;
   onClose: () => void;
+  onSwitchToText?: () => void;
   isStreaming: boolean;
   lastAssistantMessage: string;
   severity: number;
@@ -68,6 +69,7 @@ function ListeningPulse({ active }: { active: boolean }) {
 export default function VoiceConversation({
   onTranscript,
   onClose,
+  onSwitchToText,
   isStreaming,
   lastAssistantMessage,
   severity,
