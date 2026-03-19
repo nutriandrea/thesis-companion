@@ -459,7 +459,7 @@ function CareerTree({ sectors, userId, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-8">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analyzing directions...</span>
+      <span className="text-xs text-muted-foreground ml-2">Analisi direzioni...</span>
     </div>
   );
 
