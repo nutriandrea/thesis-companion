@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks, type SocrateTask } from "@/hooks/useSocrateTasks";
 import supervisorsData from "@/data/supervisors.json";

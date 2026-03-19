@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useSessionStats } from "@/hooks/useSessionStats";
 import { useToast } from "@/hooks/use-toast";
 
