@@ -66,6 +66,74 @@ function ListeningPulse({ active }: { active: boolean }) {
   );
 }
 
+// Progressive text reveal: shows a sliding window of ~4 lines worth of text
+// that advances based on speech progress (0-1)
+function ProgressiveText({ text, progress, isSpeaking }: { text: string; progress: number; isSpeaking: boolean }) {
+  // Strip markdown for word counting, but render with markdown
+  const plainWords = text.replace(/[*#`\[\]()]/g, "").split(/\s+/).filter(Boolean);
+  const totalWords = plainWords.length;
+  const VISIBLE_WORDS = 40; // ~4 lines worth
+
+  if (totalWords <= VISIBLE_WORDS || !isSpeaking) {
+    // Short text or not speaking: show full text (clamped)
+    return (
+      <div className="text-sm text-foreground/40 leading-relaxed line-clamp-4">
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+    );
+  }
+
+  // Calculate which word window to show based on progress
+  const currentWordIdx = Math.floor(progress * totalWords);
+  const startWord = Math.max(0, currentWordIdx - Math.floor(VISIBLE_WORDS * 0.3));
+  const endWord = Math.min(totalWords, startWord + VISIBLE_WORDS);
+
+  // Reconstruct visible text from the original markdown
+  // We split by whitespace preserving markdown tokens
+  const mdWords = text.split(/(\s+)/).filter(Boolean);
+  let wordCount = 0;
+  let startCharIdx = 0;
+  let endCharIdx = text.length;
+  let foundStart = false;
+
+  for (let i = 0; i < mdWords.length; i++) {
+    if (/\s+/.test(mdWords[i])) continue;
+    if (wordCount === startWord && !foundStart) {
+      startCharIdx = text.indexOf(mdWords[i], i > 0 ? text.indexOf(mdWords[i - 1] || "") : 0);
+      // find actual position
+      let pos = 0;
+      for (let j = 0; j < i; j++) pos += mdWords[j].length;
+      startCharIdx = pos;
+      foundStart = true;
+    }
+    wordCount++;
+    if (wordCount === endWord) {
+      let pos = 0;
+      for (let j = 0; j <= i; j++) pos += mdWords[j].length;
+      endCharIdx = pos;
+      break;
+    }
+  }
+
+  const visibleSlice = text.slice(startCharIdx, endCharIdx).trim();
+  const hasMore = endWord < totalWords;
+  const hasPrev = startWord > 0;
+
+  return (
+    <motion.div
+      key={startWord} // re-animate on chunk change
+      initial={{ opacity: 0.5, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="text-sm text-foreground/40 leading-relaxed"
+    >
+      {hasPrev && <span className="text-foreground/20">… </span>}
+      <ReactMarkdown>{visibleSlice}</ReactMarkdown>
+      {hasMore && <span className="text-foreground/20"> …</span>}
+    </motion.div>
+  );
+}
+
 export default function VoiceConversation({
   onTranscript,
   onClose,
