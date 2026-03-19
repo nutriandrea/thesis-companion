@@ -82,9 +82,13 @@ export default function SocrateIntro({ onComplete }: Props) {
               </motion.div>
             </motion.div>
 
-            <div className="flex flex-col items-center justify-center max-w-xl px-8 mt-32">
+            <motion.div
+              className="flex flex-col items-center justify-center max-w-xl px-8"
+              animate={{ y: phase === "mode-choice" ? -40 : 0 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            >
               {(phase === "text-appear" || phase === "mode-choice") && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: "easeOut" }} className="text-center mb-16">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: "easeOut" }} className="text-center mb-12">
                   {introText.split("\n\n").map((paragraph, i) => (
                     <motion.p key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.4, duration: 0.8 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] mb-5 last:mb-0">
                       {paragraph}
@@ -94,7 +98,7 @@ export default function SocrateIntro({ onComplete }: Props) {
               )}
 
               {phase === "mode-choice" && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="flex gap-14 mt-4">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} className="flex gap-14 mt-4">
                   <button onClick={() => handleModeChoice("voice")} className="group flex flex-col items-center gap-3 transition-all">
                     <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
                       <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
@@ -109,7 +113,7 @@ export default function SocrateIntro({ onComplete }: Props) {
                   </button>
                 </motion.div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
