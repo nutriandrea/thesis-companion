@@ -242,7 +242,7 @@ function TaskContent({ userId }: { userId: string }) {
         toast({ title: "Task completed", description: result.feedback || "Well done." });
       } else {
         setRejectedIds(prev => new Set(prev).add(taskId));
-        toast({ variant: "destructive", title: "Not yet", description: result.feedback || "Socrate is not convinced. Try again." });
+        toast({ variant: "destructive", title: "Not yet", description: result.feedback || "Socrate is not convinced. Try again.", duration: 10000 });
       }
     } catch {
       await updateTaskStatus(taskId, "completed");
