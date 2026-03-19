@@ -713,7 +713,7 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         if (data.sectors) setCareerSectors(data.sectors);
-        toast({ title: "📊 Orientamento aggiornato" });
+        toast({ title: "Orientamento aggiornato" });
       }
     } catch { toast({ variant: "destructive", title: "Errore" }); }
     finally { setCareerLoading(false); }
