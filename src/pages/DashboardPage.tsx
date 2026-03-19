@@ -64,6 +64,35 @@ export default function DashboardPage() {
     });
   }, [user]);
 
+  // Vulnerability scan
+  const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
+  const scanVulnerabilities = useCallback(async () => {
+    if (!user || isScanning) return;
+    setIsScanning(true);
+    try {
+      const msgs = await supabase.from("socrate_messages").select("role, content").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20);
+      const studentCtx = profile ? `Nome: ${profile.first_name}\nCorso: ${profile.degree}\nUniversità: ${profile.university}\nTopic: ${profile.thesis_topic}` : "";
+      const latexContent = localStorage.getItem("thesis-latex-content") || "";
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ messages: msgs.data || [], studentContext: studentCtx, latexContent, mode: "extract_vulnerabilities" }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        toast({ title: "🔥 Scansione completata", description: `${data.vulnerabilities?.length || 0} vulnerabilità rilevate.` });
+        const { data: fresh } = await supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(10);
+        if (fresh) setVulnerabilities(fresh as any);
+      }
+    } catch (e) { console.error(e); toast({ variant: "destructive", title: "Errore", description: "Scansione fallita." }); }
+    finally { setIsScanning(false); }
+  }, [user, isScanning, profile, toast]);
+
+  const resolveVulnerability = useCallback(async (id: string) => {
+    await supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() }).eq("id", id);
+    setVulnerabilities(prev => prev.filter(v => v.id !== id));
+  }, []);
+
   // Compute real progress from session data or fallback to roadmap
   const realCompletion = sessionData?.progress?.overallCompletion || overallProgress;
   const estimatedDays = sessionData?.progress?.estimatedDaysRemaining;
