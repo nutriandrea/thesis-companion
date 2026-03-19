@@ -30,6 +30,7 @@ const fields = fieldsData as Field[];
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; }
+interface Reference { title: string; authors: string; year?: string; url: string; category: string; relevance: string; }
 interface CareerSector { name: string; percentage: number; reasoning?: string; }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
