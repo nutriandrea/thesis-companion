@@ -268,7 +268,7 @@ function DemoOnboarding({ onNext }: { onNext: () => void }) {
         {selected && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <button onClick={onNext} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors">
-              Continua <ArrowRight className="w-4 h-4 inline ml-2" />
+              Continue <ArrowRight className="w-4 h-4 inline ml-2" />
             </button>
           </motion.div>
         )}
