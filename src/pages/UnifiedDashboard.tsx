@@ -45,11 +45,21 @@ const PHASES = [
   { key: "writing", label: "Scrittura", icon: "5" },
 ] as const;
 
-type PhaseKey = (typeof PHASES)[number]["key"];
+type SinglePhaseKey = (typeof PHASES)[number]["key"];
+type PhaseKey = SinglePhaseKey;
 
 const POST_PLANNING_PHASES: PhaseKey[] = ["planning", "execution", "writing"];
 
-const normalizePhase = (phase?: string | null): PhaseKey => {
+// Parse a phase string that might be hybrid (e.g. "orientation+topic_supervisor")
+interface ParsedPhase {
+  primary: SinglePhaseKey;
+  secondary: SinglePhaseKey | null;
+  isHybrid: boolean;
+}
+
+const SINGLE_PHASE_KEYS: SinglePhaseKey[] = ["orientation", "topic_supervisor", "planning", "execution", "writing"];
+
+const normalizeSinglePhase = (phase?: string | null): SinglePhaseKey => {
   switch (phase) {
     case "orientation":
     case "topic_supervisor":
@@ -57,7 +67,6 @@ const normalizePhase = (phase?: string | null): PhaseKey => {
     case "execution":
     case "writing":
       return phase;
-    // Legacy career-engine phases
     case "convergence":
     case "lost":
     case "vague_idea":
@@ -76,6 +85,32 @@ const normalizePhase = (phase?: string | null): PhaseKey => {
       return "orientation";
   }
 };
+
+const parsePhase = (phase?: string | null): ParsedPhase => {
+  if (!phase) return { primary: "orientation", secondary: null, isHybrid: false };
+
+  // Check for hybrid format: "phase1+phase2"
+  if (phase.includes("+")) {
+    const [a, b] = phase.split("+");
+    const primary = normalizeSinglePhase(a);
+    const secondary = normalizeSinglePhase(b);
+    if (primary !== secondary) {
+      // Ensure order: primary should come first in PHASES
+      const pi = SINGLE_PHASE_KEYS.indexOf(primary);
+      const si = SINGLE_PHASE_KEYS.indexOf(secondary);
+      if (pi < si) return { primary, secondary, isHybrid: true };
+      return { primary: secondary, secondary: primary, isHybrid: true };
+    }
+  }
+
+  return { primary: normalizeSinglePhase(phase), secondary: null, isHybrid: false };
+};
+
+// Helper: check if a phase key is active in a parsed phase
+const phaseActive = (parsed: ParsedPhase, key: SinglePhaseKey): boolean =>
+  parsed.primary === key || parsed.secondary === key;
+
+const normalizePhase = (phase?: string | null): PhaseKey => normalizeSinglePhase(phase);
 
 // SocrateIcon is now the shared SocrateCoin component
 
