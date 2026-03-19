@@ -363,6 +363,7 @@ function TaskContent({ userId }: { userId: string }) {
 function CareerBar({ sectors, onSectorClick, loading }: {
   sectors: CareerSector[]; onSectorClick: (sector: string) => void; loading: boolean;
 }) {
+  const t = useT();
   const colors = [
     "hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)",
     "hsl(var(--warning))", "hsl(270 60% 55%)", "hsl(200 70% 50%)",
@@ -421,6 +422,7 @@ function CareerBar({ sectors, onSectorClick, loading }: {
 function CareerTree({ sectors, userId, loading }: {
   sectors: CareerSector[]; userId: string; loading: boolean;
 }) {
+  const t = useT();
   const [expandedSector, setExpandedSector] = useState<string | null>(null);
   const [sectorCompanies, setSectorCompanies] = useState<Record<string, any[]>>({});
   const [loadingSector, setLoadingSector] = useState<string | null>(null);
@@ -593,6 +595,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
   userId: string; selectedId: string | null;
   onSelect: (id: string, name: string, motivation: string) => void;
 }) {
+  const t = useT();
   const { affinities } = useAffinityScores(userId, "supervisor");
   const [selecting, setSelecting] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
@@ -743,6 +746,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
 
 // ─── EXPERT SUGGESTIONS ───
 function ExpertSuggestions({ userId }: { userId: string }) {
+  const t = useT();
   const { affinities, loading } = useAffinityScores(userId, "expert");
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -838,6 +842,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
 function DynamicCompanies({ userId, sectors, activeSector }: {
   userId: string; sectors: CareerSector[]; activeSector: string | null;
 }) {
+  const t = useT();
   const { affinities } = useAffinityScores(userId, "company");
   const [aiCompanies, setAiCompanies] = useState<any[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -923,6 +928,7 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
 function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
   supervisorId: string | null; sectors: CareerSector[]; thesisTopic?: string | null;
 }) {
+  const t = useT();
   const sup = supervisorId ? supervisors.find(s => s.id === supervisorId) : null;
   const topSectors = sectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 3);
 
@@ -973,6 +979,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
 
 // ─── ROADMAP CARD (real data from DB) ───
 function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId: string }) {
+  const t = useT();
   const isEditable = currentPhase === "planning";
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1132,6 +1139,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
 
 
 function VulnerabilitiesContent({ vulnerabilities, onResolve, onCloseExpanded }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void; onCloseExpanded?: () => void }) {
+  const t = useT();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
@@ -1201,6 +1209,7 @@ interface SavedRef { id: string; title: string; authors: string; year?: string; 
 function ReferencesContent({ references, loading, onRefresh, userId }: {
   references: Reference[]; loading: boolean; onRefresh: () => void; userId?: string;
 }) {
+  const t = useT();
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [savedRefs, setSavedRefs] = useState<SavedRef[]>([]);
   const [savingUrl, setSavingUrl] = useState<string | null>(null);
@@ -1357,6 +1366,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
 
 // ─── THESIS DOCUMENT WIDGET ───
 function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updateProfile: any; user: any }) {
+  const t = useT();
   const { toast } = useToast();
   const [docUrl, setDocUrl] = useState(profile?.google_doc_url || "");
   const [syncing, setSyncing] = useState(false);
@@ -1477,6 +1487,7 @@ function ChatOverlay({
   messages: ChatMsg[]; input: string; setInput: (v: string) => void;
   sendMessage: (text: string) => void; isStreaming: boolean; onClose: () => void; onSwitchToVoice?: () => void;
 }) {
+  const t = useT();
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -1542,6 +1553,7 @@ function ChatOverlay({
 
 // ─── MAIN DASHBOARD ───
 export default function UnifiedDashboard() {
+  const t = useT();
   const { profile, user, updateProfile, signOut, inputMode, setInputMode } = useApp();
   const { toast } = useToast();
 
