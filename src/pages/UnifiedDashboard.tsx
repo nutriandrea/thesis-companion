@@ -1124,7 +1124,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
 }
 
 
-function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
+function VulnerabilitiesContent({ vulnerabilities, onResolve, onCloseExpanded }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void; onCloseExpanded?: () => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
