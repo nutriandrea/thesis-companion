@@ -158,9 +158,7 @@ function DemoCard({ title, icon: Icon, children, badge, action, className = "" }
   return (
     <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
-          <span className="text-[6px] font-bold text-background">S</span>
-        </div>
+        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
         {badge != null && badge > 0 && (
           <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
@@ -242,7 +240,7 @@ function DemoCareerTree() {
     <div className="space-y-1">
       <div className="flex items-center gap-2 pb-2">
         <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
-        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">La tua tesi</span>
+        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
         <div className="flex-1 h-px bg-border" />
       </div>
       {MOCK_SECTORS.map((sector, i) => {
@@ -535,12 +533,12 @@ export default function DemoPage() {
       </div>
 
       {/* Top: Identity */}
-      <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
+      <div className="flex flex-col items-center pt-5 pb-2 shrink-0 relative gap-3">
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
         </div>
 
-        <motion.div className="text-center space-y-1 px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-lg font-bold text-foreground font-display">{MOCK_THESIS}</h1>
             <Link2 className="w-4 h-4 text-muted-foreground" />
@@ -549,7 +547,7 @@ export default function DemoPage() {
 
         {/* Confirmed track for planning+ */}
         {(showPlanning || showExecution || showWriting) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 flex-wrap mt-1">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <GraduationCap className="w-3 h-3 text-accent" />
               <span className="text-[11px] text-muted-foreground">Prof. Marco Rossi</span>
@@ -562,11 +560,11 @@ export default function DemoPage() {
 
         <motion.button
           onClick={() => setShowChat(!showChat)}
-          className="mt-3 flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
+          className="flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Parla con Socrate
+          Talk to Socrate
         </motion.button>
       </div>
 
