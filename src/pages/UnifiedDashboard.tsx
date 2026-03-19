@@ -1520,6 +1520,24 @@ export default function UnifiedDashboard() {
     finally { setIsScanning(false); }
   }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
+  // Fetch references
+  const fetchReferences = useCallback(async () => {
+    if (!user || isLoadingRefs) return;
+    setIsLoadingRefs(true);
+    try {
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ messages: messages.slice(-20).map(m => ({ role: m.role, content: m.content })), studentContext, latexContent: thesisContent, mode: "suggest_references" }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setReferences(data.references || []);
+        toast({ title: "Riferimenti aggiornati", description: `${data.references?.length || 0} riferimenti suggeriti.` });
+      }
+    } catch { toast({ variant: "destructive", title: "Errore nel caricamento riferimenti" }); }
+    finally { setIsLoadingRefs(false); }
+  }, [user, isLoadingRefs, messages, studentContext, thesisContent, toast]);
+
   // Resolve vulnerability: open chat with pre-filled context, mark resolved
   const resolveVulnerability = useCallback((vulnId: string) => {
     const vuln = vulnerabilities.find(v => v.id === vulnId);
