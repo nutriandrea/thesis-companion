@@ -217,10 +217,13 @@ STATO ATTUALE:
 - Prossima fase possibile: ${nextPhase}
 - Topic tesi: ${profile?.thesis_topic || "Non definito"}
 - Supervisore scelto: ${hasSupervisor ? "Sì" : "No"}
-- Completamento: ${student?.overall_completion || 0}%
+- Completamento roadmap: ${roadmapCompletionPct}% (${completedRoadmap}/${totalRoadmap} task completati)
+- Dettaglio roadmap per fase: ${roadmapPerPhase || "Nessuna roadmap generata"}
 - Qualità tesi: ${student?.thesis_quality_score || 0}/10
-- Task completati: ${completedTasks}/${completedTasks + pendingTasks}
+- Task laterali completati: ${completedTasks}/${completedTasks + pendingTasks}
 - Vulnerabilità critiche: ${criticalVulns}
+
+IMPORTANTE: Il valore di "completion_estimate" che restituisci DEVE essere coerente con il completamento roadmap (${roadmapCompletionPct}%). Usa questo come base e aggiusta leggermente in base a task laterali e qualità. Nel tuo "socrate_comment", se rifiuti l'avanzamento, cita la percentuale di completamento roadmap (${roadmapCompletionPct}%) come dato principale.
 
 MEMORIE RECENTI: ${JSON.stringify(memories.slice(0, 10).map((m: any) => m.title))}
 AFFINITÀ: ${JSON.stringify(affinities.slice(0, 5).map((a: any) => ({ type: a.entity_type, name: a.entity_name, score: a.score })))}
