@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff, GraduationCap, MapPin, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
@@ -10,6 +10,9 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [university, setUniversity] = useState("");
+  const [degree, setDegree] = useState("");
+  const [expectedGraduation, setExpectedGraduation] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -27,6 +30,9 @@ export default function AuthPage() {
           await supabase.from("profiles").update({
             first_name: firstName,
             last_name: lastName,
+            university,
+            degree,
+            expected_graduation: expectedGraduation,
           }).eq("user_id", user.id);
         }
       } else {
@@ -54,7 +60,7 @@ export default function AuthPage() {
         className="w-full max-w-sm px-6"
       >
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <motion.h1
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -73,31 +79,66 @@ export default function AuthPage() {
           </motion.p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {isSignUp && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="grid grid-cols-2 gap-3"
+              className="space-y-3"
             >
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    placeholder="Nome"
+                    required
+                    className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+                  />
+                </div>
+                <div>
+                  <input
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    placeholder="Cognome"
+                    required
+                    className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+                  />
+                </div>
+              </div>
+
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
-                  value={firstName}
-                  onChange={e => setFirstName(e.target.value)}
-                  placeholder="Nome"
+                  value={university}
+                  onChange={e => setUniversity(e.target.value)}
+                  placeholder="Università"
                   required
                   className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
                 />
               </div>
-              <div>
-                <input
-                  value={lastName}
-                  onChange={e => setLastName(e.target.value)}
-                  placeholder="Cognome"
-                  required
-                  className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    value={degree}
+                    onChange={e => setDegree(e.target.value)}
+                    placeholder="Corso di laurea"
+                    required
+                    className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+                  />
+                </div>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    value={expectedGraduation}
+                    onChange={e => setExpectedGraduation(e.target.value)}
+                    placeholder="Laurea prevista (es. Giu 2026)"
+                    className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors"
+                  />
+                </div>
               </div>
             </motion.div>
           )}
@@ -137,14 +178,14 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-colors disabled:opacity-30 flex items-center justify-center gap-2 mt-6"
+            className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-colors disabled:opacity-30 flex items-center justify-center gap-2 mt-4"
           >
             {loading ? "..." : isSignUp ? "Registrati" : "Accedi"}
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <p className="text-center text-sm text-white/30 mt-8">
+        <p className="text-center text-sm text-white/30 mt-6">
           {isSignUp ? "Hai già un account?" : "Non hai un account?"}{" "}
           <button
             onClick={() => setIsSignUp(!isSignUp)}
