@@ -92,9 +92,9 @@ const MOCK_ROADMAP: RoadmapPhase[] = [
 ];
 
 const MOCK_SUPERVISORS: MockSupervisor[] = [
-  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Analisi Codice"], score: 92, reasoning: "Esperto NLP applicato all'ingegneria del software.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
-  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Ricerca attiva sul rilevamento vulnerabilità.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
-  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Ingegneria Software", "Testing"], score: 78, reasoning: "Focus su testing automatizzato e qualità del codice.", email: "luigi.verdi@uzh.ch", university: "UZH" },
+  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Analisi Codice"], score: 92, reasoning: "Il Prof. Rossi è uno dei principali ricercatori europei in NLP applicato all'ingegneria del software. Ha pubblicato oltre 40 paper sull'analisi automatica del codice e supervisionato 12 tesi magistrali su tematiche affini alla tua. La sua esperienza con modelli transformer per il code understanding lo rende il candidato ideale per guidarti nella parte sperimentale.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
+  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "La Prof.ssa Bianchi ha una ricerca attiva sul rilevamento automatico di vulnerabilità tramite tecniche di machine learning. Il suo laboratorio ha sviluppato strumenti open-source per l'analisi statica del codice che potresti integrare come baseline nel tuo lavoro. La sua competenza nel dominio della cybersecurity è complementare al tuo focus sugli LLM.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
+  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Ingegneria Software", "Testing"], score: 78, reasoning: "Considerando che sei nella fase di pianificazione, l'esperienza del Prof. Verdi in ingegneria del software e testing automatizzato potrebbe aiutarti a strutturare la pipeline sperimentale. Tuttavia, il suo focus è più orientato al testing funzionale che al rilevamento di vulnerabilità, il che potrebbe limitare il supporto nella parte più specifica della tesi.", email: "luigi.verdi@uzh.ch", university: "UZH" },
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
@@ -645,22 +645,66 @@ function DemoCareerTree() {
 }
 
 function DemoSupervisors() {
-  const [selected, setSelected] = useState("s1");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [motivation, setMotivation] = useState("");
+
   return (
     <div className="space-y-2">
-      {MOCK_SUPERVISORS.map(sup => (
-        <div key={sup.id} className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors cursor-pointer ${selected === sup.id ? "bg-accent/10 border border-accent/20" : "hover:bg-secondary/50"}`}
-          onClick={() => setSelected(sup.id)}>
-          <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-            {selected === sup.id ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <GraduationCap className="w-3.5 h-3.5 text-accent" />}
+      {MOCK_SUPERVISORS.map(sup => {
+        const isSelected = selected === sup.id;
+        return (
+          <div key={sup.id}>
+            <div
+              className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-colors cursor-pointer ${isSelected ? "bg-accent/10 border border-accent/20" : "hover:bg-secondary/50"}`}
+              onClick={() => setSelected(isSelected ? null : sup.id)}
+            >
+              <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                {isSelected ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <GraduationCap className="w-3.5 h-3.5 text-accent" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground">{sup.name}</p>
+                <p className="text-[10px] text-muted-foreground">{sup.fields.join(", ")}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Mail className="w-2.5 h-2.5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">{sup.email}</span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
+            </div>
+
+            <AnimatePresence>
+              {isSelected && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-3 pt-2 pb-3 space-y-3">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{sup.reasoning}</p>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-medium text-muted-foreground">Perché questo relatore?</label>
+                      <textarea
+                        value={motivation}
+                        onChange={e => setMotivation(e.target.value)}
+                        placeholder="Spiega la tua motivazione..."
+                        className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:border-accent/30 transition-colors"
+                        rows={2}
+                      />
+                    </div>
+
+                    <button className="px-4 py-2 bg-accent text-accent-foreground text-[10px] font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors">
+                      Conferma selezione
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{sup.university} · {sup.fields.join(", ")}</p>
-          </div>
-          <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
