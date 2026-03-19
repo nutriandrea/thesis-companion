@@ -1764,7 +1764,7 @@ export default function UnifiedDashboard() {
         if (data.can_advance) {
           toast({ title: "Phase advanced", description: data.socrate_comment?.substring(0, 100) || "You have moved to the next phase." });
         } else {
-          toast({ title: "Non ancora", description: data.socrate_comment?.substring(0, 100) || "There are blockers to resolve." });
+          toast({ title: "Not yet", description: data.socrate_comment?.substring(0, 100) || "There are blockers to resolve." });
         }
         // Refresh student profile
         const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
