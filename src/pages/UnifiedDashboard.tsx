@@ -1811,28 +1811,41 @@ export default function UnifiedDashboard() {
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2.5 px-6">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
           {PHASES.map((p, i) => {
-            const isCompleted = i < currentPhaseIndex;
-            const isCurrent = i === currentPhaseIndex;
+            const isCompleted = i < currentPhaseIndex && !parsedPhase.isHybrid;
+            const isPrimary = i === currentPhaseIndex;
+            const isSecondary = parsedPhase.isHybrid && i === secondaryPhaseIndex;
+            const isCurrent = isPrimary || isSecondary;
+            // For hybrid: connector between the two active phases should pulse
+            const isHybridConnector = parsedPhase.isHybrid && i >= Math.min(currentPhaseIndex, secondaryPhaseIndex) && i < Math.max(currentPhaseIndex, secondaryPhaseIndex);
+            const isBeforeActive = i < Math.min(currentPhaseIndex, parsedPhase.isHybrid ? secondaryPhaseIndex : currentPhaseIndex);
             return (
               <div key={p.key} className="flex flex-col items-center gap-1 flex-1 relative">
                 {/* Connector line */}
                 {i < PHASES.length - 1 && (
-                  <div className={`absolute top-3 left-[55%] right-[-45%] h-px ${
-                    i < currentPhaseIndex ? "bg-accent" : "bg-border"
-                  }`} />
+                  <div className={`absolute top-3 left-[55%] right-[-45%] h-px transition-all ${
+                    isHybridConnector ? "bg-accent/60" 
+                    : isBeforeActive ? "bg-accent" 
+                    : "bg-border"
+                  }`}>
+                    {isHybridConnector && (
+                      <motion.div className="absolute inset-0 bg-accent rounded-full" 
+                        animate={{ opacity: [0.3, 0.8, 0.3] }}
+                        transition={{ duration: 2, repeat: Infinity }} />
+                    )}
+                  </div>
                 )}
                 <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                  isCompleted ? "bg-accent text-accent-foreground"
+                  isBeforeActive ? "bg-accent text-accent-foreground"
                     : isCurrent ? "bg-accent/20 text-accent border border-accent/40"
                     : "bg-secondary text-muted-foreground"
                 }`}>
-                  {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
+                  {isBeforeActive ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
                 </div>
-                <span className={`text-[8px] font-medium ${isCurrent ? "text-accent" : isCompleted ? "text-foreground" : "text-muted-foreground"}`}>
+                <span className={`text-[8px] font-medium ${isCurrent ? "text-accent" : isBeforeActive ? "text-foreground" : "text-muted-foreground"}`}>
                   {p.label}
                 </span>
-                {/* Confidence on current */}
-                {isCurrent && phaseConfidence > 0 && (
+                {/* Confidence on primary */}
+                {isPrimary && phaseConfidence > 0 && (
                   <div className="flex items-center gap-0.5">
                     <div className="w-10 h-1 rounded-full bg-secondary overflow-hidden">
                       <motion.div className="h-full bg-accent rounded-full" initial={{ width: 0 }}
