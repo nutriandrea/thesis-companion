@@ -1803,6 +1803,8 @@ function DemoDashboard() {
   const showExecution = currentPhase === "execution";
   const showWriting = currentPhase === "writing";
 
+  const lastMessage = MOCK_SOCRATE_MESSAGES.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
+
   const handleResolveVuln = (vulnTitle: string) => {
     setShowChat(true);
     setChatMode("text");
@@ -1826,10 +1828,20 @@ function DemoDashboard() {
   delay += 0.05;
   cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
+  cards.push({ key: "references", delay, component: (
+    <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}
+      action={{ label: "Update", onClick: () => {}, loading: false }}>
+      <DemoReferences />
+    </DemoCard>
+  ) });
   delay += 0.05;
   if (showExecution || showWriting) {
-    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities onResolve={handleResolveVuln} /></DemoCard> });
+    cards.push({ key: "vulnerabilities", delay, component: (
+      <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}
+        action={{ label: "Scan", onClick: () => {}, loading: false }}>
+        <DemoVulnerabilities onResolve={handleResolveVuln} />
+      </DemoCard>
+    ) });
   }
 
   return (
@@ -1839,8 +1851,9 @@ function DemoDashboard() {
         <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Simulated data — Click phases to navigate</span>
       </div>
 
-      {/* Top: Identity */}
+      {/* ─── TOP: Identity ─── */}
       <div className="flex flex-col items-center pt-6 pb-6 shrink-0 relative gap-5">
+        {/* Top-left: user name + invite + logout */}
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
           {(showTopicSupervisor || showPlanning || showExecution || showWriting) && (
@@ -1855,15 +1868,20 @@ function DemoDashboard() {
           )}
         </div>
 
-        <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Center: Thesis title + doc link */}
+        <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-lg font-bold text-foreground font-display">{MOCK_THESIS}</h1>
-            <Link2 className="w-4 h-4 text-muted-foreground" />
+            <button className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" title="Connect thesis document">
+              <Link2 className="w-4 h-4" />
+            </button>
           </div>
         </motion.div>
 
+        {/* Confirmed track summary — inline under title in planning+ */}
         {(showPlanning || showExecution || showWriting) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 flex-wrap">
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="flex items-center justify-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <GraduationCap className="w-3 h-3 text-accent" />
               <span className="text-[11px] text-muted-foreground">Prof. Marco Rossi</span>
@@ -1885,6 +1903,14 @@ function DemoDashboard() {
           <MessageCircle className="w-4 h-4" />
           Talk to Socrates
         </motion.button>
+
+        {/* Last message preview */}
+        {lastMessage && !showChat && (
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="text-[11px] text-muted-foreground max-w-lg mx-auto px-6 mt-2 text-center line-clamp-2 italic">
+            "{lastMessage.slice(0, 120)}…"
+          </motion.p>
+        )}
       </div>
 
       {/* Cards grid */}
