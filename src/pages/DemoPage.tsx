@@ -696,7 +696,7 @@ function DemoSupervisors() {
                     </div>
 
                     <button className="px-4 py-2 bg-accent text-accent-foreground text-[10px] font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors">
-                      Conferma selezione
+                      Confirm selection
                     </button>
                   </div>
                 </motion.div>
