@@ -445,18 +445,16 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
 // STEP 4: DEMO SOCRATE CONVERSATION
 // ══════════════════════════════════════════════════════
 function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
-  const [visibleMsgs, setVisibleMsgs] = useState<typeof MOCK_SOCRATE_MESSAGES>([]);
-  const [msgIdx, setMsgIdx] = useState(0);
+  const welcomeMsg: ChatMsg = {
+    id: "welcome", role: "assistant",
+    content: "You have a clear direction: LLMs for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?",
+  };
+  const { messages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([welcomeMsg]);
 
-  useEffect(() => {
-    if (msgIdx >= MOCK_SOCRATE_MESSAGES.length) return;
-    const delay = msgIdx === 0 ? 800 : MOCK_SOCRATE_MESSAGES[msgIdx].role === "assistant" ? 2500 : 1500;
-    const timer = setTimeout(() => {
-      setVisibleMsgs(prev => [...prev, MOCK_SOCRATE_MESSAGES[msgIdx]]);
-      setMsgIdx(prev => prev + 1);
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [msgIdx]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -464,50 +462,58 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
       <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
         <SocrateCoin size={36} interactive={false} />
         <div className="flex-1">
-          <p className="text-sm font-bold text-foreground font-display">Socrate</p>
+          <p className="text-sm font-bold text-foreground font-display">Socrates</p>
           <p className="text-[10px] text-muted-foreground">Exploration phase — thesis definition</p>
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
-        <AnimatePresence>
-          {visibleMsgs.map(msg => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div className={`max-w-[75%] px-4 py-3 text-xs rounded-2xl ${
-                msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
-              }`}>
-                <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+        {messages.map(msg => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div className={`max-w-[75%] px-4 py-3 text-xs rounded-2xl ${
+              msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
+            }`}>
+              <div className="leading-relaxed prose prose-xs prose-foreground max-w-none">
+                <ReactMarkdown>{msg.content || "…"}</ReactMarkdown>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            </div>
+          </motion.div>
+        ))}
 
-        {msgIdx < MOCK_SOCRATE_MESSAGES.length && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+        {isStreaming && messages[messages.length - 1]?.content === "" && (
+          <div className="flex justify-start">
             <div className="flex gap-1.5 px-4 py-3">
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
-          </motion.div>
+          </div>
         )}
+        <div ref={bottomRef} />
       </div>
 
-      {/* Bottom bar with Skip button */}
-      <div className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
-        <input placeholder="Reply to Socrates..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
-        <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
-        <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
-      </div>
+      {/* Input bar */}
+      <form onSubmit={handleSubmit} className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Reply to Socrates..."
+          disabled={isStreaming}
+          className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent/30 transition-colors disabled:opacity-50"
+        />
+        <button type="submit" disabled={isStreaming || !input.trim()} className="p-2.5 bg-accent text-accent-foreground rounded-full disabled:opacity-50 hover:bg-accent/90 transition-colors">
+          {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </button>
+      </form>
 
-      {/* Skip to my progress button */}
+      {/* Skip button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
