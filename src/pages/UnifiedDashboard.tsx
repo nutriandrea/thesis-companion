@@ -1458,64 +1458,7 @@ export default function UnifiedDashboard() {
     finally { setPhaseEvalLoading(false); }
   }, [user, phaseEvalLoading, toast]);
 
-  // ─── AUTO-ADVANCE: when all roadmap tasks + critical side tasks are done ───
-  const autoAdvanceTriggered = useRef(false);
-  useEffect(() => {
-    if (currentPhase !== "planning" || !user?.id || phaseEvalLoading) return;
-
-    // Reset trigger flag when phase changes
-    autoAdvanceTriggered.current = false;
-  }, [currentPhase]);
-
-  useEffect(() => {
-    if (currentPhase !== "planning" || !user?.id || phaseEvalLoading || autoAdvanceTriggered.current) return;
-
-    const checkAutoAdvance = async () => {
-      // Check roadmap items
-      const { data: roadmapItems } = await supabase
-        .from("roadmap_items" as any)
-        .select("completed")
-        .eq("user_id", user.id);
-
-      if (!roadmapItems || roadmapItems.length === 0) return;
-      const allRoadmapDone = roadmapItems.every((item: any) => item.completed);
-      if (!allRoadmapDone) return;
-
-      // Check critical side tasks
-      const { data: criticalTasks } = await supabase
-        .from("socrate_tasks")
-        .select("id, status, priority")
-        .eq("user_id", user.id)
-        .eq("priority", "critical")
-        .eq("status", "pending");
-
-      if (criticalTasks && criticalTasks.length > 0) return;
-
-      // All conditions met — auto-trigger phase evaluation
-      autoAdvanceTriggered.current = true;
-      toast({ title: "🎉 Tutte le task completate!", description: "Valutazione automatica dell'avanzamento in corso..." });
-      evaluatePhase();
-    };
-
-    // Subscribe to changes on roadmap_items and socrate_tasks
-    const roadmapChannel = supabase
-      .channel(`auto-advance-roadmap-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "roadmap_items", filter: `user_id=eq.${user.id}` }, () => checkAutoAdvance())
-      .subscribe();
-
-    const tasksChannel = supabase
-      .channel(`auto-advance-tasks-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "socrate_tasks", filter: `user_id=eq.${user.id}` }, () => checkAutoAdvance())
-      .subscribe();
-
-    // Initial check
-    checkAutoAdvance();
-
-    return () => {
-      supabase.removeChannel(roadmapChannel);
-      supabase.removeChannel(tasksChannel);
-    };
-  }, [currentPhase, user?.id, phaseEvalLoading, evaluatePhase, toast]);
+  // (auto-advance logic moved after currentPhase declaration)
 
   // Select supervisor
   const handleSelectSupervisor = useCallback(async (supId: string, supName: string, motivation: string) => {
