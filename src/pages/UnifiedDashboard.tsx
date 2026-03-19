@@ -38,9 +38,35 @@ const PHASES = [
   { key: "planning", label: "Pianificazione", icon: "📋" },
   { key: "execution", label: "Esecuzione", icon: "🔧" },
   { key: "writing", label: "Scrittura", icon: "✍️" },
-];
+] as const;
 
-const POST_PLANNING_PHASES = ["planning", "execution", "writing"];
+type PhaseKey = (typeof PHASES)[number]["key"];
+
+const POST_PLANNING_PHASES: PhaseKey[] = ["planning", "execution", "writing"];
+
+const normalizePhase = (phase?: string | null): PhaseKey => {
+  switch (phase) {
+    case "orientation":
+    case "topic_supervisor":
+    case "planning":
+    case "execution":
+    case "writing":
+      return phase;
+    case "lost":
+    case "vague_idea":
+    case "exploration":
+      return "orientation";
+    case "topic_chosen":
+    case "finding_contacts":
+      return "topic_supervisor";
+    case "structuring":
+      return "planning";
+    case "revision":
+      return "writing";
+    default:
+      return "orientation";
+  }
+};
 
 // ─── GRADIENT ORB ───
 function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive?: boolean }) {
@@ -549,6 +575,42 @@ export default function UnifiedDashboard() {
 
   const studentContext = profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "";
 
+  const fetchStudentProfile = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("student_profiles" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (data) setStudentProfile(data);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    fetchStudentProfile();
+
+    const channel = supabase
+      .channel(`student-profile-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "student_profiles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchStudentProfile();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchStudentProfile]);
+
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
     const reader = resp.body!.getReader();
@@ -714,7 +776,9 @@ export default function UnifiedDashboard() {
   }, [user, toast]);
 
   // Progress
-  const currentPhase = studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state || "exploration";
+  const currentPhase = normalizePhase(
+    studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state
+  );
   const phaseConfidence = studentProfile?.phase_confidence || 0;
   const currentPhaseIndex = PHASES.findIndex(p => p.key === currentPhase);
   const selectedSupervisorId = studentProfile?.selected_supervisor_id || null;
