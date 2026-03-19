@@ -444,7 +444,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         {messages.map((msg) => (
           <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[75%] px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-card border border-border rounded-lg" : "bg-secondary border border-border rounded-lg"}`}>
+            <div className={`max-w-[75%] px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-card border border-border rounded-2xl" : "bg-secondary border border-border rounded-2xl"}`}>
               {msg.content === "" && (isStreaming || isGeneratingReport) ? (
                 <div className="flex gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
