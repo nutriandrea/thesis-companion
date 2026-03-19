@@ -507,6 +507,15 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         onConfirm={async (topic) => {
           setShowThesisDialog(false);
           await updateProfile({ thesis_topic: topic, journey_state: "topic_chosen" });
+
+          // Update student_profiles phase so the progress bar reflects the transition
+          if (user) {
+            await supabase
+              .from("student_profiles" as any)
+              .update({ current_phase: "topic_supervisor", overall_completion: Math.max(17, 0) } as any)
+              .eq("user_id", user.id);
+          }
+
           onThesisConfirmed?.();
         }}
       />
