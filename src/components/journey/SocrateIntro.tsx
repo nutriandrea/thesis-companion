@@ -27,7 +27,6 @@ export default function SocrateIntro({ onComplete }: Props) {
 
   const introText = t("intro.text", { name });
 
-  // Phase 1: Coin reveal with subtitles
   useEffect(() => {
     if (phase !== "coin-reveal") return;
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -63,10 +62,10 @@ export default function SocrateIntro({ onComplete }: Props) {
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 2, ease: "easeOut" }}>
               <SocrateCoin size={200} interactive={false} />
             </motion.div>
-            <div className="mt-10 h-16 flex items-center justify-center">
+            <div className="mt-12 h-20 flex items-center justify-center">
               <AnimatePresence mode="wait">
                 {currentSubtitle && (
-                  <motion.p key={currentSubtitle} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.6 }} className="font-display text-background text-xl md:text-2xl font-medium text-center px-6 italic">
+                  <motion.p key={currentSubtitle} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.6 }} className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight">
                     {currentSubtitle}
                   </motion.p>
                 )}
@@ -83,11 +82,11 @@ export default function SocrateIntro({ onComplete }: Props) {
               </motion.div>
             </motion.div>
 
-            <div className="flex flex-col items-center max-w-lg px-8">
+            <div className="flex flex-col items-center max-w-xl px-8">
               {(phase === "text-appear" || phase === "mode-choice") && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: "easeOut" }} className="text-center mb-12">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: "easeOut" }} className="text-center mb-14">
                   {introText.split("\n\n").map((paragraph, i) => (
-                    <motion.p key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.4, duration: 0.8 }} className="text-background/70 text-sm md:text-base leading-relaxed mb-4 last:mb-0">
+                    <motion.p key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.4, duration: 0.8 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] mb-5 last:mb-0">
                       {paragraph}
                     </motion.p>
                   ))}
@@ -95,18 +94,18 @@ export default function SocrateIntro({ onComplete }: Props) {
               )}
 
               {phase === "mode-choice" && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="flex gap-6">
-                  <button onClick={() => handleModeChoice("voice")} className="group border border-background/[0.08] hover:border-background/20 hover:bg-background/[0.04] transition-all px-12 py-8 flex flex-col items-center gap-4">
-                    <div className="w-14 h-14 rounded-full border border-background/15 flex items-center justify-center group-hover:border-background/30 transition-colors">
-                      <Mic className="w-5 h-5 text-background/60" />
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="flex gap-8">
+                  <button onClick={() => handleModeChoice("voice")} className="group border border-background/[0.06] hover:border-background/20 hover:bg-background/[0.03] transition-all px-14 py-10 flex flex-col items-center gap-5">
+                    <div className="w-16 h-16 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/25 transition-colors">
+                      <Mic className="w-5 h-5 text-background/50" />
                     </div>
-                    <span className="text-background/60 text-sm font-medium tracking-[0.1em] uppercase">Voice</span>
+                    <span className="font-display text-background/50 text-sm tracking-[0.15em] uppercase group-hover:text-background/70 transition-colors">Voice</span>
                   </button>
-                  <button onClick={() => handleModeChoice("text")} className="group border border-background/[0.08] hover:border-background/20 hover:bg-background/[0.04] transition-all px-12 py-8 flex flex-col items-center gap-4">
-                    <div className="w-14 h-14 rounded-full border border-background/15 flex items-center justify-center group-hover:border-background/30 transition-colors">
-                      <PenTool className="w-5 h-5 text-background/60" />
+                  <button onClick={() => handleModeChoice("text")} className="group border border-background/[0.06] hover:border-background/20 hover:bg-background/[0.03] transition-all px-14 py-10 flex flex-col items-center gap-5">
+                    <div className="w-16 h-16 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/25 transition-colors">
+                      <PenTool className="w-5 h-5 text-background/50" />
                     </div>
-                    <span className="text-background/60 text-sm font-medium tracking-[0.1em] uppercase">Text</span>
+                    <span className="font-display text-background/50 text-sm tracking-[0.15em] uppercase group-hover:text-background/70 transition-colors">Text</span>
                   </button>
                 </motion.div>
               )}
