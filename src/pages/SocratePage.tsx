@@ -1,14 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles, Zap } from "lucide-react";
+import { Send, CheckCircle, Mic, FileText, Brain, Loader2, Sparkles, Zap, Target } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import ThesisConfirmDialog from "@/components/journey/ThesisConfirmDialog";
 import companiesData from "@/data/companies.json";
 import supervisorsData from "@/data/supervisors.json";
 import topicsData from "@/data/topics.json";
 import type { Company, Supervisor, Topic } from "@/types/data";
+
+interface SocratePageProps {
+  explorationMode?: boolean;
+  onThesisConfirmed?: () => void;
+}
 
 interface ChatMsg {
   id: string;
@@ -43,9 +49,10 @@ function useLatexContent() {
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
 const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
 
-export default function SocratePage() {
+export default function SocratePage({ explorationMode = false, onThesisConfirmed }: SocratePageProps = {}) {
   const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
   const { toast } = useToast();
+  const [showThesisDialog, setShowThesisDialog] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -362,7 +369,7 @@ export default function SocratePage() {
 
   // TEXT MODE
   return (
-    <div className="flex flex-col h-[calc(100vh-3rem)]">
+    <div className={`flex flex-col ${explorationMode ? "h-screen max-w-3xl mx-auto px-6" : "h-[calc(100vh-3rem)]"}`}>
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
         <GradientOrb size="sm" />
@@ -438,8 +445,21 @@ export default function SocratePage() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Thesis confirmation button (exploration mode only) */}
+      {explorationMode && messages.length >= 6 && (
+        <div className="border-t border-border pt-3 pb-1 flex justify-center">
+          <button
+            onClick={() => setShowThesisDialog(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-accent/10 border border-accent/20 text-xs font-semibold text-accent hover:bg-accent/20 transition-colors"
+          >
+            <Target className="w-4 h-4" />
+            Ho scelto la mia tesi
+          </button>
+        </div>
+      )}
+
       {/* Input */}
-      <div className="border-t border-border pt-4 flex items-center gap-3">
+      <div className={`border-t border-border pt-4 flex items-center gap-3 ${explorationMode ? "max-w-3xl mx-auto w-full" : ""}`}>
         <div className="w-8 h-8 rounded bg-secondary border border-border flex items-center justify-center shrink-0">
           <span className="text-[10px] font-bold text-foreground">{profile?.first_name?.[0] || "U"}</span>
         </div>
@@ -454,6 +474,18 @@ export default function SocratePage() {
           </button>
         </div>
       </div>
+
+      {/* Thesis confirm dialog */}
+      <ThesisConfirmDialog
+        open={showThesisDialog}
+        onClose={() => setShowThesisDialog(false)}
+        initialTopic={profile?.thesis_topic || ""}
+        onConfirm={async (topic) => {
+          setShowThesisDialog(false);
+          await updateProfile({ thesis_topic: topic, journey_state: "topic_chosen" });
+          onThesisConfirmed?.();
+        }}
+      />
     </div>
   );
 }
