@@ -453,31 +453,6 @@ export default function VoiceConversation({
         )}
       </AnimatePresence>
 
-      {/* Text input - togglable at bottom */}
-      <AnimatePresence>
-        {showTextInput && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="px-6 py-4 border-t border-border flex items-center gap-2 shrink-0 relative z-10"
-          >
-            <input
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
-              placeholder="Type to Socrate..."
-              disabled={isStreaming}
-              autoFocus
-              className="flex-1 bg-secondary/30 border border-border rounded-full px-5 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 disabled:opacity-50"
-            />
-            <button onClick={handleTextSend} disabled={!textInput.trim() || isStreaming}
-              className="p-2.5 bg-foreground text-background rounded-full hover:bg-foreground/90 transition-colors disabled:opacity-30">
-              <Send className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
