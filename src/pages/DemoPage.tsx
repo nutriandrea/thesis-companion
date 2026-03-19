@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, Users, Building2, CheckCircle2, Circle, GraduationCap,
   MessageCircle, ChevronRight, ShieldAlert, BarChart3, BookOpen,
   ExternalLink, ArrowRight, TrendingUp, Link2, Loader2, Mic,
+  Mail, Lock, User, Eye, EyeOff, MapPin, Calendar,
+  Compass, Lightbulb, PenTool, Sparkles, SkipForward,
 } from "lucide-react";
 import SocrateCoin from "@/components/shared/SocrateCoin";
+
+// ─── DEMO STEPS ───
+type DemoStep = "login" | "onboarding" | "intro" | "socrate" | "dashboard";
 
 // ─── TYPES ───
 interface CareerSector { name: string; percentage: number; reasoning?: string; }
@@ -47,15 +52,11 @@ const MOCK_TASKS: Record<string, MockTask[]> = {
     { id: "t10", title: "Fine-tuning GPT-4 on CWE dataset", description: "Execute model fine-tuning on the CWE vulnerability dataset.", priority: "critical", status: "pending", estimated_minutes: 240 },
     { id: "t11", title: "Benchmark against SAST tools", description: "Compare model results with SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
     { id: "t12", title: "Qualitative analysis of false positives", description: "Classify and analyze the most common false positive patterns.", priority: "medium", status: "pending", estimated_minutes: 120 },
-    { id: "t10b", title: "Read paper: VulDeePecker (Li et al.)", description: "Read the VulDeePecker paper in detail to compare your detection approach with the deep learning baseline.", priority: "high", status: "completed", estimated_minutes: 90 },
-    { id: "t10c", title: "Read thesis: 'LLM-based SAST' (ETH 2025)", description: "Analyze K. Meier's master thesis (ETH Zurich) comparing LLM vs traditional SAST for code review.", priority: "medium", status: "pending", estimated_minutes: 120 },
   ],
   writing: [
     { id: "t13", title: "Write Methodology chapter", description: "Describe in detail the experimental pipeline, models used, and training parameters.", priority: "critical", status: "pending", estimated_minutes: 300 },
     { id: "t14", title: "Create result charts", description: "Generate confusion matrix, ROC curves, and comparative tables.", priority: "high", status: "pending", estimated_minutes: 120 },
     { id: "t15", title: "Final review with supervisor", description: "Send the complete draft to the supervisor for final review.", priority: "critical", status: "pending", estimated_minutes: 60 },
-    { id: "t15b", title: "Read paper: Limits of LLMs in Security", description: "Re-read the critical paper by Pearce et al. to strengthen the Discussion section and anticipate objections.", priority: "high", status: "pending", estimated_minutes: 60 },
-    { id: "t15c", title: "Read thesis: 'Automated Vuln Detection' (EPFL 2024)", description: "Consult S. Dupont's doctoral thesis (EPFL) to deepen related work on automated vulnerability detection.", priority: "medium", status: "pending", estimated_minutes: 90 },
   ],
 };
 
@@ -90,38 +91,34 @@ const MOCK_ROADMAP: RoadmapPhase[] = [
 ];
 
 const MOCK_SUPERVISORS: MockSupervisor[] = [
-  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "NLP expert applied to software engineering with 15 publications on the topic.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
-  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Active research on vulnerability detection with ML approaches.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
+  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "NLP expert applied to software engineering.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
+  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Active research on vulnerability detection.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
   { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Focus on automated testing and code quality.", email: "luigi.verdi@uzh.ch", university: "UZH" },
-  { id: "s4", name: "Prof.ssa Anna Neri", fields: ["AI Safety", "LLM"], score: 74, reasoning: "Works on alignment and safety of large language models.", email: "anna.neri@unisg.ch", university: "HSG" },
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
-  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Fuzzing and vulnerability research expert, could provide practical insights.", offerInterviews: true, email: "p.ferretti@google.com" },
-  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Published on LLM for code generation, knows the limitations.", offerInterviews: true, email: "m.conti@deepmind.com" },
-  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Industry experience in applying AI to cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
-  { id: "e4", name: "Prof. James Chen", title: "Stanford University", score: 71, reasoning: "Author of the VulnBench framework, reference in vulnerability detection.", offerInterviews: false, email: "jchen@stanford.edu" },
+  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Fuzzing and vulnerability research expert.", offerInterviews: true, email: "p.ferretti@google.com" },
+  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Published on LLM for code generation.", offerInterviews: true, email: "m.conti@deepmind.com" },
+  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Industry experience in AI for cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
 ];
 
 const MOCK_REFERENCES: MockReference[] = [
-  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "https://arxiv.org/abs/2401.00001", category: "foundational", relevance: "Fundamental survey covering the state of the art of LLMs applied to code." },
-  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "https://arxiv.org/abs/1801.01681", category: "methodology", relevance: "First paper to use deep learning for vulnerability detection, baseline approach." },
-  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "https://scholar.google.com/scholar?q=automated+vulnerability+detection+ML", category: "recent", relevance: "Systematic review of ML techniques for vulnerability detection." },
-  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "https://arxiv.org/abs/2502.00001", category: "contrarian", relevance: "Critical analysis of current LLM limitations in security analysis." },
-  { title: "CodeBERT: A Pre-Trained Model for Programming Languages", authors: "Feng et al.", year: "2020", url: "https://arxiv.org/abs/2002.08155", category: "foundational", relevance: "Pre-trained model for code that paved the way for transformers in SE." },
+  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "#", category: "foundational", relevance: "Fundamental survey on LLMs for code." },
+  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "#", category: "methodology", relevance: "First paper to use deep learning for vulnerability detection." },
+  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "#", category: "recent", relevance: "Systematic review of ML for vulnerability detection." },
+  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "#", category: "contrarian", relevance: "Critical analysis of LLM limitations in security." },
 ];
 
 const MOCK_VULNERABILITIES: MockVulnerability[] = [
-  { id: "v1", type: "methodology_flaw", title: "Dataset too small for generalization", description: "With only 5000 training samples, the model risks overfitting and not generalizing to unseen vulnerabilities. At least 20k diverse samples are needed.", severity: "critical" },
-  { id: "v2", type: "logic_gap", title: "Lack of non-ML baseline", description: "You are not comparing with standard rule-based (SAST) approaches. Without this comparison, you cannot demonstrate the added value of ML.", severity: "high" },
-  { id: "v3", type: "superficiality", title: "Related work too generic", description: "The related work section lists papers without critical analysis. You need to explain what each approach lacks and how yours improves it.", severity: "medium" },
-  { id: "v4", type: "originality_deficit", title: "Standard fine-tuning without innovation", description: "You are doing vanilla fine-tuning of GPT-4. What is your original contribution compared to those who have already done the same?", severity: "high" },
+  { id: "v1", type: "methodology_flaw", title: "Dataset too small for generalization", description: "With only 5000 training samples, the model risks overfitting.", severity: "critical" },
+  { id: "v2", type: "logic_gap", title: "Lack of non-ML baseline", description: "Not comparing with standard SAST approaches.", severity: "high" },
+  { id: "v3", type: "superficiality", title: "Related work too generic", description: "Related work lists papers without critical analysis.", severity: "medium" },
 ];
 
-const MOCK_MESSAGES = [
+const MOCK_SOCRATE_MESSAGES = [
   { id: "m1", role: "assistant" as const, content: "You have a clear direction: LLM for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?" },
   { id: "m2", role: "user" as const, content: "I want to combine traditional static analysis with LLM, creating a hybrid system." },
-  { id: "m3", role: "assistant" as const, content: "Interesting. A hybrid SAST + LLM approach has potential, but you need to be precise: **which component handles what?** The risk is that you end up with a system where the LLM is just a glorified wrapper around static rules. Define the boundary clearly." },
+  { id: "m3", role: "assistant" as const, content: "Interesting. A hybrid SAST + LLM approach has potential, but you need to be precise: **which component handles what?** The risk is that the LLM is just a glorified wrapper around static rules. Define the boundary clearly." },
   { id: "m4", role: "user" as const, content: "SAST would do the initial screening, then the LLM would analyze the results to reduce false positives." },
   { id: "m5", role: "assistant" as const, content: "This is a **concrete contribution**: reducing false positives via LLM post-processing. It's measurable, useful, and publishable. Now the critical question: **do you have access to a dataset with false positive annotations?** Without that, you can't train the model to distinguish them." },
 ];
@@ -135,25 +132,322 @@ const PHASES = [
 ] as const;
 
 const PHASE_COMPLETION: Record<string, number> = {
-  orientation: 100,
-  topic_supervisor: 75,
-  planning: 45,
-  execution: 15,
-  writing: 0,
+  orientation: 100, topic_supervisor: 75, planning: 45, execution: 15, writing: 0,
 };
 
 const PHASE_CONFIDENCE: Record<string, number> = {
-  orientation: 100,
-  topic_supervisor: 82,
-  planning: 60,
-  execution: 25,
-  writing: 0,
+  orientation: 100, topic_supervisor: 82, planning: 60, execution: 25, writing: 0,
 };
 
+// ══════════════════════════════════════════════════════
+// STEP 1: DEMO LOGIN PAGE
+// ══════════════════════════════════════════════════════
+function DemoLogin({ onNext }: { onNext: () => void }) {
+  const [isSignUp, setIsSignUp] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onNext();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/[0.02] blur-[100px]" />
+      </div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-sm px-6">
+        <div className="text-center mb-8">
+          <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-white text-2xl font-bold tracking-[0.15em] uppercase">
+            THESIS ALLY
+          </motion.h1>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-white/40 text-sm mt-3">
+            {isSignUp ? "Create your account to begin" : "Welcome back"}
+          </motion.p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {isSignUp && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input defaultValue="Marco" placeholder="First name" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                </div>
+                <input defaultValue="Demo" placeholder="Last name" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+              </div>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input defaultValue="ETH Zurich" placeholder="University" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input defaultValue="MSc Computer Science" placeholder="Degree" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                </div>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input defaultValue="Sep 2026" placeholder="Expected grad." className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                </div>
+              </div>
+            </motion.div>
+          )}
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <input type="email" defaultValue="marco.demo@ethz.ch" placeholder="Email" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <input type={showPassword ? "text" : "password"} defaultValue="demo1234" placeholder="Password" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 pr-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/50">
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <button type="submit" className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-colors flex items-center justify-center gap-2 mt-4">
+            {isSignUp ? "Sign Up" : "Login"} <ArrowRight className="w-4 h-4" />
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-white/30 mt-6">
+          {isSignUp ? "Already have an account?" : "No account?"}{" "}
+          <button onClick={() => setIsSignUp(!isSignUp)} className="text-white/60 hover:text-white transition-colors underline underline-offset-4">
+            {isSignUp ? "Login" : "Sign Up"}
+          </button>
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// STEP 2: DEMO ONBOARDING
+// ══════════════════════════════════════════════════════
+const JOURNEY_OPTIONS = [
+  { key: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet." },
+  { key: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine it." },
+  { key: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write about." },
+  { key: "writing", icon: PenTool, title: "I'm already writing", desc: "I need support for writing and revision." },
+];
+
+function DemoOnboarding({ onNext }: { onNext: () => void }) {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl text-center space-y-8">
+        <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
+          <Sparkles className="w-8 h-8 text-accent" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground font-display">Welcome, Marco</h1>
+          <p className="text-muted-foreground mt-2">Where are you in your thesis journey?</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+          {JOURNEY_OPTIONS.map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => setSelected(opt.key)}
+              className={`flex items-start gap-3 p-4 rounded-lg border text-left transition-all ${
+                selected === opt.key
+                  ? "border-accent bg-accent/5"
+                  : "border-border hover:border-foreground/20 hover:bg-secondary/30"
+              }`}
+            >
+              <opt.icon className={`w-5 h-5 mt-0.5 shrink-0 ${selected === opt.key ? "text-accent" : "text-muted-foreground"}`} />
+              <div>
+                <p className="text-sm font-semibold text-foreground">{opt.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={onNext}
+          disabled={!selected}
+          className="inline-flex items-center gap-2 px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-none hover:bg-foreground/90 transition-colors disabled:opacity-30"
+        >
+          Continue <ArrowRight className="w-4 h-4" />
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// STEP 3: DEMO SOCRATE INTRO (abbreviated)
+// ══════════════════════════════════════════════════════
+function DemoIntro({ onNext }: { onNext: () => void }) {
+  const [phase, setPhase] = useState<"coin" | "text" | "choice">("coin");
+  const [subtitle, setSubtitle] = useState("");
+
+  const subtitles = [
+    { text: "\"The only true wisdom is in knowing you know nothing.\"", delay: 0 },
+    { text: "\"An unexamined thesis is not worth writing.\"", delay: 2800 },
+    { text: "I am Socrate.", delay: 5600 },
+  ];
+
+  useEffect(() => {
+    if (phase !== "coin") return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    subtitles.forEach(s => timers.push(setTimeout(() => setSubtitle(s.text), s.delay)));
+    timers.push(setTimeout(() => setPhase("text"), 7500));
+    return () => timers.forEach(clearTimeout);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "text") return;
+    const t = setTimeout(() => setPhase("choice"), 2000);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-foreground overflow-hidden flex items-center justify-center">
+      <AnimatePresence mode="wait">
+        {phase === "coin" && (
+          <motion.div key="coin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 2, ease: "easeOut" }}>
+              <SocrateCoin size={280} interactive={false} />
+            </motion.div>
+            <div className="mt-12 h-20 flex items-center justify-center">
+              <AnimatePresence mode="wait">
+                {subtitle && (
+                  <motion.p key={subtitle} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight">
+                    {subtitle}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+
+        {(phase === "text" || phase === "choice") && (
+          <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center max-w-xl px-8">
+            <motion.div initial={{ scale: 1 }} animate={{ scale: 0.35 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} className="mb-8">
+              <SocrateCoin size={200} interactive={false} />
+            </motion.div>
+
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] text-center mb-10">
+              Marco, I'm here to challenge your ideas, find weaknesses, and push you toward a thesis worth defending. Choose how you'd like to interact.
+            </motion.p>
+
+            {phase === "choice" && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex gap-14">
+                <button onClick={onNext} className="group flex flex-col items-center gap-3">
+                  <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
+                    <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
+                  </div>
+                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voice</span>
+                </button>
+                <button onClick={onNext} className="group flex flex-col items-center gap-3">
+                  <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
+                    <PenTool className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
+                  </div>
+                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Text</span>
+                </button>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// STEP 4: DEMO SOCRATE CONVERSATION
+// ══════════════════════════════════════════════════════
+function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
+  const [visibleMsgs, setVisibleMsgs] = useState<typeof MOCK_SOCRATE_MESSAGES>([]);
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  useEffect(() => {
+    if (msgIdx >= MOCK_SOCRATE_MESSAGES.length) return;
+    const delay = msgIdx === 0 ? 800 : MOCK_SOCRATE_MESSAGES[msgIdx].role === "assistant" ? 2000 : 1200;
+    const timer = setTimeout(() => {
+      setVisibleMsgs(prev => [...prev, MOCK_SOCRATE_MESSAGES[msgIdx]]);
+      setMsgIdx(prev => prev + 1);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [msgIdx]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
+        <SocrateCoin size={36} interactive={false} />
+        <div className="flex-1">
+          <p className="text-sm font-bold text-foreground font-display">Socrate</p>
+          <p className="text-[10px] text-muted-foreground">Exploration phase — defining your thesis</p>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
+        <AnimatePresence>
+          {visibleMsgs.map(msg => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div className={`max-w-[75%] px-4 py-3 text-xs rounded-2xl ${
+                msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
+              }`}>
+                <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {msgIdx < MOCK_SOCRATE_MESSAGES.length && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+            <div className="flex items-center gap-1.5 px-4 py-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Bottom bar with Skip button */}
+      <div className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
+        <input placeholder="Reply to Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
+        <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
+        <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
+      </div>
+
+      {/* Skip to my progress button */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.5 }}
+        className="fixed bottom-20 right-6 z-[60]"
+      >
+        <button
+          onClick={onSkip}
+          className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-foreground/90 transition-all shadow-lg"
+        >
+          <SkipForward className="w-3.5 h-3.5" />
+          Skip to my progress
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// STEP 5: DASHBOARD (existing demo dashboard)
+// ══════════════════════════════════════════════════════
+
 // ─── CARD COMPONENT ───
-function DemoCard({ title, icon: Icon, children, badge, action, className = "" }: {
-  title: string; icon: React.ElementType; children: React.ReactNode;
-  badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
+function DemoCard({ title, icon: Icon, children, badge, className = "" }: {
+  title: string; icon: React.ElementType; children: React.ReactNode; badge?: number | null; className?: string;
 }) {
   return (
     <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
@@ -163,19 +457,11 @@ function DemoCard({ title, icon: Icon, children, badge, action, className = "" }
         {badge != null && badge > 0 && (
           <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
         )}
-        {action && (
-          <button onClick={action.onClick} disabled={action.loading}
-            className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
-            {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
-          </button>
-        )}
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3">{children}</div>
     </div>
   );
 }
-
-// ─── DEMO COMPONENTS ───
 
 function DemoTasks({ phase }: { phase: string }) {
   const tasks = MOCK_TASKS[phase] || MOCK_TASKS.orientation;
@@ -301,8 +587,6 @@ function DemoSupervisors() {
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
             <p className="text-[10px] text-muted-foreground truncate">{sup.university} · {sup.fields.join(", ")}</p>
-            <a href={`mailto:${sup.email}`} className="text-[10px] text-accent hover:underline block">{sup.email}</a>
-            <p className="text-[10px] text-foreground/60 line-clamp-1 mt-0.5">{sup.reasoning}</p>
           </div>
           <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
         </div>
@@ -322,10 +606,9 @@ function DemoExperts() {
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-foreground truncate">{exp.name}</p>
             <p className="text-[10px] text-muted-foreground truncate">{exp.title}</p>
-            <a href={`mailto:${exp.email}`} className="text-[10px] text-accent hover:underline block">{exp.email}</a>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            {exp.offerInterviews && <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Intervista</span>}
+            {exp.offerInterviews && <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Interview</span>}
             <span className="text-[10px] font-bold text-accent">{exp.score}%</span>
           </div>
         </div>
@@ -335,7 +618,6 @@ function DemoExperts() {
 }
 
 function DemoReferences() {
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const categoryLabel: Record<string, { text: string; cls: string }> = {
     foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
     methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
@@ -348,27 +630,13 @@ function DemoReferences() {
       {MOCK_REFERENCES.map((ref, i) => {
         const cat = categoryLabel[ref.category] || categoryLabel.foundational;
         return (
-          <div key={i} className="rounded-lg hover:bg-secondary/30 transition-colors">
-            <button onClick={() => setExpandedIdx(expandedIdx === i ? null : i)} className="w-full flex items-start gap-2.5 p-2.5 text-left">
-              <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{ref.authors} ({ref.year})</p>
-              </div>
-              <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>{cat.text}</span>
-            </button>
-            <AnimatePresence>
-              {expandedIdx === i && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="px-2.5 pb-2.5 pt-0 space-y-2 pl-8">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ref.relevance}</p>
-                    <a href={ref.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium">
-                      <ExternalLink className="w-3 h-3" /> Apri riferimento
-                    </a>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
+            <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{ref.authors} ({ref.year})</p>
+            </div>
+            <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>{cat.text}</span>
           </div>
         );
       })}
@@ -377,9 +645,10 @@ function DemoReferences() {
 }
 
 function DemoVulnerabilities() {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2 };
-  const ranked = [...MOCK_VULNERABILITIES].sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
+  const ranked = [...MOCK_VULNERABILITIES].sort((a, b) => {
+    const order: Record<string, number> = { critical: 0, high: 1, medium: 2 };
+    return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
+  });
 
   return (
     <div className="space-y-1.5">
@@ -387,24 +656,15 @@ function DemoVulnerabilities() {
         const severityColor = v.severity === "critical" ? "text-destructive" : v.severity === "high" ? "text-warning" : "text-muted-foreground";
         const severityBg = v.severity === "critical" ? "bg-destructive/[0.06]" : v.severity === "high" ? "bg-warning/[0.06]" : "bg-muted/30";
         return (
-          <div key={v.id} className={`rounded-lg transition-colors ${severityBg}`}>
-            <button onClick={() => setExpandedId(expandedId === v.id ? null : v.id)} className="w-full flex items-start gap-2.5 p-2.5 text-left">
+          <div key={v.id} className={`rounded-lg p-2.5 ${severityBg}`}>
+            <div className="flex items-start gap-2.5">
               <span className={`text-[10px] font-bold mt-0.5 shrink-0 w-4 text-center ${severityColor}`}>{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-foreground leading-tight">{v.title}</p>
-                {expandedId !== v.id && <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1 mt-0.5">{v.description}</p>}
+                <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">{v.description}</p>
               </div>
               <ShieldAlert className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${severityColor}`} />
-            </button>
-            <AnimatePresence>
-              {expandedId === v.id && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="px-2.5 pb-2.5 pt-0 pl-6">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{v.description}</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            </div>
           </div>
         );
       })}
@@ -458,7 +718,7 @@ function DemoRoadmap() {
 function DemoChat() {
   return (
     <div className="space-y-3">
-      {MOCK_MESSAGES.map(msg => (
+      {MOCK_SOCRATE_MESSAGES.map(msg => (
         <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
           <div className={`max-w-[80%] px-4 py-3 text-xs rounded-2xl ${msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"}`}>
             <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
@@ -469,15 +729,15 @@ function DemoChat() {
   );
 }
 
-// ─── MAIN DEMO PAGE ───
-export default function DemoPage() {
-  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(2); // Start at planning
+// ══════════════════════════════════════════════════════
+// DASHBOARD VIEW
+// ══════════════════════════════════════════════════════
+function DemoDashboard() {
+  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(2);
   const [showChat, setShowChat] = useState(false);
   const currentPhase = PHASES[currentPhaseIdx].key;
-  const completion = PHASE_COMPLETION[currentPhase] || 0;
   const confidence = PHASE_CONFIDENCE[currentPhase] || 0;
 
-  const showOrientation = currentPhase === "orientation";
   const showTopicSupervisor = currentPhase === "topic_supervisor";
   const showPlanning = currentPhase === "planning";
   const showExecution = currentPhase === "execution";
@@ -486,43 +746,24 @@ export default function DemoPage() {
   const cards: { key: string; component: React.ReactNode; colSpan?: string; delay: number }[] = [];
   let delay = 0.1;
 
-  // Roadmap: planning+
   if (showPlanning || showExecution || showWriting) {
-    cards.push({
-      key: "roadmap", colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined, delay,
-      component: <DemoCard title={showPlanning ? "Roadmap (under construction)" : "Roadmap"} icon={BarChart3}><DemoRoadmap /></DemoCard>,
-    });
+    cards.push({ key: "roadmap", colSpan: "md:col-span-2 lg:col-span-2", delay, component: <DemoCard title="Roadmap" icon={BarChart3}><DemoRoadmap /></DemoCard> });
     delay += 0.05;
   }
-
-  // Supervisors: topic_supervisor
   if (showTopicSupervisor) {
     cards.push({ key: "supervisors", delay, component: <DemoCard title="Suggested Supervisors" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
     delay += 0.05;
-  }
-
-  // Career Tree: topic_supervisor
-  if (showTopicSupervisor) {
-    cards.push({ key: "career-tree", colSpan: !showPlanning ? "md:col-span-2" : undefined, delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
+    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
-
-  // Tasks: always
   cards.push({ key: "tasks", delay, component: <DemoCard title="Task" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
   delay += 0.05;
-
-  // Experts: always
-  cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}><DemoExperts /></DemoCard> });
+  cards.push({ key: "rubrica", delay, component: <DemoCard title="Contacts" icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
-
-  // References: all phases
   cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
   delay += 0.05;
-
-  // Vulnerabilities: execution+
   if (showExecution || showWriting) {
     cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
-    delay += 0.05;
   }
 
   return (
@@ -533,7 +774,7 @@ export default function DemoPage() {
       </div>
 
       {/* Top: Identity */}
-      <div className="flex flex-col items-center pt-5 pb-2 shrink-0 relative gap-3">
+      <div className="flex flex-col items-center pt-6 pb-6 shrink-0 relative gap-5">
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
         </div>
@@ -545,7 +786,6 @@ export default function DemoPage() {
           </div>
         </motion.div>
 
-        {/* Confirmed track for planning+ */}
         {(showPlanning || showExecution || showWriting) && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-1.5">
@@ -647,5 +887,42 @@ export default function DemoPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// MAIN DEMO ORCHESTRATOR
+// ══════════════════════════════════════════════════════
+export default function DemoPage() {
+  const [step, setStep] = useState<DemoStep>("login");
+
+  return (
+    <AnimatePresence mode="wait">
+      {step === "login" && (
+        <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+          <DemoLogin onNext={() => setStep("onboarding")} />
+        </motion.div>
+      )}
+      {step === "onboarding" && (
+        <motion.div key="onboarding" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+          <DemoOnboarding onNext={() => setStep("intro")} />
+        </motion.div>
+      )}
+      {step === "intro" && (
+        <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+          <DemoIntro onNext={() => setStep("socrate")} />
+        </motion.div>
+      )}
+      {step === "socrate" && (
+        <motion.div key="socrate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+          <DemoSocrateChat onSkip={() => setStep("dashboard")} />
+        </motion.div>
+      )}
+      {step === "dashboard" && (
+        <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+          <DemoDashboard />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
