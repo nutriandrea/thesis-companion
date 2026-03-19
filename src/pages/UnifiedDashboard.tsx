@@ -1520,12 +1520,13 @@ export default function UnifiedDashboard() {
     } catch { toast({ variant: "destructive", title: "Errore" }); }
   }, [user, toast]);
 
-  // Progress
-  const currentPhase = normalizePhase(
-    studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state
-  );
+  // Progress — support hybrid phases
+  const rawPhase = studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state;
+  const parsedPhase = parsePhase(rawPhase);
+  const currentPhase = parsedPhase.primary;
   const phaseConfidence = studentProfile?.phase_confidence || 0;
-  const currentPhaseIndex = PHASES.findIndex(p => p.key === currentPhase);
+  const currentPhaseIndex = PHASES.findIndex(p => p.key === parsedPhase.primary);
+  const secondaryPhaseIndex = parsedPhase.secondary ? PHASES.findIndex(p => p.key === parsedPhase.secondary) : -1;
   const selectedSupervisorId = studentProfile?.selected_supervisor_id || null;
   const name = profile?.first_name || "Studente";
   const lastMessage = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
