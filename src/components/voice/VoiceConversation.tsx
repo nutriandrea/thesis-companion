@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MicOff, Mic, Volume2, VolumeX, Send, Loader2, FileText, X, Keyboard } from "lucide-react";
+import { MicOff, Mic, Volume2, VolumeX, Loader2, FileText, X, Keyboard } from "lucide-react";
 import { useScribe } from "@elevenlabs/react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,8 +79,7 @@ export default function VoiceConversation({
   const [liveTranscript, setLiveTranscript] = useState("");
   const [muted, setMuted] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [textInput, setTextInput] = useState("");
-  const [showTextInput, setShowTextInput] = useState(false);
+  
   const [error, setError] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -236,13 +235,6 @@ export default function VoiceConversation({
     if (!mutedRef.current) setTimeout(() => startListening(), 100);
   }, [stopAudio, startListening]);
 
-  const handleTextSend = () => {
-    if (!textInput.trim()) return;
-    stopAudio(); scribe.disconnect();
-    onTranscript(textInput.trim());
-    setTextInput("");
-    setVoiceState("processing");
-  };
 
   const stateLabel = {
     idle: muted ? "Muted" : "Ready",
@@ -280,9 +272,16 @@ export default function VoiceConversation({
             <FileText className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setShowTextInput(!showTextInput)}
-            className={`p-2 rounded-full transition-colors ${showTextInput ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
-            title="Type instead">
+            onClick={() => {
+              unmountedRef.current = true;
+              abortRef.current?.abort();
+              try { scribe.disconnect(); } catch(e) {}
+              stopAudio();
+              setVoiceState("idle");
+              onClose();
+            }}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Passa alla chat testuale">
             <Keyboard className="w-4 h-4" />
           </button>
           {showReport && (
@@ -446,31 +445,6 @@ export default function VoiceConversation({
         )}
       </AnimatePresence>
 
-      {/* Text input - togglable at bottom */}
-      <AnimatePresence>
-        {showTextInput && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="px-6 py-4 border-t border-border flex items-center gap-2 shrink-0 relative z-10"
-          >
-            <input
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
-              placeholder="Type to Socrate..."
-              disabled={isStreaming}
-              autoFocus
-              className="flex-1 bg-secondary/30 border border-border rounded-full px-5 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 disabled:opacity-50"
-            />
-            <button onClick={handleTextSend} disabled={!textInput.trim() || isStreaming}
-              className="p-2.5 bg-foreground text-background rounded-full hover:bg-foreground/90 transition-colors disabled:opacity-30">
-              <Send className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
