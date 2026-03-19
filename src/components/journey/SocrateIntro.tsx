@@ -124,7 +124,7 @@ export default function SocrateIntro({ onComplete }: Props) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 1, ease: "easeOut" }}
-                  className="text-center mb-16"
+                  className="text-center mb-6"
                 >
                   {introText.split("\n\n").map((paragraph, i) => (
                     <motion.p
