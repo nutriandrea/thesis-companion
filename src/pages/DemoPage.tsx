@@ -117,11 +117,11 @@ const MOCK_VULNERABILITIES: MockVulnerability[] = [
 ];
 
 const MOCK_SOCRATE_MESSAGES = [
-  { id: "m1", role: "assistant" as const, content: "Hai una direzione chiara: LLM per il rilevamento vulnerabilità. Ottimo punto di partenza. Ma dimmi: **cosa rende il tuo approccio diverso** da chi ha già fatto fine-tuning di modelli su dataset di vulnerabilità?" },
-  { id: "m2", role: "user" as const, content: "Voglio combinare l'analisi statica tradizionale con LLM, creando un sistema ibrido." },
-  { id: "m3", role: "assistant" as const, content: "Interessante. Un approccio ibrido SAST + LLM ha potenziale, ma devi essere preciso: **quale componente fa cosa?** Il rischio è che l'LLM sia solo un wrapper glorificato di regole statiche. Definisci chiaramente il confine." },
-  { id: "m4", role: "user" as const, content: "Il SAST farebbe lo screening iniziale, poi l'LLM analizzerebbe i risultati per ridurre i falsi positivi." },
-  { id: "m5", role: "assistant" as const, content: "Questo è un **contributo concreto**: ridurre i falsi positivi tramite post-processing con LLM. È misurabile, utile e pubblicabile. Ora la domanda critica: **hai accesso a un dataset con annotazioni di falsi positivi?** Senza quello, non puoi addestrare il modello a distinguerli." },
+  { id: "m1", role: "assistant" as const, content: "You have a clear direction: LLMs for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?" },
+  { id: "m2", role: "user" as const, content: "I want to combine traditional static analysis with LLMs, creating a hybrid system." },
+  { id: "m3", role: "assistant" as const, content: "Interesting. A hybrid SAST + LLM approach has potential, but you need to be precise: **which component does what?** The risk is that the LLM is just a glorified wrapper for static rules. Define the boundary clearly." },
+  { id: "m4", role: "user" as const, content: "SAST would do the initial screening, then the LLM would analyze the results to reduce false positives." },
+  { id: "m5", role: "assistant" as const, content: "This is a **concrete contribution**: reducing false positives through post-processing with LLMs. It's measurable, useful and publishable. Now the critical question: **do you have access to a dataset with false positive annotations?** Without that, you can't train the model to distinguish them." },
 ];
 
 const PHASES = [
