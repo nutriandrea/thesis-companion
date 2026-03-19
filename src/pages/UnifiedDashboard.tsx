@@ -1381,7 +1381,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
             />
             <button onClick={saveAndSync} disabled={!docUrl.trim() || syncing}
               className="px-3 py-2.5 bg-foreground text-background text-[10px] font-medium uppercase tracking-[0.1em] hover:bg-foreground/90 transition-colors disabled:opacity-20">
-              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connect"}
+              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connetti"}
             </button>
           </div>
         </>
