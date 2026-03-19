@@ -882,14 +882,12 @@ export default function UnifiedDashboard() {
             </DashboardCard>
           </motion.div>
 
-          {/* Google Doc - visible only after planning */}
-          {POST_PLANNING_PHASES.includes(currentPhase) && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              <DashboardCard title="Documento Tesi" icon={FileText}>
-                <GoogleDocWidget profile={profile} updateProfile={updateProfile} user={user} />
-              </DashboardCard>
-            </motion.div>
-          )}
+          {/* Thesis Document - always visible */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <DashboardCard title="Documento Tesi" icon={FileText}>
+              <ThesisDocWidget profile={profile} updateProfile={updateProfile} user={user} />
+            </DashboardCard>
+          </motion.div>
 
           {/* Companies (spans remaining cols) */}
           <motion.div className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
