@@ -546,7 +546,112 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
   );
 }
 
-// ─── VULNERABILITIES PANEL ───
+// ─── CONFIRMED TRACK SUMMARY (planning phase) ───
+function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
+  supervisorId: string | null; sectors: CareerSector[]; thesisTopic?: string | null;
+}) {
+  const sup = supervisorId ? supervisors.find(s => s.id === supervisorId) : null;
+  const topSectors = sectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 3);
+
+  return (
+    <div className="space-y-3">
+      {thesisTopic && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Topic</p>
+          <p className="text-xs font-medium text-foreground">{thesisTopic}</p>
+        </div>
+      )}
+      {sup && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Supervisore</p>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
+              <GraduationCap className="w-3 h-3 text-accent" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-foreground">{sup.title} {sup.firstName} {sup.lastName}</p>
+              <p className="text-[10px] text-muted-foreground">{sup.researchInterests.slice(0, 2).join(", ")}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {topSectors.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Direzione</p>
+          <div className="space-y-1">
+            {topSectors.map(s => (
+              <div key={s.name} className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-full bg-accent rounded-full" style={{ width: `${s.percentage}%` }} />
+                </div>
+                <span className="text-[10px] text-foreground font-medium w-24 truncate">{s.name}</span>
+                <span className="text-[10px] text-muted-foreground font-bold w-8 text-right">{s.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!sup && topSectors.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-4 italic">Conferma supervisore e orientamento per procedere.</p>
+      )}
+    </div>
+  );
+}
+
+// ─── ROADMAP CARD ───
+function RoadmapCard({ currentPhase }: { currentPhase: PhaseKey }) {
+  const isEditable = currentPhase === "planning";
+
+  // Use mock roadmap data — in production this would come from DB
+  const { mockRoadmap } = require("@/data/mock-roadmap");
+  const phases = (mockRoadmap || []) as import("@/types/data").RoadmapPhase[];
+
+  // Filter: in planning show from planning onward; in execution/writing show all with progress
+  const visiblePhases = phases.filter((_: any, i: number) => i >= 2); // planning, execution, writing
+
+  return (
+    <div className="space-y-3">
+      {visiblePhases.map((phase: import("@/types/data").RoadmapPhase) => (
+        <div key={phase.id} className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{phase.title}</span>
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[10px] font-bold text-foreground">{phase.progress}%</span>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-accent rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${phase.progress}%` }}
+              transition={{ duration: 0.8 }}
+            />
+          </div>
+          {/* Tasks */}
+          <div className="space-y-1 pl-2">
+            {phase.tasks.map((task: import("@/types/data").RoadmapTask) => (
+              <div key={task.id} className="flex items-center gap-2 py-0.5">
+                {task.completed ? (
+                  <CheckCircle2 className="w-3 h-3 text-accent shrink-0" />
+                ) : (
+                  <Circle className="w-3 h-3 text-muted-foreground/40 shrink-0" />
+                )}
+                <span className={`text-[11px] flex-1 ${task.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                  {task.title}
+                </span>
+                {isEditable && !task.completed && (
+                  <span className="text-[9px] text-muted-foreground">{new Date(task.dueDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
