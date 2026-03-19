@@ -242,13 +242,20 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       const assistantContent = await streamResponse(resp, assistantId);
 
       if (assistantContent) {
-        // Strip hidden marker before saving
-        const cleanContent = assistantContent.replace(/<!--\s*THESIS_READY\s*-->/g, "").trim();
+        // Strip hidden markers before saving
+        const cleanContent = assistantContent
+          .replace(/<!--\s*THESIS_TITLE:\s*.*?\s*-->/g, "")
+          .replace(/<!--\s*THESIS_READY\s*-->/g, "")
+          .trim();
         await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: cleanContent });
 
         // Check if Socrate proposed thesis confirmation
         if (assistantContent.includes("<!-- THESIS_READY -->")) {
-          // Update displayed message to remove marker
+          // Extract proposed title
+          const titleMatch = assistantContent.match(/<!--\s*THESIS_TITLE:\s*(.*?)\s*-->/);
+          const extractedTitle = titleMatch?.[1]?.trim() || "";
+          if (extractedTitle) setProposedThesisTopic(extractedTitle);
+          // Update displayed message to remove markers
           setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: cleanContent } : m));
           // Show thesis confirmation dialog after a brief delay
           setTimeout(() => setShowThesisDialog(true), 1500);
