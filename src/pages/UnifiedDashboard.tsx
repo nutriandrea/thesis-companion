@@ -321,7 +321,7 @@ function TaskContent({ userId }: { userId: string }) {
                       {isValidating ? (
                         <>
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          Socrate sta verificando…
+                          Socrate is verifying…
                         </>
                       ) : (
                         <>
