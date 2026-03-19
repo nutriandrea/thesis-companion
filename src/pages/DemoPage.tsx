@@ -444,16 +444,46 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
 // ══════════════════════════════════════════════════════
 // STEP 4: DEMO SOCRATE CONVERSATION
 // ══════════════════════════════════════════════════════
+const DEMO_CONVERSATION_HISTORY: ChatMsg[] = [
+  { id: "s1", role: "assistant", content: "You mentioned LLMs for vulnerability detection. That's a crowded space. **What specifically frustrates you** about existing approaches?" },
+  { id: "u1", role: "user", content: "Most tools just do pattern matching on known CVEs. They miss zero-days and context-dependent vulnerabilities entirely." },
+  { id: "s2", role: "assistant", content: "Interesting. So your intuition is that **semantic understanding** of code flow matters more than signature matching. But how would you prove that empirically? What would your ground truth dataset look like?" },
+  { id: "u2", role: "user", content: "I was thinking of using real-world commits that fixed vulnerabilities — the before/after pairs from open source projects." },
+  { id: "s3", role: "assistant", content: "Commit-pair datasets like Big-Vul exist already. Your contribution needs to go beyond that. What if you focused on **the reasoning gap** — why does the LLM detect one vulnerability but miss a structurally similar one? That's where the literature is thin." },
+  { id: "u3", role: "user", content: "That's a great angle. I could build an interpretability layer that explains the model's decision process for each detection." },
+  { id: "s4", role: "assistant", content: "Now we're getting somewhere. An **explainable vulnerability detection pipeline** — combining LLM code analysis with interpretability techniques to expose reasoning failures. That bridges security, NLP, and software engineering.\n\nLet me challenge you: **which interpretability method** would you use? Attention visualization? SHAP? Chain-of-thought prompting?" },
+  { id: "u4", role: "user", content: "Chain-of-thought seems most natural for LLMs — forcing the model to articulate why something is a vulnerability before classifying it." },
+  { id: "s5", role: "assistant", content: "Strong choice. CoT prompting as an **audit mechanism** for detection confidence. Here's your thesis taking shape:\n\n> **\"Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code\"**\n\nThis is focused, novel, and testable. You have a clear research question: *Does CoT prompting improve both detection accuracy and human trust in LLM-based vulnerability analysis?*\n\nI'd say you're ready to move forward. 🎯" },
+];
+
 function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
   const [mode, setMode] = useState<"text" | "voice">("text");
-  const welcomeMsg: ChatMsg = {
-    id: "welcome", role: "assistant",
-    content: "You have a clear direction: LLMs for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?",
-  };
-  const { messages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([welcomeMsg]);
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [autoPlaying, setAutoPlaying] = useState(true);
+  const { messages, setMessages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([]);
+
+  // Auto-reveal messages quickly to simulate a fast conversation recap
+  useEffect(() => {
+    if (!autoPlaying || visibleCount >= DEMO_CONVERSATION_HISTORY.length) {
+      if (visibleCount >= DEMO_CONVERSATION_HISTORY.length) setAutoPlaying(false);
+      return;
+    }
+    const msg = DEMO_CONVERSATION_HISTORY[visibleCount];
+    const delay = visibleCount === 0 ? 600 : msg.role === "assistant" ? 1200 : 700;
+    const timer = setTimeout(() => {
+      setMessages(prev => [...prev, DEMO_CONVERSATION_HISTORY[visibleCount]]);
+      setVisibleCount(prev => prev + 1);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [visibleCount, autoPlaying, setMessages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setAutoPlaying(false);
+    if (visibleCount < DEMO_CONVERSATION_HISTORY.length) {
+      setMessages([...DEMO_CONVERSATION_HISTORY]);
+      setVisibleCount(DEMO_CONVERSATION_HISTORY.length);
+    }
     sendMessage(input);
   };
 
@@ -497,7 +527,8 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
           </motion.div>
         ))}
 
-        {isStreaming && messages[messages.length - 1]?.content === "" && (
+        {/* Typing indicator during auto-play or streaming */}
+        {((autoPlaying && visibleCount < DEMO_CONVERSATION_HISTORY.length) || (isStreaming && messages[messages.length - 1]?.content === "")) && (
           <div className="flex justify-start">
             <div className="flex gap-1.5 px-4 py-3">
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -505,6 +536,30 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
           </div>
+        )}
+
+        {/* Thesis chosen banner */}
+        {!autoPlaying && visibleCount >= DEMO_CONVERSATION_HISTORY.length && !isStreaming && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="mx-auto max-w-sm bg-accent/10 border border-accent/20 rounded-xl px-5 py-4 text-center space-y-2"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Target className="w-4 h-4 text-accent" />
+              <p className="text-xs font-bold text-accent uppercase tracking-wider">Thesis defined</p>
+            </div>
+            <p className="text-[11px] text-foreground/80 leading-relaxed italic">
+              "Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code"
+            </p>
+            <button
+              onClick={onSkip}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-accent text-accent-foreground text-[10px] font-semibold uppercase tracking-wider rounded-full hover:bg-accent/90 transition-colors"
+            >
+              <ArrowRight className="w-3 h-3" /> See my dashboard
+            </button>
+          </motion.div>
         )}
         <div ref={bottomRef} />
       </div>
