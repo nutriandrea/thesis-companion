@@ -227,7 +227,13 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Errore" }));
-        toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
+        if (resp.status === 402) {
+          toast({ variant: "destructive", title: "Crediti AI esauriti", description: "I crediti AI del workspace sono terminati. Vai su Settings → Workspace → Usage per ricaricarli." });
+        } else if (resp.status === 429) {
+          toast({ variant: "destructive", title: "Troppo veloci", description: "Troppe richieste. Attendi qualche secondo e riprova." });
+        } else {
+          toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
+        }
         setIsStreaming(false);
         return;
       }
