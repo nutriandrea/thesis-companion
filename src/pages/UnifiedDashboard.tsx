@@ -371,12 +371,12 @@ function CareerBar({ sectors, onSectorClick, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-6">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analisi carriera...</span>
+      <span className="text-xs text-muted-foreground ml-2">{t("career.analyzing")}</span>
     </div>
   );
 
   if (sectors.length === 0) return (
-    <p className="text-xs text-muted-foreground text-center py-6">Parla con Socrate per calcolare il tuo orientamento.</p>
+    <p className="text-xs text-muted-foreground text-center py-6">{t("career.talk_to_socrate")}</p>
   );
 
   const sorted = [...sectors].sort((a, b) => b.percentage - a.percentage);
@@ -466,13 +466,13 @@ function CareerTree({ sectors, userId, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-8">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analisi direzioni...</span>
+      <span className="text-xs text-muted-foreground ml-2">{t("career.analyzing_directions")}</span>
     </div>
   );
 
   if (sorted.length === 0) return (
     <p className="text-xs text-muted-foreground text-center py-8 italic">
-      Parla con Socrate per scoprire le direzioni possibili per la tua tesi.
+      {t("career.talk_for_directions")}
     </p>
   );
 
@@ -553,10 +553,10 @@ function CareerTree({ sectors, userId, loading }: {
                     {isLoading ? (
                       <div className="flex items-center gap-2 py-3 pl-4">
                         <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                        <span className="text-[10px] text-muted-foreground">Ricerca aziende...</span>
+                        <span className="text-[10px] text-muted-foreground">{t("career.searching_companies")}</span>
                       </div>
                     ) : comps.length === 0 ? (
-                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">Nessuna azienda trovata per questo settore.</p>
+                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">{t("career.no_companies")}</p>
                     ) : (
                       comps.slice(0, 5).map((comp: any, j: number) => (
                         <div key={j} className="relative flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
@@ -867,11 +867,11 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
     if (loadingAi) return (
       <div className="flex items-center justify-center py-6">
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        <span className="text-xs text-muted-foreground ml-2">Ricerca aziende in {activeSector}...</span>
+        <span className="text-xs text-muted-foreground ml-2">{t("career.searching_in", { sector: activeSector })}</span>
       </div>
     );
 
-    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna azienda trovata per {activeSector}.</p>;
+    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">{t("career.no_companies_in", { sector: activeSector })}</p>;
 
     return (
       <div className="space-y-2">
@@ -965,7 +965,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
         </div>
       )}
       {!sup && topSectors.length === 0 && (
-        <p className="text-xs text-muted-foreground text-center py-4 italic">Conferma relatore e orientamento per procedere.</p>
+        <p className="text-xs text-muted-foreground text-center py-4 italic">{t("supervisor.confirm_to_proceed")}</p>
       )}
     </div>
   );
@@ -1052,7 +1052,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
   // Empty state: offer to generate
   if (phases.length === 0) return (
     <div className="text-center py-8 space-y-3">
-      <p className="text-xs text-muted-foreground">Nessuna roadmap. Socrate può generarne una basata sulla tua tesi.</p>
+      <p className="text-xs text-muted-foreground">{t("roadmap.none")}</p>
       <button
         onClick={generateRoadmap}
         disabled={generating}
@@ -1075,7 +1075,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
             className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-            Rigenera
+            {t("roadmap.regenerate")}
           </button>
         </div>
       )}
@@ -1298,7 +1298,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
                   className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
-                  Apri riferimento
+                  {t("ref.open")}
                 </a>
               </div>
             </motion.div>
@@ -1342,7 +1342,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
           </p>
           {!showSaved && (
             <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
-              Genera riferimenti →
+              {t("ref.generate")}
             </button>
           )}
         </div>
@@ -1440,7 +1440,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
             </button>
           </div>
           <button onClick={disconnect} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            Disconnetti documento
+            {t("doc.disconnect")}
           </button>
         </div>
       ) : (
@@ -1998,7 +1998,7 @@ export default function UnifiedDashboard() {
               title="Invita il tuo relatore a seguire i progressi"
             >
               <UserPlus className="w-3 h-3" />
-              Invita relatore
+              {t("dashboard.invite_supervisor")}
             </button>
           )}
           <LanguageSwitch />
@@ -2077,7 +2077,7 @@ export default function UnifiedDashboard() {
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Parla con Socrate
+          {t("dashboard.talk_to_socrate")}
         </motion.button>
         {lastMessage && !chatOpen && (
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
