@@ -432,7 +432,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
           )}
           {profile?.socrate_done && (
             <button onClick={() => setActiveSection("dashboard")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               <CheckCircle className="w-3.5 h-3.5 text-success" /> Dashboard
             </button>
           )}
