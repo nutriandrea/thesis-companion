@@ -1098,6 +1098,12 @@ function DemoSupervisors() {
 }
 
 function DemoExperts() {
+  const { data, loading } = useDemoEngine<{ experts: MockExpert[] }>("match_experts");
+  const exps = data?.experts?.length ? data.experts : MOCK_EXPERTS;
+
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
+
+  return (
   return (
     <div className="space-y-1.5">
       {MOCK_EXPERTS.map(exp => (
