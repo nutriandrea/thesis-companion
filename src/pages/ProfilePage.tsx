@@ -212,7 +212,7 @@ export default function ProfilePage() {
                 <div className="flex-1">
                   <Progress value={(studentProfile.severita ?? 1) * 100} className="h-1.5" />
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {(studentProfile.severita ?? 1) >= 0.8 ? "🔥 Spietato" : (studentProfile.severita ?? 1) >= 0.6 ? "⚡ Critico" : (studentProfile.severita ?? 1) >= 0.4 ? "🤝 Collaborativo" : "💡 Supportivo"}
+                    {(studentProfile.severita ?? 1) >= 0.8 ? "Spietato" : (studentProfile.severita ?? 1) >= 0.6 ? "Critico" : (studentProfile.severita ?? 1) >= 0.4 ? "Collaborativo" : "Supportivo"}
                   </p>
                 </div>
               </div>
