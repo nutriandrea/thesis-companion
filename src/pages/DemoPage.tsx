@@ -206,7 +206,7 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
             </button>
           </div>
           <button type="submit" className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-colors flex items-center justify-center gap-2 mt-4">
-            {isSignUp ? "Registrati" : "Accedi"} <ArrowRight className="w-4 h-4" />
+            {isSignUp ? "Sign Up" : "Sign In"} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
