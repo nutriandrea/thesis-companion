@@ -90,10 +90,10 @@ const MOCK_ROADMAP: RoadmapPhase[] = [
 ];
 
 const MOCK_SUPERVISORS: MockSupervisor[] = [
-  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "Esperto di NLP applicato al software engineering con 15 pubblicazioni sul tema." },
-  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Ricerca attiva su vulnerability detection con approcci ML." },
-  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Focus su testing automatico e qualità del codice." },
-  { id: "s4", name: "Prof.ssa Anna Neri", fields: ["AI Safety", "LLM"], score: 74, reasoning: "Lavora su alignment e safety dei large language models." },
+  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "Esperto di NLP applicato al software engineering con 15 pubblicazioni sul tema.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
+  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Ricerca attiva su vulnerability detection con approcci ML.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
+  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Focus su testing automatico e qualità del codice.", email: "luigi.verdi@uzh.ch", university: "UZH" },
+  { id: "s4", name: "Prof.ssa Anna Neri", fields: ["AI Safety", "LLM"], score: 74, reasoning: "Lavora su alignment e safety dei large language models.", email: "anna.neri@unisg.ch", university: "HSG" },
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
