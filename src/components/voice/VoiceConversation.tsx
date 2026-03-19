@@ -91,6 +91,7 @@ export default function VoiceConversation({
   const mutedRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const unmountedRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => { mutedRef.current = muted; }, [muted]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
