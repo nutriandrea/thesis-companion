@@ -1625,7 +1625,7 @@ export default function UnifiedDashboard() {
         </motion.div>
 
         {/* Confirmed track summary — inline under title in planning+ */}
-        {(currentPhase === "planning" || currentPhase === "execution" || currentPhase === "writing") && (
+        {(phaseActive(parsedPhase, "planning") || phaseActive(parsedPhase, "execution") || phaseActive(parsedPhase, "writing")) && (
           <motion.div
             initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             className="flex items-center justify-center gap-4 flex-wrap mt-1"
