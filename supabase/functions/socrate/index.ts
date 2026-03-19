@@ -1814,8 +1814,9 @@ COME USARE I PATTERN:
 
         // Career distribution context
         let careerCtx = "";
-        const career = (studentRes as any)?.data?.career_distribution;
-        const currentPhase = (studentRes as any)?.data?.current_phase;
+        const studentData = studentRes.status === "fulfilled" ? (studentRes.value as any)?.data : null;
+        const career = studentData?.career_distribution;
+        const currentPhase = studentData?.current_phase;
         const selectedSup = (studentRes as any)?.data?.selected_supervisor_id;
         const supMotivation = (studentRes as any)?.data?.supervisor_motivation;
 
