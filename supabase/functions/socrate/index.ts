@@ -1934,7 +1934,7 @@ REGOLE (calibrate sulla severità ${severita}):
 12. Se LaTeX presente, critica sezioni specifiche con linguaggio pratico.
 13. ${severita >= 0.7 ? '"Perché hai scelto questo approccio e non un altro?"' : '"Cosa ti ha portato a questa scelta?"'}
 
-FORMATO: **grassetto**, *corsivo*, paragrafi brevi.`;
+FORMATO: **grassetto** per concetti chiave. Risposte CORTE (max 3-5 righe). Una domanda finale. Niente preamboli.`;
     }
 
     const response = await fetch(AI_URL, {
