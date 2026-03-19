@@ -90,6 +90,7 @@ export default function VoiceConversation({
   const hasAutoStarted = useRef(false);
   const mutedRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const unmountedRef = useRef(false);
 
   useEffect(() => { mutedRef.current = muted; }, [muted]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -136,7 +137,7 @@ export default function VoiceConversation({
   }, []);
 
   const speakText = useCallback(async (text: string) => {
-    if (!audioEnabled || !text.trim()) return;
+    if (!audioEnabled || !text.trim() || unmountedRef.current) return;
     const cleanText = text
       .replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1")
       .replace(/#{1,6}\s/g, "").replace(/```[\s\S]*?```/g, "")
@@ -159,11 +160,13 @@ export default function VoiceConversation({
         },
         body: JSON.stringify({ text: cleanText, severity }),
       });
+      if (unmountedRef.current) return;
       if (!response.ok) {
         isSpeakingRef.current = false; setVoiceState("idle");
-        setTimeout(() => startListening(), 300); return;
+        if (!unmountedRef.current) setTimeout(() => startListening(), 300); return;
       }
       const audioBlob = await response.blob();
+      if (unmountedRef.current) return;
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
       const audio = new Audio(audioUrl);
@@ -171,15 +174,27 @@ export default function VoiceConversation({
       audio.onended = () => {
         isSpeakingRef.current = false;
         URL.revokeObjectURL(audioUrl); audioUrlRef.current = null; audioRef.current = null;
-        setVoiceState("idle");
-        setTimeout(() => startListening(), 300);
+        if (!unmountedRef.current) {
+          setVoiceState("idle");
+          setTimeout(() => { if (!unmountedRef.current) startListening(); }, 300);
+        }
       };
-      audio.onerror = () => { isSpeakingRef.current = false; setVoiceState("idle"); setTimeout(() => startListening(), 300); };
+      audio.onerror = () => {
+        isSpeakingRef.current = false;
+        if (!unmountedRef.current) {
+          setVoiceState("idle");
+          setTimeout(() => { if (!unmountedRef.current) startListening(); }, 300);
+        }
+      };
+      if (unmountedRef.current) { URL.revokeObjectURL(audioUrl); return; }
       await audio.play();
     } catch (e) {
       console.error("TTS playback error:", e);
-      isSpeakingRef.current = false; setVoiceState("idle");
-      setTimeout(() => startListening(), 300);
+      isSpeakingRef.current = false;
+      if (!unmountedRef.current) {
+        setVoiceState("idle");
+        setTimeout(() => { if (!unmountedRef.current) startListening(); }, 300);
+      }
     }
   }, [audioEnabled, severity, stopAudio, startListening, scribe]);
 
@@ -191,7 +206,16 @@ export default function VoiceConversation({
   }, [lastAssistantMessage, isStreaming, audioEnabled, speakText]);
 
   useEffect(() => { if (isStreaming && voiceState !== "speaking") setVoiceState("processing"); }, [isStreaming]);
-  useEffect(() => { return () => { try { scribe.disconnect(); } catch(e) {} stopAudio(); }; }, [scribe, stopAudio]);
+
+  // Cleanup on unmount — empty deps so it only runs once on unmount
+  useEffect(() => {
+    return () => {
+      unmountedRef.current = true;
+      try { scribe.disconnect(); } catch(e) {}
+      stopAudio();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleMute = useCallback(() => {
     if (muted) { setMuted(false); if (!isSpeakingRef.current) setTimeout(() => startListening(), 100); }
