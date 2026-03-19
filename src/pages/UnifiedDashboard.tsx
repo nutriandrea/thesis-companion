@@ -8,6 +8,7 @@ import {
   BookOpen, ExternalLink, Mail, UserPlus
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { useT } from "@/contexts/LanguageContext";
 import VoiceConversation from "@/components/voice/VoiceConversation";
 import SocrateCoin from "@/components/shared/SocrateCoin";
 import SocrateTutor from "@/components/shared/SocrateTutor";
@@ -227,6 +228,7 @@ function DashboardCard({
 
 // ─── TASK PANEL ───
 function TaskContent({ userId }: { userId: string }) {
+  const t = useT();
   const { tasks, updateTaskStatus, validateTask } = useSocrateTasks(userId);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [validatingId, setValidatingId] = useState<string | null>(null);
@@ -266,7 +268,7 @@ function TaskContent({ userId }: { userId: string }) {
 
   const priorityLabel = (p: string) => {
     switch (p) {
-      case "critical": return { text: "Critico", cls: "bg-destructive/10 text-destructive" };
+      case "critical": return { text: t("ref.contrarian"), cls: "bg-destructive/10 text-destructive" };
       case "high": return { text: "Alto", cls: "bg-warning/10 text-warning" };
       case "medium": return { text: "Medio", cls: "bg-accent/10 text-accent" };
       default: return { text: "Basso", cls: "bg-muted text-muted-foreground" };
@@ -323,7 +325,7 @@ function TaskContent({ userId }: { userId: string }) {
                       {isValidating ? (
                         <>
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          Socrate sta verificando…
+                          {t("task.verifying")}
                         </>
                       ) : (
                         <>
@@ -337,7 +339,7 @@ function TaskContent({ userId }: { userId: string }) {
                         onClick={(e) => { e.stopPropagation(); forceComplete(task.id); }}
                         className="w-full flex items-center justify-center gap-2 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        Forza completamento
+                        {t("task.force_completion")}
                       </button>
                     )}
                   </div>
@@ -350,7 +352,7 @@ function TaskContent({ userId }: { userId: string }) {
       {completedCount > 0 && (
         <div className="flex items-center gap-2 pt-2">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-[10px] text-muted-foreground">{completedCount} completati</span>
+          <span className="text-[10px] text-muted-foreground">{t("task.n_completed", { n: completedCount })}</span>
           <div className="h-px flex-1 bg-border" />
         </div>
       )}
@@ -362,6 +364,7 @@ function TaskContent({ userId }: { userId: string }) {
 function CareerBar({ sectors, onSectorClick, loading }: {
   sectors: CareerSector[]; onSectorClick: (sector: string) => void; loading: boolean;
 }) {
+  const t = useT();
   const colors = [
     "hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)",
     "hsl(var(--warning))", "hsl(270 60% 55%)", "hsl(200 70% 50%)",
@@ -370,12 +373,12 @@ function CareerBar({ sectors, onSectorClick, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-6">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analisi carriera...</span>
+      <span className="text-xs text-muted-foreground ml-2">{t("career.analyzing")}</span>
     </div>
   );
 
   if (sectors.length === 0) return (
-    <p className="text-xs text-muted-foreground text-center py-6">Parla con Socrate per calcolare il tuo orientamento.</p>
+    <p className="text-xs text-muted-foreground text-center py-6">{t("career.talk_to_socrate")}</p>
   );
 
   const sorted = [...sectors].sort((a, b) => b.percentage - a.percentage);
@@ -420,6 +423,7 @@ function CareerBar({ sectors, onSectorClick, loading }: {
 function CareerTree({ sectors, userId, loading }: {
   sectors: CareerSector[]; userId: string; loading: boolean;
 }) {
+  const t = useT();
   const [expandedSector, setExpandedSector] = useState<string | null>(null);
   const [sectorCompanies, setSectorCompanies] = useState<Record<string, any[]>>({});
   const [loadingSector, setLoadingSector] = useState<string | null>(null);
@@ -465,13 +469,13 @@ function CareerTree({ sectors, userId, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-8">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analisi direzioni...</span>
+      <span className="text-xs text-muted-foreground ml-2">{t("career.analyzing_directions")}</span>
     </div>
   );
 
   if (sorted.length === 0) return (
     <p className="text-xs text-muted-foreground text-center py-8 italic">
-      Parla con Socrate per scoprire le direzioni possibili per la tua tesi.
+      {t("career.talk_for_directions")}
     </p>
   );
 
@@ -552,10 +556,10 @@ function CareerTree({ sectors, userId, loading }: {
                     {isLoading ? (
                       <div className="flex items-center gap-2 py-3 pl-4">
                         <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                        <span className="text-[10px] text-muted-foreground">Ricerca aziende...</span>
+                        <span className="text-[10px] text-muted-foreground">{t("career.searching_companies")}</span>
                       </div>
                     ) : comps.length === 0 ? (
-                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">Nessuna azienda trovata per questo settore.</p>
+                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">{t("career.no_companies")}</p>
                     ) : (
                       comps.slice(0, 5).map((comp: any, j: number) => (
                         <div key={j} className="relative flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
@@ -592,6 +596,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
   userId: string; selectedId: string | null;
   onSelect: (id: string, name: string, motivation: string) => void;
 }) {
+  const t = useT();
   const { affinities } = useAffinityScores(userId, "supervisor");
   const [selecting, setSelecting] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
@@ -742,6 +747,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
 
 // ─── EXPERT SUGGESTIONS ───
 function ExpertSuggestions({ userId }: { userId: string }) {
+  const t = useT();
   const { affinities, loading } = useAffinityScores(userId, "expert");
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -837,6 +843,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
 function DynamicCompanies({ userId, sectors, activeSector }: {
   userId: string; sectors: CareerSector[]; activeSector: string | null;
 }) {
+  const t = useT();
   const { affinities } = useAffinityScores(userId, "company");
   const [aiCompanies, setAiCompanies] = useState<any[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -866,11 +873,11 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
     if (loadingAi) return (
       <div className="flex items-center justify-center py-6">
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        <span className="text-xs text-muted-foreground ml-2">Ricerca aziende in {activeSector}...</span>
+        <span className="text-xs text-muted-foreground ml-2">{t("career.searching_in", { sector: activeSector })}</span>
       </div>
     );
 
-    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna azienda trovata per {activeSector}.</p>;
+    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">{t("career.no_companies_in", { sector: activeSector })}</p>;
 
     return (
       <div className="space-y-2">
@@ -922,6 +929,7 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
 function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
   supervisorId: string | null; sectors: CareerSector[]; thesisTopic?: string | null;
 }) {
+  const t = useT();
   const sup = supervisorId ? supervisors.find(s => s.id === supervisorId) : null;
   const topSectors = sectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 3);
 
@@ -929,13 +937,13 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
     <div className="space-y-3">
       {thesisTopic && (
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Argomento</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t("topic")}</p>
           <p className="text-xs font-medium text-foreground">{thesisTopic}</p>
         </div>
       )}
       {sup && (
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Relatore</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t("supervisor.label")}</p>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
               <GraduationCap className="w-3 h-3 text-accent" />
@@ -949,7 +957,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
       )}
       {topSectors.length > 0 && (
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Direzione</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t("supervisor.direction")}</p>
           <div className="space-y-1">
             {topSectors.map(s => (
               <div key={s.name} className="flex items-center gap-2">
@@ -964,7 +972,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
         </div>
       )}
       {!sup && topSectors.length === 0 && (
-        <p className="text-xs text-muted-foreground text-center py-4 italic">Conferma relatore e orientamento per procedere.</p>
+        <p className="text-xs text-muted-foreground text-center py-4 italic">{t("supervisor.confirm_to_proceed")}</p>
       )}
     </div>
   );
@@ -972,6 +980,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
 
 // ─── ROADMAP CARD (real data from DB) ───
 function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId: string }) {
+  const t = useT();
   const isEditable = currentPhase === "planning";
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1051,14 +1060,14 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
   // Empty state: offer to generate
   if (phases.length === 0) return (
     <div className="text-center py-8 space-y-3">
-      <p className="text-xs text-muted-foreground">Nessuna roadmap. Socrate può generarne una basata sulla tua tesi.</p>
+      <p className="text-xs text-muted-foreground">{t("roadmap.none")}</p>
       <button
         onClick={generateRoadmap}
         disabled={generating}
         className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground text-xs font-medium rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-40"
       >
         {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <BarChart3 className="w-3 h-3" />}
-        {generating ? "Generazione..." : "Genera Roadmap"}
+        {generating ? t("roadmap.generating") : t("roadmap.generate")}
       </button>
     </div>
   );
@@ -1074,7 +1083,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
             className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-            Rigenera
+            {t("roadmap.regenerate")}
           </button>
         </div>
       )}
@@ -1131,6 +1140,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
 
 
 function VulnerabilitiesContent({ vulnerabilities, onResolve, onCloseExpanded }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void; onCloseExpanded?: () => void }) {
+  const t = useT();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
@@ -1200,6 +1210,7 @@ interface SavedRef { id: string; title: string; authors: string; year?: string; 
 function ReferencesContent({ references, loading, onRefresh, userId }: {
   references: Reference[]; loading: boolean; onRefresh: () => void; userId?: string;
 }) {
+  const t = useT();
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [savedRefs, setSavedRefs] = useState<SavedRef[]>([]);
   const [savingUrl, setSavingUrl] = useState<string | null>(null);
@@ -1236,10 +1247,10 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
   };
 
   const categoryLabel: Record<string, { text: string; cls: string }> = {
-    foundational: { text: "Fondamentale", cls: "bg-accent/10 text-accent" },
-    methodology: { text: "Metodo", cls: "bg-warning/10 text-warning" },
-    recent: { text: "Recente", cls: "bg-green-500/10 text-green-600" },
-    contrarian: { text: "Critico", cls: "bg-destructive/10 text-destructive" },
+    foundational: { text: t("ref.foundational"), cls: "bg-accent/10 text-accent" },
+    methodology: { text: t("ref.methodology"), cls: "bg-warning/10 text-warning" },
+    recent: { text: t("ref.recent"), cls: "bg-green-500/10 text-green-600" },
+    contrarian: { text: t("ref.contrarian"), cls: "bg-destructive/10 text-destructive" },
   };
 
   const renderRef = (ref: Reference | SavedRef, i: number, canSave: boolean) => {
@@ -1297,7 +1308,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
                   className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
-                  Apri riferimento
+                  {t("ref.open")}
                 </a>
               </div>
             </motion.div>
@@ -1324,24 +1335,24 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
           onClick={() => { setShowSaved(false); setExpandedIdx(null); }}
           className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${!showSaved ? "text-accent border-b-2 border-accent" : "text-muted-foreground hover:text-foreground"}`}
         >
-          Suggeriti ({references.length})
+          {t("ref.suggested", { n: references.length })}
         </button>
         <button
           onClick={() => { setShowSaved(true); setExpandedIdx(null); }}
           className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${showSaved ? "text-yellow-500 border-b-2 border-yellow-500" : "text-muted-foreground hover:text-foreground"}`}
         >
-          ⭐ Salvati ({savedRefs.length})
+          {t("ref.saved", { n: savedRefs.length })}
         </button>
       </div>
 
       {displayList.length === 0 ? (
         <div className="text-center py-6 space-y-2">
           <p className="text-xs text-muted-foreground italic">
-            {showSaved ? "Nessun riferimento salvato. Clicca ☆ per salvare." : "Parla con Socrate per ottenere suggerimenti di lettura."}
+            {showSaved ? t("ref.no_saved") : t("ref.talk_for_suggestions")}
           </p>
           {!showSaved && (
             <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
-              Genera riferimenti →
+              {t("ref.generate")}
             </button>
           )}
         </div>
@@ -1356,6 +1367,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
 
 // ─── THESIS DOCUMENT WIDGET ───
 function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updateProfile: any; user: any }) {
+  const t = useT();
   const { toast } = useToast();
   const [docUrl, setDocUrl] = useState(profile?.google_doc_url || "");
   const [syncing, setSyncing] = useState(false);
@@ -1425,11 +1437,11 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
           <div className="flex items-center gap-2 p-2.5 bg-secondary/50">
             <div className="w-2 h-2 rounded-full bg-foreground shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-foreground">Connesso</p>
+              <p className="text-xs font-medium text-foreground">{t("doc.connected")}</p>
               <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
               {lastSyncTime && (
                 <p className="text-[9px] text-muted-foreground mt-0.5">
-                  Ultimo sync: {lastSyncTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
+                  {t("doc.last_sync", { time: lastSyncTime.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) })}
                 </p>
               )}
             </div>
@@ -1439,28 +1451,28 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
             </button>
           </div>
           <button onClick={disconnect} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            Disconnetti documento
+            {t("doc.disconnect")}
           </button>
         </div>
       ) : (
         <>
           <div className="flex items-center gap-2 p-2.5 bg-secondary/30">
             <div className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
-            <p className="text-xs text-muted-foreground">Nessun documento connesso</p>
+            <p className="text-xs text-muted-foreground">{t("doc.none")}</p>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Connetti il tuo documento per permettere a Socrate di analizzare la tua tesi.
+            {t("doc.connect_desc")}
           </p>
           <div className="flex items-center gap-2">
             <input
               value={docUrl} onChange={e => setDocUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveAndSync()}
-              placeholder="Incolla link Google Docs / Overleaf"
+              placeholder={t("doc.paste_link")}
               className="flex-1 bg-secondary/50 border border-border px-3 py-2.5 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-foreground/20 transition-colors"
             />
             <button onClick={saveAndSync} disabled={!docUrl.trim() || syncing}
               className="px-3 py-2.5 bg-foreground text-background text-[10px] font-medium uppercase tracking-[0.1em] hover:bg-foreground/90 transition-colors disabled:opacity-20">
-              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connetti"}
+              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : t("doc.connect")}
             </button>
           </div>
         </>
@@ -1476,6 +1488,7 @@ function ChatOverlay({
   messages: ChatMsg[]; input: string; setInput: (v: string) => void;
   sendMessage: (text: string) => void; isStreaming: boolean; onClose: () => void; onSwitchToVoice?: () => void;
 }) {
+  const t = useT();
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -1488,7 +1501,7 @@ function ChatOverlay({
         <SocrateCoin size={32} interactive={false} />
         <div className="flex-1">
           <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-          <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
+          <p className="text-[10px] text-muted-foreground">{t("chat.mentor")}</p>
         </div>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
           <X className="w-4 h-4 text-muted-foreground" />
@@ -1519,7 +1532,7 @@ function ChatOverlay({
         <input
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-          placeholder="Rispondi a Socrate..."
+          placeholder={t("chat.reply_placeholder")}
           disabled={isStreaming}
           className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
@@ -1541,6 +1554,7 @@ function ChatOverlay({
 
 // ─── MAIN DASHBOARD ───
 export default function UnifiedDashboard() {
+  const t = useT();
   const { profile, user, updateProfile, signOut, inputMode, setInputMode } = useApp();
   const { toast } = useToast();
 
@@ -1719,7 +1733,7 @@ export default function UnifiedDashboard() {
           const vulnId = match[1].trim();
           await supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId);
           setVulnerabilities(prev => prev.filter(v => v.id !== vulnId));
-          toast({ title: "Vulnerabilità risolta", description: "Socrate ha validato la tua comprensione." });
+          toast({ title: t("vuln.scan_completed"), description: "Socrate ha validato la tua comprensione." });
         }
         // Strip markers before saving
         const cleanContent = assistantContent.replace(/<!--\s*VULN_RESOLVED:\s*.+?\s*-->/g, "").trim();
@@ -1997,7 +2011,7 @@ export default function UnifiedDashboard() {
               title="Invita il tuo relatore a seguire i progressi"
             >
               <UserPlus className="w-3 h-3" />
-              Invita relatore
+              {t("dashboard.invite_supervisor")}
             </button>
           )}
           <LanguageSwitch />
@@ -2010,7 +2024,7 @@ export default function UnifiedDashboard() {
         <motion.div className="text-center px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-lg font-bold text-foreground font-display">
-              {profile?.thesis_topic || "Tesi non definita"}
+              {profile?.thesis_topic || t("dashboard.thesis_undefined")}
             </h1>
             {profile?.google_doc_url ? (
               <a
@@ -2076,7 +2090,7 @@ export default function UnifiedDashboard() {
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Parla con Socrate
+          {t("dashboard.talk_to_socrate")}
         </motion.button>
         {lastMessage && !chatOpen && (
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -2128,7 +2142,7 @@ export default function UnifiedDashboard() {
 
           // Roadmap: planning, execution, writing
           if (showPlanning || showExecution || showWriting) {
-            const roadmapTitle = showPlanning && !showExecution ? "Roadmap (in costruzione)" : "Roadmap";
+            const roadmapTitle = showPlanning && !showExecution ? t("card.roadmap_building") : t("card.roadmap");
             cards.push({
               key: "roadmap",
               colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined,
@@ -2148,7 +2162,7 @@ export default function UnifiedDashboard() {
               key: "supervisors",
               delay: delay,
               component: (
-                <DashboardCard title="Relatori suggeriti" icon={GraduationCap}>
+                <DashboardCard title={t("card.supervisors")} icon={GraduationCap}>
                   <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
                 </DashboardCard>
               ),
@@ -2163,7 +2177,7 @@ export default function UnifiedDashboard() {
               colSpan: !showPlanning ? "md:col-span-2" : undefined,
               delay: delay,
               component: (
-                <DashboardCard title="Direzioni possibili" icon={TrendingUp}>
+                <DashboardCard title={t("card.career_tree")} icon={TrendingUp}>
                   <CareerTree sectors={careerSectors} userId={user?.id || ""} loading={careerLoading} />
                 </DashboardCard>
               ),
@@ -2188,7 +2202,7 @@ export default function UnifiedDashboard() {
             key: "rubrica",
             delay: delay,
             component: (
-              <DashboardCard title={showTopicSupervisor ? "Partner per interviste" : "Contatti"} icon={Users}>
+              <DashboardCard title={showTopicSupervisor ? t("card.interview_partners") : t("card.rubrica")} icon={Users}>
                 <ExpertSuggestions userId={user?.id || ""} />
               </DashboardCard>
             ),
@@ -2200,8 +2214,8 @@ export default function UnifiedDashboard() {
             key: "references",
             delay: delay,
             component: (
-              <DashboardCard title="Riferimenti principali" icon={BookOpen} badge={references.length || null}
-                action={{ label: "Aggiorna", onClick: fetchReferences, loading: isLoadingRefs }}>
+              <DashboardCard title={t("card.references")} icon={BookOpen} badge={references.length || null}
+                action={{ label: t("ref.update"), onClick: fetchReferences, loading: isLoadingRefs }}>
                 <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} userId={user?.id} />
               </DashboardCard>
             ),
@@ -2214,8 +2228,8 @@ export default function UnifiedDashboard() {
               key: "vulnerabilities",
               delay: delay,
               component: (
-                <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }} closeRef={vulnCardCloseRef}>
+                <DashboardCard title={t("card.vulnerabilities")} icon={ShieldAlert} badge={vulnerabilities.length}
+                  action={{ label: t("vuln.scan"), onClick: scanVulnerabilities, loading: isScanning }} closeRef={vulnCardCloseRef}>
                   <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} onCloseExpanded={() => vulnCardCloseRef.current?.()} />
                 </DashboardCard>
               ),
@@ -2256,7 +2270,7 @@ export default function UnifiedDashboard() {
                     {isBeforeActive ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
                   </div>
                   <span className={`text-[8px] font-medium whitespace-nowrap ${isCurrent ? "text-foreground" : isBeforeActive ? "text-foreground" : "text-muted-foreground"}`}>
-                    {p.label}
+                    {t(`phase.${p.key}`) || p.label}
                   </span>
                   {isPrimary && phaseConfidence > 0 && (
                     <div className="flex items-center gap-1">
