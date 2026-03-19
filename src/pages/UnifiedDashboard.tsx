@@ -1864,7 +1864,7 @@ export default function UnifiedDashboard() {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* ─── TOP: Orb + Identity ─── */}
-      <div className="flex flex-col items-center pt-5 pb-2 shrink-0 relative gap-3">
+      <div className="flex flex-col items-center pt-5 pb-5 shrink-0 relative gap-4">
         {/* Top-left: user name + logout */}
         <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">{name}</span>
