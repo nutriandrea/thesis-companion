@@ -1523,7 +1523,7 @@ export default function UnifiedDashboard() {
     if (profile?.google_doc_url && user && !thesisContent) fetchGoogleDoc();
   }, [profile?.google_doc_url, user]);
 
-  const studentContext = profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "";
+  const studentContext = profile ? `Name: ${profile.first_name} ${profile.last_name}\nDegree: ${profile.degree || "N/A"}\nUniversity: ${profile.university || "N/A"}\nSkills: ${profile.skills?.join(", ") || "N/A"}\nTopic: ${profile.thesis_topic || "Not defined"}` : "";
 
   const fetchStudentProfile = useCallback(async () => {
     if (!user?.id) return;
