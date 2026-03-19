@@ -685,7 +685,7 @@ function DemoSupervisors() {
                     <p className="text-[11px] text-muted-foreground leading-relaxed">{sup.reasoning}</p>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium text-muted-foreground">Perché questo relatore?</label>
+                      <label className="text-[10px] font-medium text-muted-foreground">Why this supervisor?</label>
                       <textarea
                         value={motivation}
                         onChange={e => setMotivation(e.target.value)}
