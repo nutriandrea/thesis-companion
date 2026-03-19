@@ -1192,68 +1192,132 @@ function DemoCareerTree() {
 function DemoSupervisors() {
   const { data, loading } = useDemoEngine<{ supervisors: MockSupervisor[] }>("match_supervisors");
   const sups = data?.supervisors?.length ? data.supervisors : MOCK_SUPERVISORS;
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<string | null>(null);
+  const [confirmedName, setConfirmedName] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [motivation, setMotivation] = useState("");
 
   if (loading) return <DemoLoadingSkeleton lines={3} />;
 
+  // Confirmation animation
+  if (confirming && confirmedName) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-8 space-y-4"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: [0, 1.2, 1] }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-14 h-14 rounded-full bg-accent/15 flex items-center justify-center"
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <CheckCircle2 className="w-7 h-7 text-accent" />
+          </motion.div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center space-y-1"
+        >
+          <p className="text-xs font-bold text-foreground">Supervisor confirmed</p>
+          <p className="text-[11px] text-accent font-medium">{confirmedName}</p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+          className="flex items-center gap-2 text-[10px] text-muted-foreground"
+        >
+          <motion.div
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <ArrowRight className="w-3 h-3" />
+          </motion.div>
+          <span>Moving to next phase...</span>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  const handleConfirm = (sup: MockSupervisor) => {
+    setConfirming(true);
+    setConfirmedName(sup.name);
+    setTimeout(() => {
+      setConfirmed(sup.id);
+      setSelecting(null);
+      setMotivation("");
+    }, 2200);
+  };
+
   return (
     <div className="space-y-2">
-      {sups.map(sup => {
-        const isSelected = selected === sup.id;
-        return (
-          <div key={sup.id}>
-            <div
-              className={`flex items-center gap-2.5 p-2.5 rounded-lg transition-colors cursor-pointer ${isSelected ? "bg-accent/10 border border-accent/20" : "hover:bg-secondary/50"}`}
-              onClick={() => setSelected(isSelected ? null : sup.id)}
-            >
-              <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                {isSelected ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <GraduationCap className="w-3.5 h-3.5 text-accent" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-foreground">{sup.name}</p>
-                <p className="text-[10px] text-muted-foreground">{sup.fields.join(", ")}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Mail className="w-2.5 h-2.5 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">{sup.email}</span>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
+      {sups.map(sup => (
+        <div key={sup.id}>
+          <div
+            className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors cursor-pointer ${
+              confirmed === sup.id ? "bg-accent/10 border border-accent/20" : "hover:bg-secondary/50"
+            }`}
+            onClick={() => setSelecting(selecting === sup.id ? null : sup.id)}
+          >
+            <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+              {confirmed === sup.id ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <GraduationCap className="w-3.5 h-3.5 text-accent" />}
             </div>
-
-            <AnimatePresence>
-              {isSelected && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="overflow-hidden"
-                >
-                  <div className="px-3 pt-2 pb-3 space-y-3">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{sup.reasoning}</p>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium text-muted-foreground">Why this supervisor?</label>
-                      <textarea
-                        value={motivation}
-                        onChange={e => setMotivation(e.target.value)}
-                        placeholder="Explain your motivation..."
-                        className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:border-accent/30 transition-colors"
-                        rows={2}
-                      />
-                    </div>
-
-                    <button className="px-4 py-2 bg-accent text-accent-foreground text-[10px] font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors">
-                      Confirm selection
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground">{sup.name}</p>
+              <p className="text-[10px] text-muted-foreground">{sup.fields.join(", ")}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Mail className="w-2.5 h-2.5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">{sup.email}</span>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
           </div>
-        );
-      })}
+
+          {/* Motivation input */}
+          <AnimatePresence>
+            {selecting === sup.id && confirmed !== sup.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-2 py-2 space-y-2">
+                  {sup.reasoning && (
+                    <div className="rounded-lg border border-border bg-secondary/40 px-3 py-2">
+                      <p className="text-[10px] text-muted-foreground mb-1">Suggested reasoning</p>
+                      <p className="text-[11px] text-foreground/80 leading-relaxed break-words whitespace-pre-wrap">{sup.reasoning}</p>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">Why this supervisor?</p>
+                  <textarea
+                    value={motivation}
+                    onChange={e => setMotivation(e.target.value)}
+                    placeholder="Explain your motivation..."
+                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-accent"
+                    rows={2}
+                  />
+                  <button
+                    onClick={() => handleConfirm(sup)}
+                    disabled={!motivation.trim()}
+                    className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30"
+                  >
+                    Confirm selection
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))}
     </div>
   );
 }
