@@ -995,7 +995,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
             className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-            Regenerate
+            Rigenera
           </button>
         </div>
       )}
