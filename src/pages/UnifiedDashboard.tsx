@@ -1371,10 +1371,10 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
         <>
           <div className="flex items-center gap-2 p-2.5 bg-secondary/30">
             <div className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
-            <p className="text-xs text-muted-foreground">Nessun documento collegato</p>
+            <p className="text-xs text-muted-foreground">No document connected</p>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Collega il tuo documento per consentire a Socrate di analizzare la tua tesi.
+            Connect your document to let Socrate analyze your thesis.
           </p>
           <div className="flex items-center gap-2">
             <input
