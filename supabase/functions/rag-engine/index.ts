@@ -83,17 +83,15 @@ Deno.serve(async (req) => {
       const chunks = chunkText(content);
       const embeddings: any[] = [];
 
-      for (const chunk of chunks) {
-        const vector = await getEmbedding(chunk, OPENAI_API_KEY);
-        embeddings.push({
-          user_id: userId,
-          source_type: source_type || "thesis_chunk",
-          source_id: source_id || null,
-          content: chunk,
-          metadata: metadata || {},
-          embedding: `[${vector.join(",")}]`,
-        });
-      }
+      const vectors = await getBatchEmbeddings(chunks, OPENAI_API_KEY);
+      const embeddings = chunks.map((chunk, i) => ({
+        user_id: userId,
+        source_type: source_type || "thesis_chunk",
+        source_id: source_id || null,
+        content: chunk,
+        metadata: metadata || {},
+        embedding: `[${vectors[i].join(",")}]`,
+      }));
 
       // Delete old embeddings of same source
       if (source_id) {
