@@ -499,7 +499,7 @@ export default function DemoPage() {
 
   // Career Tree: topic_supervisor
   if (showTopicSupervisor) {
-    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
+    cards.push({ key: "career-tree", colSpan: !showPlanning ? "md:col-span-2" : undefined, delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
 
