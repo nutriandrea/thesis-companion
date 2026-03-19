@@ -1258,7 +1258,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
       {displayList.length === 0 ? (
         <div className="text-center py-6 space-y-2">
           <p className="text-xs text-muted-foreground italic">
-            {showSaved ? "No saved references. Click ☆ to save." : "Talk to Socrate to get reading suggestions."}
+            {showSaved ? "Nessun riferimento salvato. Clicca ☆ per salvare." : "Parla con Socrate per ottenere suggerimenti di lettura."}
           </p>
           {!showSaved && (
             <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
