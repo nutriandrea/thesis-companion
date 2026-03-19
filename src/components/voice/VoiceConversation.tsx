@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MicOff, Mic, Volume2, VolumeX, Send, Loader2, FileText, X } from "lucide-react";
+import { MicOff, Mic, Volume2, VolumeX, Send, Loader2, FileText, X, Keyboard } from "lucide-react";
 import { useScribe } from "@elevenlabs/react";
-import VoiceWaveform from "./VoiceWaveform";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
+import SocrateCoin from "@/components/shared/SocrateCoin";
 
 type VoiceState = "idle" | "listening" | "processing" | "speaking";
 
@@ -27,6 +27,44 @@ interface VoiceConversationProps {
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
+// Concentric ring animation for speaking state
+function SpeakingRings({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-0 rounded-full border border-foreground/[0.08]"
+          initial={{ scale: 1, opacity: 0 }}
+          animate={{
+            scale: [1, 1.3 + i * 0.2, 1.5 + i * 0.3],
+            opacity: [0.3 - i * 0.08, 0.15, 0],
+          }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            delay: i * 0.6,
+            ease: "easeOut",
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+// Subtle breathing ring for listening state
+function ListeningPulse({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <motion.div
+      className="absolute inset-0 rounded-full border border-foreground/10"
+      animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.15, 0.3] }}
+      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
+
 export default function VoiceConversation({
   onTranscript,
   onClose,
@@ -42,7 +80,9 @@ export default function VoiceConversation({
   const [muted, setMuted] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [textInput, setTextInput] = useState("");
+  const [showTextInput, setShowTextInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTranscript, setShowTranscript] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const prevMessageRef = useRef<string>("");
@@ -172,130 +212,225 @@ export default function VoiceConversation({
   };
 
   const stateLabel = {
-    idle: muted ? "In muto" : "Pronto",
-    listening: "In ascolto",
-    processing: "Elaborazione",
-    speaking: "Socrate parla",
+    idle: muted ? "Muted" : "Ready",
+    listening: "Listening...",
+    processing: "Thinking...",
+    speaking: "Speaking",
   }[voiceState];
 
   const showReport = messages.length >= 6 && onGenerateReport;
+  const lastAssistant = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
 
   return (
-    <div className="flex flex-col h-full select-none">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-3 border-b border-border shrink-0">
-        <div className="flex-1 flex items-center gap-3">
-          {/* Voice state orb */}
-          <motion.div
-            className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 cursor-pointer transition-colors duration-300 ${
-              voiceState === "listening" ? "border-foreground"
-              : voiceState === "processing" ? "border-muted-foreground/50"
-              : voiceState === "speaking" ? "border-foreground/60"
-              : muted ? "border-destructive/40" : "border-border"
-            }`}
-            animate={voiceState === "listening" ? { scale: [1, 1.06, 1] } : voiceState === "speaking" ? { scale: [1, 1.03, 1] } : {}}
-            transition={voiceState === "listening" || voiceState === "speaking" ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {}}
-            onClick={() => { if (voiceState === "speaking") interruptSocrate(); }}
-          >
-            {voiceState === "processing" ? (
-              <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
-            ) : voiceState === "listening" ? (
-              <VoiceWaveform active />
-            ) : voiceState === "speaking" ? (
-              <Volume2 className="w-3.5 h-3.5 text-foreground/80" />
-            ) : muted ? (
-              <MicOff className="w-3.5 h-3.5 text-destructive/60" />
-            ) : (
-              <Mic className="w-3.5 h-3.5 text-muted-foreground" />
-            )}
-          </motion.div>
-          <div>
-            <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stateLabel}</p>
-          </div>
-        </div>
+    <div className="flex flex-col h-full select-none bg-background relative overflow-hidden">
 
-        {/* Controls */}
-        <div className="flex items-center gap-1">
+      {/* Top bar - minimal controls */}
+      <div className="flex items-center justify-between px-6 py-4 shrink-0 relative z-10">
+        <div className="flex items-center gap-2">
           <button onClick={toggleMute}
-            className={`p-2 rounded-lg transition-colors ${muted ? "text-destructive" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
-            title={muted ? "Riattiva microfono" : "Metti in muto"}>
+            className={`p-2 rounded-full transition-colors ${muted ? "text-destructive bg-destructive/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            title={muted ? "Unmute" : "Mute"}>
             {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>
           <button onClick={() => { setAudioEnabled(!audioEnabled); if (audioEnabled) stopAudio(); }}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            title={audioEnabled ? "Disattiva voce" : "Attiva voce"}>
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title={audioEnabled ? "Mute Socrate" : "Unmute Socrate"}>
             {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTranscript(!showTranscript)}
+            className={`p-2 rounded-full transition-colors ${showTranscript ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            title="Toggle transcript">
+            <FileText className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setShowTextInput(!showTextInput)}
+            className={`p-2 rounded-full transition-colors ${showTextInput ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            title="Type instead">
+            <Keyboard className="w-4 h-4" />
           </button>
           {showReport && (
             <button onClick={onGenerateReport} disabled={isGeneratingReport || isStreaming}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30"
-              title="Genera report">
+              className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30"
+              title="Generate report">
               {isGeneratingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             </button>
           )}
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
-            <X className="w-4 h-4 text-muted-foreground" />
+          <button onClick={onClose} className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-        {messages.map(msg => (
-          <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[80%] px-4 py-3 text-sm rounded-xl ${
-              msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
-            }`}>
-              {msg.content === "" && isStreaming ? (
-                <div className="flex gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.3s" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" style={{ animationDelay: "0.6s" }} />
-                </div>
-              ) : (
-                <div className="prose prose-sm max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
-              )}
-            </div>
-          </motion.div>
-        ))}
+      {/* Central area - Coin is the hero */}
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10">
 
-        {/* Live transcript indicator */}
-        {(liveTranscript || voiceState === "listening") && messages.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-end">
-            <div className="max-w-[80%] px-4 py-2 text-sm rounded-xl bg-accent/5 border border-accent/10 text-foreground/60 italic">
-              {liveTranscript || "..."}
+        {/* The Socrate Coin - central and dominant */}
+        <div className="relative flex items-center justify-center">
+          {/* Speaking rings animation */}
+          <div className="absolute" style={{ width: 200, height: 200 }}>
+            <SpeakingRings active={voiceState === "speaking"} />
+          </div>
+
+          {/* Listening pulse */}
+          <div className="absolute" style={{ width: 200, height: 200 }}>
+            <ListeningPulse active={voiceState === "listening"} />
+          </div>
+
+          {/* Processing spinner ring */}
+          {voiceState === "processing" && (
+            <motion.div
+              className="absolute rounded-full border-2 border-transparent"
+              style={{
+                width: 210,
+                height: 210,
+                borderTopColor: "hsl(var(--foreground) / 0.15)",
+              }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            />
+          )}
+
+          {/* The coin itself */}
+          <motion.div
+            animate={
+              voiceState === "speaking"
+                ? { scale: [1, 1.03, 1] }
+                : voiceState === "listening"
+                ? { scale: [1, 1.01, 1] }
+                : {}
+            }
+            transition={
+              voiceState === "speaking"
+                ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+                : voiceState === "listening"
+                ? { duration: 3, repeat: Infinity, ease: "easeInOut" }
+                : {}
+            }
+            onClick={() => { if (voiceState === "speaking") interruptSocrate(); }}
+            className="cursor-pointer"
+          >
+            <SocrateCoin size={180} interactive={false} isActive={voiceState === "speaking" || voiceState === "listening"} />
+          </motion.div>
+        </div>
+
+        {/* State label */}
+        <motion.p
+          key={stateLabel}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 text-xs text-muted-foreground uppercase tracking-[0.2em] font-medium"
+        >
+          {stateLabel}
+        </motion.p>
+
+        {/* Live transcript (what user is saying) */}
+        <AnimatePresence>
+          {liveTranscript && (
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-6 text-sm text-foreground/50 italic text-center max-w-md px-6"
+            >
+              {liveTranscript}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* Last assistant message - shown below the coin, subtle */}
+        <AnimatePresence>
+          {lastAssistant && !showTranscript && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-8 max-w-lg px-8 text-center"
+            >
+              <div className="text-sm text-foreground/40 leading-relaxed line-clamp-4">
+                <ReactMarkdown>{lastAssistant}</ReactMarkdown>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Full transcript panel - slides up from bottom */}
+      <AnimatePresence>
+        {showTranscript && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="absolute bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border max-h-[50vh] flex flex-col"
+          >
+            <div className="px-5 py-3 border-b border-border flex items-center justify-between shrink-0">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Transcript</p>
+              <button onClick={() => setShowTranscript(false)} className="p-1 rounded hover:bg-secondary">
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2.5">
+              {messages.map(msg => (
+                <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] px-3 py-2 text-xs rounded-lg ${
+                    msg.role === "assistant"
+                      ? "bg-secondary/30 text-foreground/70"
+                      : "bg-accent/5 text-foreground/60"
+                  }`}>
+                    {msg.content === "" && isStreaming ? (
+                      <span className="text-muted-foreground">...</span>
+                    ) : (
+                      <div className="prose prose-xs max-w-none [&_p]:my-0.5 [&_strong]:text-foreground/80">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
             </div>
           </motion.div>
         )}
-
-        <div ref={bottomRef} />
-      </div>
+      </AnimatePresence>
 
       {/* Error */}
       <AnimatePresence>
         {error && (
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="px-5 py-1 text-xs text-destructive text-center">{error}</motion.p>
+            className="absolute bottom-20 left-0 right-0 text-xs text-destructive text-center z-10">{error}</motion.p>
         )}
       </AnimatePresence>
 
-      {/* Text input */}
-      <div className="border-t border-border px-5 py-3 flex items-center gap-2 shrink-0">
-        <input
-          value={textInput}
-          onChange={(e) => setTextInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
-          placeholder="Scrivi a Socrate..."
-          disabled={isStreaming}
-          className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
-        />
-        <button onClick={handleTextSend} disabled={!textInput.trim() || isStreaming}
-          className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30">
-          <Send className="w-4 h-4" />
-        </button>
-      </div>
+      {/* Text input - togglable at bottom */}
+      <AnimatePresence>
+        {showTextInput && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="px-6 py-4 border-t border-border flex items-center gap-2 shrink-0 relative z-10"
+          >
+            <input
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
+              placeholder="Type to Socrate..."
+              disabled={isStreaming}
+              autoFocus
+              className="flex-1 bg-secondary/30 border border-border rounded-full px-5 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 disabled:opacity-50"
+            />
+            <button onClick={handleTextSend} disabled={!textInput.trim() || isStreaming}
+              className="p-2.5 bg-foreground text-background rounded-full hover:bg-foreground/90 transition-colors disabled:opacity-30">
+              <Send className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
