@@ -283,12 +283,8 @@ export default function VoiceConversation({
           </button>
           <button
             onClick={() => {
-              unmountedRef.current = true;
-              abortRef.current?.abort();
-              try { scribe.disconnect(); } catch(e) {}
-              stopAudio();
-              setVoiceState("idle");
-              onClose();
+              cleanupVoiceSession();
+              (onSwitchToText ?? onClose)();
             }}
             className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             title="Passa alla chat testuale">
@@ -301,14 +297,13 @@ export default function VoiceConversation({
               {isGeneratingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             </button>
           )}
-          <button onClick={() => {
-            unmountedRef.current = true;
-            abortRef.current?.abort();
-            try { scribe.disconnect(); } catch(e) {}
-            stopAudio();
-            setVoiceState("idle");
-            onClose();
-          }} className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+          <button
+            onClick={() => {
+              cleanupVoiceSession();
+              onClose();
+            }}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
