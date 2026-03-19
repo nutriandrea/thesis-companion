@@ -885,7 +885,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
         </div>
       )}
       {!sup && topSectors.length === 0 && (
-        <p className="text-xs text-muted-foreground text-center py-4 italic">Confirm supervisor and orientation to proceed.</p>
+        <p className="text-xs text-muted-foreground text-center py-4 italic">Conferma relatore e orientamento per procedere.</p>
       )}
     </div>
   );
