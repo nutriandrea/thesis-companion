@@ -1011,8 +1011,7 @@ export default function UnifiedDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
           {/* Career Distribution */}
           <motion.div data-tutor-id="career" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}
-              action={{ label: "Calcola", onClick: computeCareer, loading: careerLoading }}>
+            <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}>
               <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
             </DashboardCard>
           </motion.div>
