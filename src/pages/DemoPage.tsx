@@ -24,9 +24,34 @@ interface MockSupervisor { id: string; name: string; fields: string[]; score: nu
 interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; email: string; }
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
 
-// ─── DEMO SOCRATE CHAT HOOK ───
+// ─── BACKEND URLS ───
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
-const DEMO_STUDENT_CONTEXT = `Name: Marco Demo\nDegree: MSc Computer Science\nUniversity: ETH Zurich\nSkills: Python, machine learning, NLP, data analysis\nState: topic_chosen\nTopic: Applying Large Language Models for Automated Vulnerability Detection in Source Code`;
+const DEMO_ENGINE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/demo-engine`;
+const DEMO_STUDENT_CONTEXT = `Name: Marco Demo\nDegree: MSc Computer Science\nUniversity: ETH Zurich\nSkills: Python, machine learning, NLP, data analysis\nState: topic_chosen\nTopic: Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code`;
+
+// ─── DEMO ENGINE HOOK ───
+function useDemoEngine<T>(mode: string, extraParams?: Record<string, any>) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(DEMO_ENGINE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      body: JSON.stringify({ mode, ...extraParams }),
+    })
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setData(d); setLoading(false); } })
+      .catch(e => { if (!cancelled) { setError(e.message); setLoading(false); } });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, JSON.stringify(extraParams)]);
+
+  return { data, loading, error };
+}
 
 function useDemoChat(initialMessages?: ChatMsg[]) {
   const [messages, setMessages] = useState<ChatMsg[]>(initialMessages || []);
@@ -889,8 +914,25 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
   );
 }
 
+function DemoLoadingSkeleton({ lines = 3 }: { lines?: number }) {
+  return (
+    <div className="space-y-2.5 animate-pulse">
+      {Array.from({ length: lines }).map((_, i) => (
+        <div key={i} className="flex items-center gap-2.5 p-2">
+          <div className="w-3 h-3 rounded-full bg-secondary" />
+          <div className="flex-1 space-y-1">
+            <div className="h-3 bg-secondary rounded w-3/4" />
+            <div className="h-2 bg-secondary/60 rounded w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DemoTasks({ phase }: { phase: string }) {
-  const tasks = MOCK_TASKS[phase] || MOCK_TASKS.orientation;
+  const { data, loading } = useDemoEngine<{ tasks: MockTask[] }>("generate_tasks", { phase });
+  const tasks = data?.tasks?.length ? data.tasks : (MOCK_TASKS[phase] || MOCK_TASKS.orientation);
   const priorityLabel = (p: string) => {
     switch (p) {
       case "critical": return { text: "Critical", cls: "bg-destructive/10 text-destructive" };
@@ -900,6 +942,8 @@ function DemoTasks({ phase }: { phase: string }) {
     }
   };
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
 
   return (
     <div className="space-y-1.5">
@@ -940,13 +984,12 @@ function DemoTasks({ phase }: { phase: string }) {
 }
 
 function DemoCareerTree() {
+  const { data, loading } = useDemoEngine<{ sectors: CareerSector[] }>("compute_career");
+  const sectors = data?.sectors?.length ? data.sectors : MOCK_SECTORS;
   const [expanded, setExpanded] = useState<string | null>(null);
   const COLORS = ["hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)", "hsl(var(--warning))", "hsl(270 60% 55%)"];
-  const mockCompanies: Record<string, string[]> = {
-    "AI & Machine Learning": ["Google DeepMind", "OpenAI", "Anthropic", "Meta AI", "Mistral AI"],
-    "Cybersecurity": ["CrowdStrike", "Palo Alto Networks", "Snyk", "Checkmarx"],
-    "DevOps & Automazione": ["GitHub", "GitLab", "HashiCorp", "Docker"],
-  };
+
+  if (loading) return <DemoLoadingSkeleton lines={4} />;
 
   return (
     <div className="space-y-1">
@@ -955,10 +998,9 @@ function DemoCareerTree() {
         <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
         <div className="flex-1 h-px bg-border" />
       </div>
-      {MOCK_SECTORS.map((sector, i) => {
+      {sectors.map((sector, i) => {
         const color = COLORS[i % COLORS.length];
         const isExpanded = expanded === sector.name;
-        const comps = mockCompanies[sector.name] || [];
         return (
           <div key={sector.name} className="relative">
             <div className="absolute left-[7px] top-0 bottom-0 w-px bg-border" />
@@ -970,6 +1012,7 @@ function DemoCareerTree() {
               </div>
               <div className="flex-1 min-w-0 ml-2">
                 <span className="text-xs font-semibold text-foreground">{sector.name}</span>
+                {sector.reasoning && <p className="text-[10px] text-muted-foreground mt-0.5">{sector.reasoning}</p>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -977,22 +1020,7 @@ function DemoCareerTree() {
                 </div>
                 <span className="text-[11px] font-bold w-8 text-right" style={{ color }}>{sector.percentage}%</span>
               </div>
-              <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             </button>
-            <AnimatePresence>
-              {isExpanded && comps.length > 0 && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="pl-8 pr-2 pb-2 space-y-1">
-                    {comps.map((c, j) => (
-                      <div key={j} className="flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
-                        <Building2 className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-[11px] font-medium text-foreground">{c}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         );
       })}
@@ -1001,12 +1029,16 @@ function DemoCareerTree() {
 }
 
 function DemoSupervisors() {
+  const { data, loading } = useDemoEngine<{ supervisors: MockSupervisor[] }>("match_supervisors");
+  const sups = data?.supervisors?.length ? data.supervisors : MOCK_SUPERVISORS;
   const [selected, setSelected] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
 
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
+
   return (
     <div className="space-y-2">
-      {MOCK_SUPERVISORS.map(sup => {
+      {sups.map(sup => {
         const isSelected = selected === sup.id;
         return (
           <div key={sup.id}>
@@ -1066,9 +1098,14 @@ function DemoSupervisors() {
 }
 
 function DemoExperts() {
+  const { data, loading } = useDemoEngine<{ experts: MockExpert[] }>("match_experts");
+  const exps = data?.experts?.length ? data.experts : MOCK_EXPERTS;
+
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
+
   return (
     <div className="space-y-1.5">
-      {MOCK_EXPERTS.map(exp => (
+      {exps.map(exp => (
         <div key={exp.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
           <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${exp.offerInterviews ? "bg-green-500/10" : "bg-accent/10"}`}>
             <Users className={`w-3.5 h-3.5 ${exp.offerInterviews ? "text-green-500" : "text-accent"}`} />
@@ -1088,6 +1125,8 @@ function DemoExperts() {
 }
 
 function DemoReferences() {
+  const { data, loading } = useDemoEngine<{ references: MockReference[] }>("generate_references");
+  const refs = data?.references?.length ? data.references : MOCK_REFERENCES;
   const categoryLabel: Record<string, { text: string; cls: string }> = {
     foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
     methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
@@ -1095,9 +1134,11 @@ function DemoReferences() {
     contrarian: { text: "Critical", cls: "bg-destructive/10 text-destructive" },
   };
 
+  if (loading) return <DemoLoadingSkeleton lines={4} />;
+
   return (
     <div className="space-y-1.5">
-      {MOCK_REFERENCES.map((ref, i) => {
+      {refs.map((ref, i) => {
         const cat = categoryLabel[ref.category] || categoryLabel.foundational;
         return (
           <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
@@ -1115,10 +1156,14 @@ function DemoReferences() {
 }
 
 function DemoVulnerabilities() {
-  const ranked = [...MOCK_VULNERABILITIES].sort((a, b) => {
+  const { data, loading } = useDemoEngine<{ vulnerabilities: MockVulnerability[] }>("extract_vulnerabilities");
+  const vulns = data?.vulnerabilities?.length ? data.vulnerabilities : MOCK_VULNERABILITIES;
+  const ranked = [...vulns].sort((a, b) => {
     const order: Record<string, number> = { critical: 0, high: 1, medium: 2 };
     return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
   });
+
+  if (loading) return <DemoLoadingSkeleton lines={3} />;
 
   return (
     <div className="space-y-1.5">
@@ -1218,7 +1263,10 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
 }
 
 function DemoRoadmap() {
+  const { data, loading } = useDemoEngine<{ phases: RoadmapPhase[] }>("generate_roadmap");
+  const initialItems = data?.phases?.length ? data.phases : MOCK_ROADMAP;
   const [items, setItems] = useState(MOCK_ROADMAP);
+  useEffect(() => { if (data?.phases?.length) setItems(data.phases); }, [data]);
   const toggleTask = (phaseKey: string, taskId: string) => {
     setItems(prev => prev.map(phase =>
       phase.key === phaseKey
@@ -1226,6 +1274,8 @@ function DemoRoadmap() {
         : phase
     ));
   };
+
+  if (loading) return <DemoLoadingSkeleton lines={5} />;
 
   return (
     <div className="space-y-4">
