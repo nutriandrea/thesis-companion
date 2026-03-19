@@ -5,10 +5,11 @@ import {
   MessageCircle, ChevronRight, ShieldAlert, BarChart3, BookOpen,
   ExternalLink, ArrowRight, TrendingUp, Link2, Loader2, Mic,
   Mail, Lock, User, Eye, EyeOff, MapPin, Calendar,
-  Compass, Lightbulb, PenTool, Sparkles, SkipForward, X,
+  Compass, Lightbulb, PenTool, Sparkles, SkipForward, X, Send,
   UserPlus, Share2, BarChart, Eye as EyeIcon,
 } from "lucide-react";
 import SocrateCoin from "@/components/shared/SocrateCoin";
+import ReactMarkdown from "react-markdown";
 
 // ─── DEMO STEPS ───
 type DemoStep = "login" | "onboarding" | "intro" | "socrate" | "dashboard";
