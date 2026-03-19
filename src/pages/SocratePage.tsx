@@ -410,13 +410,6 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
               <Loader2 className="w-3 h-3 animate-spin" /> Analyzing...
             </span>
           )}
-          {messages.length >= 3 && (
-            <button onClick={generateReport} disabled={isStreaming || isGeneratingReport}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
-              {isGeneratingReport ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-              Report
-            </button>
-          )}
           {messages.length >= 5 && (
             <button onClick={runFusionAnalysis} disabled={isStreaming || isExtracting}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ai/10 border border-ai/20 text-xs text-ai hover:bg-ai/20 transition-colors disabled:opacity-30">
