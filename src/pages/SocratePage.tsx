@@ -404,18 +404,6 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
           <h2 className="font-display text-base font-semibold text-foreground">Socrate</h2>
           <p className="ds-caption">Hub centrale</p>
         </div>
-        {severita !== null && (
-          <div className="flex items-center gap-1.5 ml-2" title={`Severità: ${severita} — ${severita >= 0.8 ? "Spietato" : severita >= 0.6 ? "Critico" : severita >= 0.4 ? "Collaborativo" : "Supportivo"}`}>
-            <div className="flex gap-0.5">
-              {[0.2, 0.4, 0.6, 0.8, 1.0].map((threshold, i) => (
-                <div key={i} className={`w-1.5 h-3 rounded-sm ${severita >= threshold ? (severita >= 0.8 ? "bg-destructive" : severita >= 0.6 ? "bg-warning" : "bg-accent") : "bg-border"}`} />
-              ))}
-            </div>
-            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
-              {severita >= 0.8 ? "max" : severita >= 0.6 ? "alto" : severita >= 0.4 ? "medio" : "basso"}
-            </span>
-          </div>
-        )}
         <div className="ml-auto flex items-center gap-2">
           {isExtracting && (
             <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -424,27 +412,27 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
           )}
           {messages.length >= 3 && (
             <button onClick={generateReport} disabled={isStreaming || isGeneratingReport}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
               {isGeneratingReport ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
               Report
             </button>
           )}
           {messages.length >= 5 && (
             <button onClick={() => runBackgroundExtraction(messages)} disabled={isStreaming || isExtracting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-30">
               <Brain className="w-3.5 h-3.5" /> Analizza
             </button>
           )}
           {messages.length >= 5 && (
             <button onClick={runFusionAnalysis} disabled={isStreaming || isExtracting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-ai/10 border border-ai/20 text-xs text-ai hover:bg-ai/20 transition-colors disabled:opacity-30">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ai/10 border border-ai/20 text-xs text-ai hover:bg-ai/20 transition-colors disabled:opacity-30">
               {isExtracting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
               Fusione
             </button>
           )}
           {profile?.socrate_done && (
             <button onClick={() => setActiveSection("dashboard")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               <CheckCircle className="w-3.5 h-3.5 text-success" /> Dashboard
             </button>
           )}
@@ -456,7 +444,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         {messages.map((msg) => (
           <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[75%] px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-card border border-border rounded-lg" : "bg-secondary border border-border rounded-lg"}`}>
+            <div className={`max-w-[75%] px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-card border border-border rounded-2xl" : "bg-secondary border border-border rounded-2xl"}`}>
               {msg.content === "" && (isStreaming || isGeneratingReport) ? (
                 <div className="flex gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
@@ -477,7 +465,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         <div className="border-t border-border pt-3 pb-1 flex justify-center">
           <button
             onClick={() => setShowThesisDialog(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-accent/10 border border-accent/20 text-xs font-semibold text-accent hover:bg-accent/20 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent hover:bg-accent/20 transition-colors"
           >
             <Target className="w-4 h-4" />
             Ho scelto la mia tesi
@@ -487,21 +475,21 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       {/* Input */}
       <div className={`border-t border-border pt-4 flex items-center gap-3 ${explorationMode ? "max-w-3xl mx-auto w-full" : ""}`}>
-        <div className="w-8 h-8 rounded bg-secondary border border-border flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0">
           <span className="text-[10px] font-bold text-foreground">{profile?.first_name?.[0] || "U"}</span>
         </div>
         <div className="flex-1 flex gap-2">
           <input value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
             placeholder="Rispondi a Socrate..." disabled={isStreaming}
-            className="flex-1 bg-card border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+            className="flex-1 bg-card border border-border rounded-full px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
           <button onClick={() => setInputMode("voice")}
-            className="px-3 py-3 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="px-3 py-3 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             title="Passa alla modalità vocale">
             <Mic className="w-4 h-4" />
           </button>
           <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
-            className="px-4 py-3 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors disabled:opacity-30">
+            className="px-4 py-3 bg-accent text-accent-foreground rounded-full hover:bg-accent/90 transition-colors disabled:opacity-30">
             <Send className="w-4 h-4" />
           </button>
         </div>
