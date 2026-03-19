@@ -1,23 +1,28 @@
 import { useApp } from "@/contexts/AppContext";
 import { motion } from "framer-motion";
-import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText, Building2, GraduationCap, Activity, Timer } from "lucide-react";
+import { Clock, Target, Calendar, TrendingUp, MessageCircle, Zap, BookOpen, Users, ChevronRight, Sparkles, Brain, FileText, Building2, GraduationCap, Activity, Timer, AlertTriangle, ShieldAlert, Copy, Eye, Flame, CircleX, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionStats } from "@/hooks/useSessionStats";
+import { useToast } from "@/hooks/use-toast";
 
 interface AISuggestion { id: string; category: string; title: string; detail: string; reason: string; }
 interface AffinityScore { id: string; entity_type: string; entity_id: string; entity_name: string; score: number; reasoning: string; matched_traits: string[]; }
+interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; resolved: boolean; created_at: string; }
 
 export default function DashboardPage() {
   const { roadmap, toggleTask, profile, overallProgress, setActiveSection, user } = useApp();
+  const { toast } = useToast();
   const [memoryCount, setMemoryCount] = useState(0);
   const [suggestionCount, setSuggestionCount] = useState(0);
   const [nextSteps, setNextSteps] = useState<AISuggestion[]>([]);
   const [thesisFeedback, setThesisFeedback] = useState<AISuggestion[]>([]);
   const [topAffinities, setTopAffinities] = useState<AffinityScore[]>([]);
+  const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
 
   // Session stats (realtime)
   const { data: sessionData } = useSessionStats(user?.id);
@@ -48,14 +53,45 @@ export default function DashboardPage() {
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "next_step").order("created_at", { ascending: false }).limit(5),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "thesis_feedback").order("created_at", { ascending: false }).limit(3),
       supabase.from("affinity_scores" as any).select("*").eq("user_id", user.id).order("score", { ascending: false }).limit(6),
-    ]).then(([mem, sug, steps, feedback, affinities]) => {
+      supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(10),
+    ]).then(([mem, sug, steps, feedback, affinities, vulns]) => {
       setMemoryCount(mem.count || 0);
       setSuggestionCount((sug as any).count || 0);
       if ((steps as any).data) setNextSteps((steps as any).data);
       if ((feedback as any).data) setThesisFeedback((feedback as any).data);
       if ((affinities as any).data) setTopAffinities((affinities as any).data);
+      if ((vulns as any).data) setVulnerabilities((vulns as any).data);
     });
   }, [user]);
+
+  // Vulnerability scan
+  const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
+  const scanVulnerabilities = useCallback(async () => {
+    if (!user || isScanning) return;
+    setIsScanning(true);
+    try {
+      const msgs = await supabase.from("socrate_messages").select("role, content").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20);
+      const studentCtx = profile ? `Nome: ${profile.first_name}\nCorso: ${profile.degree}\nUniversità: ${profile.university}\nTopic: ${profile.thesis_topic}` : "";
+      const latexContent = localStorage.getItem("thesis-latex-content") || "";
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ messages: msgs.data || [], studentContext: studentCtx, latexContent, mode: "extract_vulnerabilities" }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        toast({ title: "🔥 Scansione completata", description: `${data.vulnerabilities?.length || 0} vulnerabilità rilevate.` });
+        const { data: fresh } = await supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(10);
+        if (fresh) setVulnerabilities(fresh as any);
+      }
+    } catch (e) { console.error(e); toast({ variant: "destructive", title: "Errore", description: "Scansione fallita." }); }
+    finally { setIsScanning(false); }
+  }, [user, isScanning, profile, toast]);
+
+  const resolveVulnerability = useCallback(async (id: string) => {
+    await supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() }).eq("id", id);
+    setVulnerabilities(prev => prev.filter(v => v.id !== id));
+  }, []);
 
   // Compute real progress from session data or fallback to roadmap
   const realCompletion = sessionData?.progress?.overallCompletion || overallProgress;
@@ -191,6 +227,68 @@ export default function DashboardPage() {
           </motion.button>
         ))}
       </div>
+
+      {/* ─── VULNERABILITIES ─── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+        className="bg-card border border-destructive/20 rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-destructive/10 bg-destructive/5">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-destructive" />
+            <h2 className="text-sm font-bold text-foreground tracking-wide uppercase">Vulnerabilità</h2>
+            {vulnerabilities.length > 0 && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-destructive/20 text-destructive">{vulnerabilities.length}</span>
+            )}
+          </div>
+          <button onClick={scanVulnerabilities} disabled={isScanning}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive/10 border border-destructive/20 text-xs font-medium text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40">
+            {isScanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Flame className="w-3.5 h-3.5" />}
+            {isScanning ? "Analisi..." : "Scansiona"}
+          </button>
+        </div>
+        {vulnerabilities.length === 0 ? (
+          <div className="p-6 text-center">
+            <ShieldAlert className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">Nessuna vulnerabilità rilevata.</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1">Clicca "Scansiona" per far analizzare la tua tesi a Socrate.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {vulnerabilities.map((v, i) => {
+              const typeConfig: Record<string, { icon: any; label: string; color: string }> = {
+                cliche: { icon: Copy, label: "CLICHÉ", color: "text-warning" },
+                logic_gap: { icon: CircleX, label: "BUCO LOGICO", color: "text-destructive" },
+                methodology_flaw: { icon: AlertTriangle, label: "METODO", color: "text-destructive" },
+                superficiality: { icon: Eye, label: "SUPERFICIALE", color: "text-warning" },
+                originality_deficit: { icon: Copy, label: "ZERO ORIGINALITÀ", color: "text-destructive" },
+              };
+              const config = typeConfig[v.type] || typeConfig.cliche;
+              const sevColors: Record<string, string> = { critical: "bg-destructive/20 text-destructive border-destructive/30", high: "bg-warning/20 text-warning border-warning/30", medium: "bg-muted text-muted-foreground border-border" };
+              return (
+                <motion.div key={v.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.05 }}
+                  className="p-4 hover:bg-destructive/[0.02] transition-colors group">
+                  <div className="flex items-start gap-3">
+                    <config.icon className={`w-4 h-4 mt-0.5 shrink-0 ${config.color}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[9px] font-bold tracking-wider ${config.color}`}>{config.label}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium ${sevColors[v.severity]}`}>
+                          {v.severity === "critical" ? "CRITICO" : v.severity === "high" ? "SERIO" : "MEDIO"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-foreground">{v.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{v.description}</p>
+                    </div>
+                    <button onClick={() => resolveVulnerability(v.id)} title="Segna come risolta"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-success/10 text-muted-foreground hover:text-success">
+                      <CircleX className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
 
       {/* Socrate Hub Banner */}
       {(memoryCount > 0 || suggestionCount > 0) && (

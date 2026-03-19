@@ -133,6 +133,95 @@ Tipi:
       return new Response(JSON.stringify({ entries }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ─── EXTRACT VULNERABILITIES ───
+    if (currentMode === "extract_vulnerabilities") {
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei l'analista critico del sistema Socrate. Identifica VULNERABILITÀ nella tesi e nel ragionamento dello studente.
+
+CONTESTO STUDENTE:
+${studentContext || "Non disponibile"}
+
+${latexContent ? `CONTENUTO LATEX:\n${latexContent.substring(0, 3000)}` : ""}
+
+Categorie:
+- "cliche": frasi fatte, idee banali, argomenti già sentiti mille volte
+- "logic_gap": buchi logici, salti argomentativi, premesse non dimostrate
+- "methodology_flaw": errori metodologici, approcci deboli
+- "superficiality": trattazione superficiale, mancanza di profondità
+- "originality_deficit": niente di nuovo rispetto alla letteratura
+
+Severity: "critical" (blocca la tesi), "high" (serio), "medium" (da migliorare)
+
+Sii DIRETTO, AGGRESSIVO, BRUTALE. Non addolcire.
+Esempio: "Questa introduzione potrebbe essere in qualsiasi tesi. Zero identità."
+Esempio: "Stai riscrivendo Wikipedia, non stai facendo ricerca."`,
+            },
+            { role: "user", content: JSON.stringify((messages as any[]).slice(-20)) },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "report_vulnerabilities",
+              description: "Report thesis vulnerabilities",
+              parameters: {
+                type: "object",
+                properties: {
+                  vulnerabilities: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        type: { type: "string", enum: ["cliche", "logic_gap", "methodology_flaw", "superficiality", "originality_deficit"] },
+                        title: { type: "string" },
+                        description: { type: "string" },
+                        severity: { type: "string", enum: ["critical", "high", "medium"] },
+                      },
+                      required: ["type", "title", "description", "severity"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["vulnerabilities"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "report_vulnerabilities" } },
+        }),
+      });
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: "Errore estrazione vulnerabilità" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      let vulnerabilities: any[] = [];
+      if (toolCall?.function?.arguments) {
+        try { vulnerabilities = JSON.parse(toolCall.function.arguments).vulnerabilities || []; } catch { vulnerabilities = []; }
+      }
+
+      if (userId && vulnerabilities.length > 0) {
+        await supabase.from("vulnerabilities").insert(
+          vulnerabilities.map((v: any) => ({
+            user_id: userId, type: v.type, title: v.title, description: v.description, severity: v.severity, source: "socrate",
+          }))
+        );
+        await logEvent("vulnerability_extraction", { count: vulnerabilities.length });
+      }
+
+      return new Response(JSON.stringify({ vulnerabilities }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ─── FULL PROFILE EXTRACTION + PERSISTENCE ───
     if (currentMode === "extract_suggestions") {
       const response = await fetch(AI_URL, {
