@@ -35,6 +35,7 @@ const RAG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`;
 const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
 
 
+
 const PHASES = [
   { key: "orientation", label: "Orientamento", icon: "1" },
   { key: "topic_supervisor", label: "Topic & Supervisore", icon: "2" },
@@ -866,6 +867,15 @@ export default function UnifiedDashboard() {
     finally { setCareerLoading(false); }
   }, [user, careerLoading, thesisContent, toast]);
 
+  // Close chat and auto-compute career
+  const closeChat = useCallback(() => {
+    setChatOpen(false);
+    setInputMode("text");
+    if (messages.length > 2) {
+      setTimeout(() => computeCareer(), 500);
+    }
+  }, [messages.length, computeCareer]);
+
   // Evaluate phase
   const evaluatePhase = useCallback(async () => {
     if (!user || phaseEvalLoading) return;
@@ -1011,8 +1021,7 @@ export default function UnifiedDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
           {/* Career Distribution */}
           <motion.div data-tutor-id="career" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}
-              action={{ label: "Calcola", onClick: computeCareer, loading: careerLoading }}>
+            <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}>
               <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
             </DashboardCard>
           </motion.div>
@@ -1109,7 +1118,7 @@ export default function UnifiedDashboard() {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 bg-foreground/10 z-40"
-              onClick={() => { setChatOpen(false); setInputMode("text"); }}
+              onClick={closeChat}
             />
             {inputMode === "voice" ? (
               <motion.div
@@ -1122,7 +1131,7 @@ export default function UnifiedDashboard() {
                     <p className="text-sm font-bold text-foreground">Socrate</p>
                     <p className="text-[10px] text-muted-foreground">Modalità vocale</p>
                   </div>
-                  <button onClick={() => { setChatOpen(false); setInputMode("text"); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+                  <button onClick={closeChat} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                     <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
@@ -1138,7 +1147,7 @@ export default function UnifiedDashboard() {
               </motion.div>
             ) : (
               <ChatOverlay messages={messages} input={input} setInput={setInput}
-                sendMessage={sendMessage} isStreaming={isStreaming} onClose={() => setChatOpen(false)}
+                sendMessage={sendMessage} isStreaming={isStreaming} onClose={closeChat}
                 onSwitchToVoice={() => setInputMode("voice")} />
             )}
           </>
