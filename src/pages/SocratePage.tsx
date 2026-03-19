@@ -475,7 +475,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       {/* Input */}
       <div className={`border-t border-border pt-4 flex items-center gap-3 ${explorationMode ? "max-w-3xl mx-auto w-full" : ""}`}>
-        <div className="w-8 h-8 rounded bg-secondary border border-border flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0">
           <span className="text-[10px] font-bold text-foreground">{profile?.first_name?.[0] || "U"}</span>
         </div>
         <div className="flex-1 flex gap-2">
