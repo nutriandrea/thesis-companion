@@ -1967,6 +1967,45 @@ FORMATO: **grassetto** per concetti chiave. Risposte CORTE (max 3-5 righe). Una 
     // Log chat/report event
     logEvent(currentMode === "report" ? "report_generated" : "chat_exchange", { messagesCount: messages?.length || 0 }, currentMode === "report" ? "report" : "socrate");
 
+    // ─── UPDATE PROGRESS AFTER CHAT ───
+    // Compute overall_completion based on phase + conversation depth
+    if (userId && (currentMode === "chat" || !currentMode)) {
+      try {
+        const PHASE_BASE_PROGRESS: Record<string, number> = {
+          orientation: 0,
+          topic_supervisor: 20,
+          planning: 40,
+          execution: 60,
+          writing: 80,
+        };
+        const baseProgress = PHASE_BASE_PROGRESS[currentPhase] || 0;
+        const msgCount = messages?.length || 0;
+        // Each exchange adds up to 20% within the phase (capped at phase ceiling)
+        const withinPhaseProgress = Math.min(20, Math.round(msgCount * 0.8));
+        const newCompletion = Math.min(100, baseProgress + withinPhaseProgress);
+
+        const { data: sp } = await supabase.from("student_profiles").select("overall_completion, total_exchanges").eq("user_id", userId).single();
+        if (sp) {
+          const prevCompletion = sp.overall_completion || 0;
+          // Only update if progress increased (never go backwards)
+          if (newCompletion > prevCompletion) {
+            await supabase.from("student_profiles").update({
+              overall_completion: newCompletion,
+              total_exchanges: (sp.total_exchanges || 0) + 1,
+              last_active_at: new Date().toISOString(),
+            }).eq("user_id", userId);
+          } else {
+            await supabase.from("student_profiles").update({
+              total_exchanges: (sp.total_exchanges || 0) + 1,
+              last_active_at: new Date().toISOString(),
+            }).eq("user_id", userId);
+          }
+        }
+      } catch (e) {
+        console.error("Progress update error:", e);
+      }
+    }
+
     return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {
     console.error("socrate error:", e);

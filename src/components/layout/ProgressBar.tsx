@@ -1,31 +1,70 @@
+import { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { motion } from "framer-motion";
-import { useSessionStats } from "@/hooks/useSessionStats";
+import { supabase } from "@/integrations/supabase/client";
+
+interface StudentProgress {
+  overall_completion: number | null;
+  current_phase: string | null;
+  estimated_days_remaining: number | null;
+}
 
 export default function ProgressBar() {
-  const { overallProgress, roadmap, user } = useApp();
-  const { data: sessionData } = useSessionStats(user?.id);
+  const { user } = useApp();
+  const [progress, setProgress] = useState<StudentProgress>({
+    overall_completion: null,
+    current_phase: null,
+    estimated_days_remaining: null,
+  });
 
-  // Use real completion from session data if available
-  const realProgress = sessionData?.progress?.overallCompletion || overallProgress;
-  const estimatedDays = sessionData?.progress?.estimatedDaysRemaining;
-  const thesisStage = sessionData?.progress?.thesisStage;
+  const fetchProgress = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("student_profiles" as any)
+      .select("overall_completion, current_phase, estimated_days_remaining")
+      .eq("user_id", user.id)
+      .single();
+    if (data) setProgress(data as unknown as StudentProgress);
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchProgress();
+    if (!user?.id) return;
+
+    // Realtime subscription on student_profiles for instant updates
+    const channel = supabase
+      .channel("progress-bar")
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "student_profiles",
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        fetchProgress();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, fetchProgress]);
+
+  const realProgress = progress.overall_completion || 0;
+  const estimatedDays = progress.estimated_days_remaining;
+  const currentPhase = progress.current_phase || "orientation";
 
   const totalWeeks = 24;
   const currentWeek = Math.max(1, Math.round((realProgress / 100) * totalWeeks));
 
-  const stageLabels: Record<string, string> = {
-    exploration: "E", topic_chosen: "T", structuring: "S", writing: "W", revision: "R",
-  };
-
-  // Stage markers with their week positions
   const stageMarkers = [
     { label: "O", week: 4, id: "orientation" },
-    { label: "T", week: 8, id: "topic-search" },
+    { label: "T", week: 8, id: "topic_supervisor" },
     { label: "P", week: 10, id: "planning" },
     { label: "E", week: 20, id: "execution" },
     { label: "W", week: 24, id: "writing" },
   ];
+
+  // Determine which phases are done/current based on current_phase
+  const phaseOrder = ["orientation", "topic_supervisor", "planning", "execution", "writing"];
+  const currentPhaseIdx = phaseOrder.indexOf(currentPhase);
 
   return (
     <div className="fixed right-0 top-0 z-30 h-screen w-12 flex flex-col items-center bg-background border-l border-border">
@@ -51,9 +90,9 @@ export default function ProgressBar() {
         {/* Stage markers */}
         {stageMarkers.map((marker) => {
           const position = (marker.week / totalWeeks) * 88 + 3;
-          const phase = roadmap.find(p => p.id === marker.id);
-          const isDone = phase && phase.progress === 100;
-          const isCurrent = phase && phase.progress > 0 && phase.progress < 100;
+          const markerIdx = phaseOrder.indexOf(marker.id);
+          const isDone = markerIdx < currentPhaseIdx;
+          const isCurrent = markerIdx === currentPhaseIdx;
 
           return (
             <div
@@ -98,13 +137,13 @@ export default function ProgressBar() {
         )}
       </div>
 
-      {/* Stage indicator */}
-      {thesisStage && (
-        <div className="py-2 border-t border-border w-full flex flex-col items-center">
-          <span className="text-[8px] text-muted-foreground">Stage</span>
-          <span className="text-[10px] font-bold text-ai">{stageLabels[thesisStage] || "?"}</span>
-        </div>
-      )}
+      {/* Phase indicator */}
+      <div className="py-2 border-t border-border w-full flex flex-col items-center">
+        <span className="text-[8px] text-muted-foreground">Fase</span>
+        <span className="text-[10px] font-bold text-accent">
+          {stageMarkers[currentPhaseIdx]?.label || "O"}
+        </span>
+      </div>
     </div>
   );
 }
