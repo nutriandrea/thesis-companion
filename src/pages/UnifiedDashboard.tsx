@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, ShieldAlert, Flame, Target, Users, Building2,
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
-  ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw
+  ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw,
+  TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,16 +23,19 @@ const fields = fieldsData as Field[];
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; }
+interface CareerSector { name: string; percentage: number; reasoning?: string; }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
+const CAREER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/career-engine`;
 const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
 
-const STAGES = [
-  { key: "exploration", label: "Esplorazione" },
-  { key: "topic_chosen", label: "Topic" },
-  { key: "structuring", label: "Struttura" },
-  { key: "writing", label: "Scrittura" },
-  { key: "revision", label: "Revisione" },
+const PHASES = [
+  { key: "exploration", label: "Esplorazione", icon: "🔍" },
+  { key: "convergence", label: "Convergenza", icon: "🎯" },
+  { key: "thesis_defined", label: "Tesi Definita", icon: "📋" },
+  { key: "refinement", label: "Refinement", icon: "🔧" },
+  { key: "writing", label: "Scrittura", icon: "✍️" },
+  { key: "revision", label: "Revisione", icon: "✅" },
 ];
 
 // ─── GRADIENT ORB ───
@@ -43,29 +47,16 @@ function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive
       animate={isActive ? { scale: [1, 1.03, 1] } : {}}
       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
     >
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: size,
-          height: size,
-          top: 0,
-          left: 0,
-          background: "radial-gradient(circle at 35% 40%, #f5a623 0%, #e94e77 25%, #7b61ff 50%, #4a90d9 75%, #7b61ff 100%)",
-          filter: "blur(1px)",
-        }}
-      />
-      {/* Glow */}
-      <div
-        className="absolute rounded-full opacity-30"
-        style={{
-          width: size * 1.4,
-          height: size * 1.4,
-          top: -(size * 0.2),
-          left: -(size * 0.2),
-          background: "radial-gradient(circle, rgba(245,166,35,0.3) 0%, rgba(123,97,255,0.15) 40%, transparent 70%)",
-          filter: "blur(30px)",
-        }}
-      />
+      <div className="absolute rounded-full" style={{
+        width: size, height: size, top: 0, left: 0,
+        background: "radial-gradient(circle at 35% 40%, #f5a623 0%, #e94e77 25%, #7b61ff 50%, #4a90d9 75%, #7b61ff 100%)",
+        filter: "blur(1px)",
+      }} />
+      <div className="absolute rounded-full opacity-30" style={{
+        width: size * 1.4, height: size * 1.4, top: -(size * 0.2), left: -(size * 0.2),
+        background: "radial-gradient(circle, rgba(245,166,35,0.3) 0%, rgba(123,97,255,0.15) 40%, transparent 70%)",
+        filter: "blur(30px)",
+      }} />
     </motion.div>
   );
 }
@@ -74,12 +65,8 @@ function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive
 function DashboardCard({
   title, icon: Icon, children, badge, action, className = ""
 }: {
-  title: string;
-  icon: React.ElementType;
-  children: React.ReactNode;
-  badge?: number | null;
-  action?: { label: string; onClick: () => void; loading?: boolean };
-  className?: string;
+  title: string; icon: React.ElementType; children: React.ReactNode;
+  badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
 }) {
   return (
     <div className={`bg-card/60 backdrop-blur-sm border border-border rounded-xl flex flex-col h-full ${className}`}>
@@ -90,18 +77,13 @@ function DashboardCard({
           <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
         )}
         {action && (
-          <button
-            onClick={action.onClick}
-            disabled={action.loading}
-            className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40"
-          >
+          <button onClick={action.onClick} disabled={action.loading}
+            className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
             {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
           </button>
         )}
       </div>
-      <div className="flex-1 overflow-y-auto px-4 py-3">
-        {children}
-      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-3">{children}</div>
     </div>
   );
 }
@@ -135,9 +117,73 @@ function TaskContent({ userId }: { userId: string }) {
   );
 }
 
-// ─── CONTACTS PANEL ───
-function ContactsContent({ userId }: { userId: string }) {
+// ─── CAREER DISTRIBUTION BAR ───
+function CareerBar({ sectors, onSectorClick, loading }: {
+  sectors: CareerSector[]; onSectorClick: (sector: string) => void; loading: boolean;
+}) {
+  const colors = [
+    "hsl(var(--accent))", "hsl(var(--destructive))", "hsl(142 50% 40%)",
+    "hsl(var(--warning))", "hsl(270 60% 55%)", "hsl(200 70% 50%)",
+  ];
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-6">
+      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      <span className="text-xs text-muted-foreground ml-2">Analizzando carriera...</span>
+    </div>
+  );
+
+  if (sectors.length === 0) return (
+    <p className="text-xs text-muted-foreground text-center py-6">Parla con Socrate per calcolare il tuo orientamento.</p>
+  );
+
+  const sorted = [...sectors].sort((a, b) => b.percentage - a.percentage);
+
+  return (
+    <div className="space-y-3">
+      {/* Stacked bar */}
+      <div className="h-3 rounded-full overflow-hidden flex bg-secondary">
+        {sorted.map((s, i) => (
+          <motion.div
+            key={s.name}
+            initial={{ width: 0 }}
+            animate={{ width: `${s.percentage}%` }}
+            transition={{ duration: 0.8, delay: i * 0.1 }}
+            className="h-full cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: colors[i % colors.length] }}
+            onClick={() => onSectorClick(s.name)}
+            title={`${s.name}: ${s.percentage}%`}
+          />
+        ))}
+      </div>
+
+      {/* Labels */}
+      <div className="space-y-1.5">
+        {sorted.map((s, i) => (
+          <button
+            key={s.name}
+            onClick={() => onSectorClick(s.name)}
+            className="w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors text-left"
+          >
+            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+            <span className="text-[11px] font-medium text-foreground flex-1">{s.name}</span>
+            <span className="text-[11px] font-bold text-foreground">{s.percentage}%</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── SUPERVISOR SELECTION ───
+function SupervisorSelection({ userId, selectedId, onSelect }: {
+  userId: string; selectedId: string | null;
+  onSelect: (id: string, name: string, motivation: string) => void;
+}) {
   const { affinities } = useAffinityScores(userId, "supervisor");
+  const [selecting, setSelecting] = useState<string | null>(null);
+  const [motivation, setMotivation] = useState("");
+
   const items = useMemo(() => {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
@@ -153,25 +199,65 @@ function ContactsContent({ userId }: { userId: string }) {
   return (
     <div className="space-y-2">
       {items.map(sup => (
-        <div key={sup.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-          <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-            <GraduationCap className="w-3.5 h-3.5 text-accent" />
+        <div key={sup.id}>
+          <div
+            className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors cursor-pointer ${
+              selectedId === sup.id ? "bg-accent/10 border border-accent/20" : "hover:bg-secondary/50"
+            }`}
+            onClick={() => setSelecting(selecting === sup.id ? null : sup.id)}
+          >
+            <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+              {selectedId === sup.id ? <CheckCircle2 className="w-3.5 h-3.5 text-accent" /> : <GraduationCap className="w-3.5 h-3.5 text-accent" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
+            </div>
+            {sup.score !== null && <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>}
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
-          </div>
-          {sup.score !== null && <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>}
+
+          {/* Motivation input */}
+          <AnimatePresence>
+            {selecting === sup.id && selectedId !== sup.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-2 py-2 space-y-2">
+                  <p className="text-[10px] text-muted-foreground">Perché questo supervisore?</p>
+                  <textarea
+                    value={motivation}
+                    onChange={e => setMotivation(e.target.value)}
+                    placeholder="Spiega la tua motivazione..."
+                    className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+                    rows={2}
+                  />
+                  <button
+                    onClick={() => { onSelect(sup.id, sup.name, motivation); setSelecting(null); setMotivation(""); }}
+                    disabled={!motivation.trim()}
+                    className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30"
+                  >
+                    Conferma scelta
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       ))}
     </div>
   );
 }
 
-// ─── COMPANIES PANEL ───
-function CompaniesContent({ userId }: { userId: string }) {
+// ─── DYNAMIC COMPANIES ───
+function DynamicCompanies({ userId, sectors, activeSector }: {
+  userId: string; sectors: CareerSector[]; activeSector: string | null;
+}) {
   const { affinities } = useAffinityScores(userId, "company");
-  const items = useMemo(() => {
+  const [aiCompanies, setAiCompanies] = useState<any[]>([]);
+  const [loadingAi, setLoadingAi] = useState(false);
+
+  const defaultItems = useMemo(() => {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
         const comp = companies.find(c => c.id === a.entity_id);
@@ -181,9 +267,58 @@ function CompaniesContent({ userId }: { userId: string }) {
     return companies.slice(0, 5).map(c => ({ id: c.id, name: c.name, score: null, domains: c.domains.slice(0, 2) }));
   }, [affinities]);
 
+  useEffect(() => {
+    if (!activeSector || !userId) return;
+    setLoadingAi(true);
+    fetch(CAREER_URL, {
+      method: "POST", headers: AUTH_HEADERS,
+      body: JSON.stringify({ mode: "get_companies_by_sector", sector: activeSector }),
+    }).then(r => r.json()).then(data => {
+      setAiCompanies(data.companies || []);
+    }).catch(() => {}).finally(() => setLoadingAi(false));
+  }, [activeSector, userId]);
+
+  if (activeSector) {
+    if (loadingAi) return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        <span className="text-xs text-muted-foreground ml-2">Cercando aziende in {activeSector}...</span>
+      </div>
+    );
+
+    if (aiCompanies.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna azienda trovata per {activeSector}.</p>;
+
+    return (
+      <div className="space-y-2">
+        <p className="text-[10px] text-accent font-semibold uppercase tracking-wider mb-2">{activeSector}</p>
+        {aiCompanies.slice(0, 6).map((comp, i) => (
+          <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/50 transition-colors">
+            <div className="w-7 h-7 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+              <Building2 className="w-3.5 h-3.5 text-warning" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-medium text-foreground">{comp.name}</p>
+                {comp.thesis_coherence != null && (
+                  <span className="text-[9px] font-bold text-accent">{comp.thesis_coherence}%</span>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{comp.description}</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {comp.technologies?.slice(0, 3).map((t: string) => (
+                  <span key={t} className="text-[8px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{t}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
-      {items.map(comp => (
+      {defaultItems.map(comp => (
         <div key={comp.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
           <div className="w-7 h-7 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
             <Building2 className="w-3.5 h-3.5 text-warning" />
@@ -221,24 +356,17 @@ function VulnerabilitiesContent({ vulnerabilities }: { vulnerabilities: Vulnerab
 function ChatOverlay({
   messages, input, setInput, sendMessage, isStreaming, onClose
 }: {
-  messages: ChatMsg[];
-  input: string;
-  setInput: (v: string) => void;
-  sendMessage: (text: string) => void;
-  isStreaming: boolean;
-  onClose: () => void;
+  messages: ChatMsg[]; input: string; setInput: (v: string) => void;
+  sendMessage: (text: string) => void; isStreaming: boolean; onClose: () => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
       className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden"
     >
-      {/* Chat header */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
         <div className="w-8 h-8 rounded-full" style={{
           background: "radial-gradient(circle at 35% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)"
@@ -251,16 +379,12 @@ function ChatOverlay({
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
-
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
         {messages.map(msg => (
           <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[80%] px-4 py-3 text-sm rounded-xl ${
-              msg.role === "assistant"
-                ? "bg-secondary/50 border border-border"
-                : "bg-accent/10 border border-accent/20"
+              msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
             }`}>
               {msg.content === "" && isStreaming ? (
                 <div className="flex gap-1.5">
@@ -276,22 +400,16 @@ function ChatOverlay({
         ))}
         <div ref={bottomRef} />
       </div>
-
-      {/* Input */}
       <div className="border-t border-border px-5 py-3 flex items-center gap-3">
         <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
+          value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
           placeholder="Rispondi a Socrate..."
           disabled={isStreaming}
           className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
-        <button
-          onClick={() => sendMessage(input)}
-          disabled={!input.trim() || isStreaming}
-          className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30"
-        >
+        <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
+          className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30">
           <Send className="w-4 h-4" />
         </button>
       </div>
@@ -313,6 +431,13 @@ export default function UnifiedDashboard() {
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
+
+  // New state
+  const [careerSectors, setCareerSectors] = useState<CareerSector[]>([]);
+  const [careerLoading, setCareerLoading] = useState(false);
+  const [activeSector, setActiveSector] = useState<string | null>(null);
+  const [phaseEvalLoading, setPhaseEvalLoading] = useState(false);
+  const [supervisorResponse, setSupervisorResponse] = useState<string | null>(null);
 
   // Google Docs state
   const [googleDocUrl, setGoogleDocUrl] = useState("");
@@ -348,12 +473,45 @@ export default function UnifiedDashboard() {
         supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: welcome.content });
       }
       if (memRes.data) memoryRef.current = memRes.data;
-      if ((spRes as any).data) setStudentProfile((spRes as any).data);
+      if ((spRes as any).data) {
+        const sp = (spRes as any).data;
+        setStudentProfile(sp);
+        // Load career distribution
+        if (sp.career_distribution && Object.keys(sp.career_distribution).length > 0) {
+          const sectors = Object.entries(sp.career_distribution).map(([name, percentage]) => ({
+            name, percentage: percentage as number,
+          }));
+          setCareerSectors(sectors);
+        }
+      }
       if ((vulnRes as any).data) setVulnerabilities((vulnRes as any).data);
     });
   }, [user]);
 
-  // Load saved Google Doc URL from profile
+  // Realtime student_profiles subscription
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("student-profile-changes")
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "student_profiles",
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        const newData = payload.new as any;
+        if (newData) {
+          setStudentProfile(newData);
+          if (newData.career_distribution && Object.keys(newData.career_distribution).length > 0) {
+            setCareerSectors(Object.entries(newData.career_distribution).map(([name, percentage]) => ({
+              name, percentage: percentage as number,
+            })));
+          }
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  // Load saved Google Doc URL
   useEffect(() => {
     if (profile && (profile as any).google_doc_url) {
       const url = (profile as any).google_doc_url;
@@ -372,10 +530,7 @@ export default function UnifiedDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
         body: JSON.stringify({ google_doc_url: docUrl }),
       });
       if (!resp.ok) {
@@ -388,39 +543,28 @@ export default function UnifiedDashboard() {
       setDocSynced(true);
       toast({ title: "📄 Documento sincronizzato", description: `${Math.round((data.length || 0) / 1000)}k caratteri letti.` });
 
-      // Embed thesis content in RAG engine (background)
       if (data.content && data.content.length > 100) {
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
           body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
-        }).then(() => console.log("Thesis embedded in RAG"))
-          .catch((e) => console.error("RAG embed error:", e));
+        }).catch(console.error);
       }
     } catch {
       toast({ variant: "destructive", title: "Errore", description: "Impossibile connettersi al documento." });
-    } finally {
-      setDocLoading(false);
-    }
+    } finally { setDocLoading(false); }
   }, [googleDocUrl, user, toast]);
 
-  // Auto-fetch on load if URL exists
   useEffect(() => {
-    if (googleDocUrl && user && !thesisContent) {
-      fetchGoogleDoc(googleDocUrl);
-    }
+    if (googleDocUrl && user && !thesisContent) fetchGoogleDoc(googleDocUrl);
   }, [googleDocUrl, user]);
 
-  // Save Google Doc URL
   const saveGoogleDocUrl = useCallback(async () => {
     if (!googleDocInput.trim() || !user) return;
     setGoogleDocUrl(googleDocInput.trim());
     await updateProfile({ google_doc_url: googleDocInput.trim() } as any);
     fetchGoogleDoc(googleDocInput.trim());
-    toast({ title: "✅ Link salvato", description: "Il tuo Google Doc è stato collegato." });
+    toast({ title: "✅ Link salvato" });
   }, [googleDocInput, user, updateProfile, fetchGoogleDoc, toast]);
 
   // Stream helper
@@ -490,14 +634,14 @@ export default function UnifiedDashboard() {
     const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
     try {
       await Promise.allSettled([
-        // Memory extraction
         fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-20), mode: "extract_memory" }) }),
-        // Profile + suggestions extraction
         fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "extract_suggestions" }) }),
-        // Embed conversation in RAG
         fetch(RAG_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "embed_conversation", messages: recentMsgs.slice(-6) }) }),
-        // Auto-generate tasks from conversation
         fetch(TASK_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "auto_generate", messages: recentMsgs.slice(-6), thesis_content: thesisContent?.substring(0, 2000) || "" }) }),
+        // Compute career distribution
+        fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "compute_career", thesis_content: thesisContent?.substring(0, 3000) || "" }) }),
+        // Evaluate phase transition
+        fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "evaluate_phase" }) }),
       ]);
     } catch {}
   }, [user, studentContext, thesisContent]);
@@ -520,69 +664,121 @@ export default function UnifiedDashboard() {
     finally { setIsScanning(false); }
   }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
+  // Compute career on demand
+  const computeCareer = useCallback(async () => {
+    if (!user || careerLoading) return;
+    setCareerLoading(true);
+    try {
+      const resp = await fetch(CAREER_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ mode: "compute_career", thesis_content: thesisContent?.substring(0, 3000) || "" }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.sectors) setCareerSectors(data.sectors);
+        toast({ title: "📊 Orientamento aggiornato" });
+      }
+    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    finally { setCareerLoading(false); }
+  }, [user, careerLoading, thesisContent, toast]);
+
+  // Evaluate phase
+  const evaluatePhase = useCallback(async () => {
+    if (!user || phaseEvalLoading) return;
+    setPhaseEvalLoading(true);
+    try {
+      const resp = await fetch(CAREER_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ mode: "evaluate_phase" }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.can_advance) {
+          toast({ title: "🚀 Fase avanzata!", description: data.socrate_comment?.substring(0, 100) || "Sei passato alla fase successiva." });
+        } else {
+          toast({ title: "⏸ Non ancora", description: data.socrate_comment?.substring(0, 100) || "Ci sono blocchi da risolvere." });
+        }
+        // Refresh student profile
+        const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
+        if (sp) setStudentProfile(sp);
+      }
+    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    finally { setPhaseEvalLoading(false); }
+  }, [user, phaseEvalLoading, toast]);
+
+  // Select supervisor
+  const handleSelectSupervisor = useCallback(async (supId: string, supName: string, motivation: string) => {
+    if (!user) return;
+    try {
+      const resp = await fetch(CAREER_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ mode: "select_supervisor", supervisor_id: supId, supervisor_name: supName, motivation }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        toast({ title: "✅ Supervisore selezionato", description: supName });
+        if (data.socrate_response) {
+          setSupervisorResponse(data.socrate_response);
+          // Also inject into chat
+          const socrateMsg: ChatMsg = { id: `sup-${Date.now()}`, role: "assistant", content: data.socrate_response };
+          setMessages(prev => [...prev, socrateMsg]);
+          await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: data.socrate_response });
+        }
+        // Refresh student profile
+        const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
+        if (sp) setStudentProfile(sp);
+      }
+    } catch { toast({ variant: "destructive", title: "Errore" }); }
+  }, [user, toast]);
+
   // Progress
-  const completion = studentProfile?.overall_completion || 0;
-  const stage = studentProfile?.thesis_stage || profile?.journey_state || "exploration";
-  const currentStageIndex = STAGES.findIndex(s => s.key === stage);
+  const currentPhase = studentProfile?.current_phase || studentProfile?.thesis_stage || profile?.journey_state || "exploration";
+  const phaseConfidence = studentProfile?.phase_confidence || 0;
+  const currentPhaseIndex = PHASES.findIndex(p => p.key === currentPhase);
+  const selectedSupervisorId = studentProfile?.selected_supervisor_id || null;
   const name = profile?.first_name || "Studente";
   const lastMessage = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* ─── TOP: Orb + Identity ─── */}
-      <div className="flex flex-col items-center pt-8 pb-4 shrink-0 relative">
-        {/* Logout */}
+      <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
         <button onClick={signOut} className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
           <LogOut className="w-4 h-4" />
         </button>
-
-        {/* Orb */}
-        <GradientOrb size={140} isActive={isStreaming} />
-
-        {/* Identity */}
-        <motion.div className="text-center mt-4 space-y-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <GradientOrb size={120} isActive={isStreaming} />
+        <motion.div className="text-center mt-3 space-y-0.5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <h1 className="text-lg font-bold text-foreground font-display">{name}</h1>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto px-4 truncate">
-            {profile?.thesis_topic || "Tesi non definita"}
-          </p>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto px-4 truncate">{profile?.thesis_topic || "Tesi non definita"}</p>
         </motion.div>
-
-        {/* Talk to Socrate button */}
         <motion.button
           onClick={() => setChatOpen(true)}
-          className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          className="mt-3 flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
+          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
           Parla con Socrate
         </motion.button>
-
-        {/* Last Socrate message preview */}
         {lastMessage && !chatOpen && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-[11px] text-muted-foreground max-w-lg mx-auto px-6 mt-3 text-center line-clamp-2 italic"
-          >
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="text-[11px] text-muted-foreground max-w-lg mx-auto px-6 mt-2 text-center line-clamp-2 italic">
             "{lastMessage.slice(0, 120)}…"
           </motion.p>
         )}
       </div>
 
       {/* ─── GOOGLE DOC LINK BAR ─── */}
-      <div className="px-4 lg:px-8 xl:px-16 mb-3">
+      <div className="px-4 lg:px-8 xl:px-16 mb-2">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-2 bg-card/60 border border-border rounded-xl px-4 py-2.5">
+          <div className="flex items-center gap-2 bg-card/60 border border-border rounded-xl px-4 py-2">
             <FileText className="w-4 h-4 text-accent shrink-0" />
             <input
-              value={googleDocInput}
-              onChange={e => setGoogleDocInput(e.target.value)}
+              value={googleDocInput} onChange={e => setGoogleDocInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveGoogleDocUrl()}
               placeholder="Incolla il link del tuo Google Doc..."
               className="flex-1 bg-transparent text-xs text-foreground placeholder-muted-foreground focus:outline-none"
             />
-            {docSynced && <span className="text-[10px] text-success font-medium shrink-0">● Sincronizzato</span>}
+            {docSynced && <span className="text-[10px] text-success font-medium shrink-0">● Sync</span>}
             {googleDocUrl && (
               <button onClick={() => fetchGoogleDoc()} disabled={docLoading}
                 className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-accent disabled:opacity-40">
@@ -598,66 +794,91 @@ export default function UnifiedDashboard() {
       </div>
 
       {/* ─── CARDS GRID ─── */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-6xl mx-auto">
-          {/* Card 1: Tasks */}
+      <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
+          {/* Career Distribution */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}
+              action={{ label: "Calcola", onClick: computeCareer, loading: careerLoading }}>
+              <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
+            </DashboardCard>
+          </motion.div>
+
+          {/* Tasks */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
             <DashboardCard title="Task" icon={Target}>
               <TaskContent userId={user?.id || ""} />
             </DashboardCard>
           </motion.div>
 
-          {/* Card 2: Vulnerabilità */}
+          {/* Vulnerabilities */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <DashboardCard
-              title="Vulnerabilità"
-              icon={ShieldAlert}
-              badge={vulnerabilities.length}
-              action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}
-            >
+            <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+              action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
               <VulnerabilitiesContent vulnerabilities={vulnerabilities} />
             </DashboardCard>
           </motion.div>
 
-          {/* Card 3: Supervisori */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-            <DashboardCard title="Supervisori" icon={Users}>
-              <ContactsContent userId={user?.id || ""} />
+          {/* Supervisors */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+            <DashboardCard title="Supervisore" icon={Users}>
+              <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
+            </DashboardCard>
+          </motion.div>
+
+          {/* Companies (spans 2 cols) */}
+          <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
+              action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
+              <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
             </DashboardCard>
           </motion.div>
         </div>
-
-        {/* Companies row */}
-        <motion.div className="max-w-6xl mx-auto mt-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-          <DashboardCard title="Aziende" icon={Building2}>
-            <CompaniesContent userId={user?.id || ""} />
-          </DashboardCard>
-        </motion.div>
       </div>
 
-      {/* ─── BOTTOM STEPPER ─── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border py-3 px-8">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
-          {STAGES.map((s, i) => {
-            const isCompleted = i < currentStageIndex;
-            const isCurrent = i === currentStageIndex;
+      {/* ─── BOTTOM PHASE STEPPER ─── */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border py-2.5 px-6">
+        <div className="flex items-center justify-between max-w-3xl mx-auto">
+          {PHASES.map((p, i) => {
+            const isCompleted = i < currentPhaseIndex;
+            const isCurrent = i === currentPhaseIndex;
             return (
-              <div key={s.key} className="flex flex-col items-center gap-1.5 flex-1">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
-                  isCompleted
-                    ? "bg-accent text-accent-foreground"
-                    : isCurrent
-                      ? "bg-accent/20 text-accent border border-accent/40"
-                      : "bg-secondary text-muted-foreground"
+              <div key={p.key} className="flex flex-col items-center gap-1 flex-1 relative">
+                {/* Connector line */}
+                {i < PHASES.length - 1 && (
+                  <div className={`absolute top-3 left-[55%] right-[-45%] h-px ${
+                    i < currentPhaseIndex ? "bg-accent" : "bg-border"
+                  }`} />
+                )}
+                <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                  isCompleted ? "bg-accent text-accent-foreground"
+                    : isCurrent ? "bg-accent/20 text-accent border border-accent/40"
+                    : "bg-secondary text-muted-foreground"
                 }`}>
-                  {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : i + 1}
+                  {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
                 </div>
-                <span className={`text-[9px] font-medium ${isCurrent ? "text-accent" : isCompleted ? "text-foreground" : "text-muted-foreground"}`}>
-                  {s.label}
+                <span className={`text-[8px] font-medium ${isCurrent ? "text-accent" : isCompleted ? "text-foreground" : "text-muted-foreground"}`}>
+                  {p.label}
                 </span>
+                {/* Confidence on current */}
+                {isCurrent && phaseConfidence > 0 && (
+                  <div className="flex items-center gap-0.5">
+                    <div className="w-10 h-1 rounded-full bg-secondary overflow-hidden">
+                      <motion.div className="h-full bg-accent rounded-full" initial={{ width: 0 }}
+                        animate={{ width: `${phaseConfidence}%` }} transition={{ duration: 0.5 }} />
+                    </div>
+                    <span className="text-[7px] text-accent">{Math.round(phaseConfidence)}%</span>
+                  </div>
+                )}
               </div>
             );
           })}
+          {/* Evaluate button */}
+          <button onClick={evaluatePhase} disabled={phaseEvalLoading}
+            className="ml-3 p-2 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 shrink-0"
+            title="Valuta avanzamento fase">
+            {phaseEvalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+          </button>
         </div>
       </div>
 
@@ -670,14 +891,8 @@ export default function UnifiedDashboard() {
               className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
               onClick={() => setChatOpen(false)}
             />
-            <ChatOverlay
-              messages={messages}
-              input={input}
-              setInput={setInput}
-              sendMessage={sendMessage}
-              isStreaming={isStreaming}
-              onClose={() => setChatOpen(false)}
-            />
+            <ChatOverlay messages={messages} input={input} setInput={setInput}
+              sendMessage={sendMessage} isStreaming={isStreaming} onClose={() => setChatOpen(false)} />
           </>
         )}
       </AnimatePresence>

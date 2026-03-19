@@ -1754,7 +1754,7 @@ Italiano, diretto, specifico, provocatorio.`;
         // Load RAG context, vulnerabilities, and affinities in parallel
         const lastUserMsg = (messages as any[]).filter((m: any) => m.role === "user").slice(-1)[0]?.content || "";
 
-        const [vulnsResult, affinitiesResult, ragResult] = await Promise.allSettled([
+        const [vulnsResult, affinitiesResult, ragResult, studentRes] = await Promise.allSettled([
           supabase.from("vulnerabilities")
             .select("type, title, description, severity")
             .eq("user_id", userId).eq("resolved", false)
@@ -1768,6 +1768,9 @@ Italiano, diretto, specifico, provocatorio.`;
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` },
             body: JSON.stringify({ mode: "get_context", query: lastUserMsg, include_thesis: true, include_conversations: true }),
           }).then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null),
+          supabase.from("student_profiles")
+            .select("career_distribution, current_phase, selected_supervisor_id, supervisor_motivation")
+            .eq("user_id", userId).single(),
         ]);
 
         // Process RAG context
@@ -1808,6 +1811,38 @@ COME USARE I PATTERN:
 - "Nel tuo settore, questo tipo di tesi è stato fatto molte volte. Cosa rende la tua diversa?"
 - Se lo studente non ha considerato un match forte: "C'è un professore/azienda che lavora esattamente su questo. Lo sapevi?"`;
         }
+
+        // Career distribution context
+        let careerCtx = "";
+        const studentData = studentRes.status === "fulfilled" ? (studentRes.value as any)?.data : null;
+        const career = studentData?.career_distribution;
+        const currentPhase = studentData?.current_phase;
+        const selectedSup = studentData?.selected_supervisor_id;
+        const supMotivation = studentData?.supervisor_motivation;
+
+        if (career && Object.keys(career).length > 0) {
+          const sorted = Object.entries(career).sort(([,a], [,b]) => (b as number) - (a as number));
+          careerCtx = `
+ORIENTAMENTO LAVORATIVO DELLO STUDENTE:
+${sorted.map(([sector, pct]) => `- ${sector}: ${pct}%`).join("\n")}
+
+USA QUESTO PER:
+- Commentare se la tesi sta andando nella direzione giusta: "Stai andando verso ${sorted[0]?.[0]}, ma la tua tesi non approfondisce X"
+- Sfidare: "Vuoi lavorare in ${sorted[0]?.[0]}? Allora perché non stai facendo Y?"
+- Collegare aziende: "Le aziende in ${sorted[0]?.[0]} cercano chi sa fare Z. Tu lo sai fare?"`;
+        }
+
+        let phaseCtx = "";
+        if (currentPhase) {
+          phaseCtx = `\nFASE ATTUALE: ${currentPhase}. Adatta il tuo approccio alla fase.`;
+        }
+
+        let supervisorCtx = "";
+        if (selectedSup && supMotivation) {
+          supervisorCtx = `\nSUPERVISORE SCELTO: Lo studente ha scelto un supervisore con motivazione: "${supMotivation}". Metti in dubbio questa scelta quando appropriato.`;
+        }
+
+        vulnerabilitiesCtx += careerCtx + phaseCtx + supervisorCtx;
       }
 
       // Post-thesis critical attack instructions
