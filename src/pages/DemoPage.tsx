@@ -817,7 +817,7 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
   );
 }
 
-
+function DemoRoadmap() {
   const [items, setItems] = useState(MOCK_ROADMAP);
   const toggleTask = (phaseKey: string, taskId: string) => {
     setItems(prev => prev.map(phase =>
