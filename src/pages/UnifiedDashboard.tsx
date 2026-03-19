@@ -265,7 +265,7 @@ export default function UnifiedDashboard() {
     try {
       const resp = await fetch(SOCRATE_URL, {
         method: "POST", headers: AUTH_HEADERS,
-        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, memoryEntries: memoryRef.current.slice(-15), mode: "chat" }),
+        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-15), mode: "chat" }),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Errore" }));
