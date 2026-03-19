@@ -1988,19 +1988,18 @@ export default function UnifiedDashboard() {
           });
           delay += 0.05;
 
-          // References: pre-execution phases (orientation, topic_supervisor, planning)
-          if (!showExecution && !showWriting) {
-            cards.push({
-              key: "references",
-              delay: delay,
-              component: (
-                <DashboardCard title="Riferimenti principali" icon={BookOpen} badge={references.length || null}
-                  action={{ label: "Aggiorna", onClick: fetchReferences, loading: isLoadingRefs }}>
-                  <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} userId={user?.id} />
-                </DashboardCard>
-              ),
-            });
-          }
+          // References: all phases
+          cards.push({
+            key: "references",
+            delay: delay,
+            component: (
+              <DashboardCard title="Riferimenti principali" icon={BookOpen} badge={references.length || null}
+                action={{ label: "Aggiorna", onClick: fetchReferences, loading: isLoadingRefs }}>
+                <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} userId={user?.id} />
+              </DashboardCard>
+            ),
+          });
+          delay += 0.05;
 
           // Vulnerabilities: execution and writing only
           if (showExecution || showWriting) {
