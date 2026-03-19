@@ -116,7 +116,18 @@ export default function VoiceConversation({
     setError(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      if (fnError || !data?.token) { setError("Unable to start transcription"); return; }
+      if (fnError || !data?.token) {
+        const errMsg = typeof fnError === "object" && fnError?.message
+          ? fnError.message
+          : typeof fnError === "string" ? fnError : "";
+        const isConnectionError = errMsg.includes("connection") || errMsg.includes("TLS") || errMsg.includes("close_notify");
+        setError(
+          isConnectionError
+            ? "Voice service temporarily unavailable. Tap to retry."
+            : "Unable to start transcription. Tap to retry."
+        );
+        return;
+      }
       await scribe.connect({
         token: data.token,
         microphone: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
@@ -124,7 +135,14 @@ export default function VoiceConversation({
       setVoiceState("listening");
     } catch (e) {
       console.error("Start listening error:", e);
-      setError("Microphone not available");
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("Permission denied") || msg.includes("NotAllowedError")) {
+        setError("Microphone access denied. Please allow microphone in your browser settings.");
+      } else if (msg.includes("NotFoundError")) {
+        setError("No microphone found. Please connect a microphone and try again.");
+      } else {
+        setError("Could not access microphone. Tap to retry.");
+      }
     }
   }, [scribe]);
 
@@ -442,11 +460,23 @@ export default function VoiceConversation({
         )}
       </AnimatePresence>
 
-      {/* Error */}
+      {/* Error with retry */}
       <AnimatePresence>
         {error && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute bottom-20 left-0 right-0 text-xs text-destructive text-center z-10">{error}</motion.p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+            className="absolute bottom-20 left-4 right-4 z-10 flex flex-col items-center gap-2">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3 text-center max-w-sm">
+              <p className="text-xs text-destructive font-medium">{error}</p>
+            </div>
+            {error.includes("Tap to retry") && (
+              <button
+                onClick={() => { setError(null); startListening(); }}
+                className="text-[10px] font-semibold text-accent hover:text-accent/80 uppercase tracking-wider transition-colors"
+              >
+                Retry now
+              </button>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
 
