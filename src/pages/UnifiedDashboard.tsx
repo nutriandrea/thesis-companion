@@ -311,7 +311,7 @@ export default function UnifiedDashboard() {
     try {
       const resp = await fetch(SOCRATE_URL, {
         method: "POST", headers: AUTH_HEADERS,
-        body: JSON.stringify({ messages: messages.slice(-20).map(m => ({ role: m.role, content: m.content })), studentContext, latexContent, mode: "extract_vulnerabilities" }),
+        body: JSON.stringify({ messages: messages.slice(-20).map(m => ({ role: m.role, content: m.content })), studentContext, latexContent: thesisContent, mode: "extract_vulnerabilities" }),
       });
       if (resp.ok) {
         const data = await resp.json();
