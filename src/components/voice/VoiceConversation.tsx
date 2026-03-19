@@ -235,13 +235,6 @@ export default function VoiceConversation({
     if (!mutedRef.current) setTimeout(() => startListening(), 100);
   }, [stopAudio, startListening]);
 
-  const handleTextSend = () => {
-    if (!textInput.trim()) return;
-    stopAudio(); scribe.disconnect();
-    onTranscript(textInput.trim());
-    setTextInput("");
-    setVoiceState("processing");
-  };
 
   const stateLabel = {
     idle: muted ? "Muted" : "Ready",
