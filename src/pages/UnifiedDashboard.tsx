@@ -35,6 +35,19 @@ const RAG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`;
 const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
 
 
+  // Resolve vulnerability: open chat with pre-filled message about it
+  const resolveVulnerability = useCallback((vulnId: string) => {
+    const vuln = vulnerabilities.find(v => v.id === vulnId);
+    if (!vuln) return;
+    const msg = `Ho risolto la vulnerabilità "${vuln.title}": ${vuln.description}. Spiego perché non è più un problema:`;
+    setInput(msg);
+    setChatOpen(true);
+    // Mark as resolved in DB
+    supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId).then(() => {
+      setVulnerabilities(prev => prev.filter(v => v.id !== vulnId));
+    });
+  }, [vulnerabilities]);
+
 
 const PHASES = [
   { key: "orientation", label: "Orientamento", icon: "1" },
