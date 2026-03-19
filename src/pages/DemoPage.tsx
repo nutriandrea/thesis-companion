@@ -1876,28 +1876,19 @@ function DemoDashboard() {
 // MAIN DEMO ORCHESTRATOR
 // ══════════════════════════════════════════════════════
 export default function DemoPage() {
-  const [step, setStep] = useState<DemoStep>("login");
+  const [step, setStep] = useState<DemoStep>("intro");
+  const [demoMode, setDemoMode] = useState<"text" | "voice">("text");
 
   return (
     <AnimatePresence mode="wait">
-      {step === "login" && (
-        <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoLogin onNext={() => setStep("onboarding")} />
-        </motion.div>
-      )}
-      {step === "onboarding" && (
-        <motion.div key="onboarding" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoOnboarding onNext={() => setStep("intro")} />
-        </motion.div>
-      )}
       {step === "intro" && (
         <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoIntro onNext={() => setStep("socrate")} />
+          <DemoIntro onNext={(mode) => { setDemoMode(mode); setStep("socrate"); }} />
         </motion.div>
       )}
       {step === "socrate" && (
         <motion.div key="socrate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-          <DemoSocrateChat onSkip={() => setStep("dashboard")} />
+          <DemoSocrateChat onSkip={() => setStep("dashboard")} initialMode={demoMode} />
         </motion.div>
       )}
       {step === "dashboard" && (
