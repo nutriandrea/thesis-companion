@@ -576,35 +576,37 @@ export default function DemoPage() {
       </div>
 
       {/* Phase stepper */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2.5 px-6 z-30">
-        <div className="flex items-center justify-between max-w-3xl mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-3 px-6 z-30">
+        <div className="flex items-center max-w-3xl mx-auto">
           {PHASES.map((p, i) => {
             const isCompleted = i < currentPhaseIdx;
             const isCurrent = i === currentPhaseIdx;
             return (
-              <button key={p.key} onClick={() => setCurrentPhaseIdx(i)} className="flex flex-col items-center gap-1 flex-1 relative group">
-                {i < PHASES.length - 1 && (
-                  <div className={`absolute top-3 left-[55%] right-[-45%] h-px transition-all ${isCompleted ? "bg-accent" : "bg-border"}`} />
-                )}
-                <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all cursor-pointer ${
-                  isCompleted ? "bg-accent text-accent-foreground"
-                    : isCurrent ? "bg-accent/20 text-accent border border-accent/40 ring-2 ring-accent/20"
-                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                }`}>
-                  {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
-                </div>
-                <span className={`text-[8px] font-medium transition-colors ${isCurrent ? "text-accent" : isCompleted ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"}`}>
-                  {p.label}
-                </span>
-                {isCurrent && confidence > 0 && (
-                  <div className="flex items-center gap-0.5">
-                    <div className="w-10 h-1 rounded-full bg-secondary overflow-hidden">
-                      <motion.div className="h-full bg-accent rounded-full" initial={{ width: 0 }} animate={{ width: `${confidence}%` }} transition={{ duration: 0.5 }} />
-                    </div>
-                    <span className="text-[7px] text-accent">{confidence}%</span>
+              <div key={p.key} className="flex items-center flex-1 last:flex-none">
+                <button onClick={() => setCurrentPhaseIdx(i)} className="flex flex-col items-center gap-1.5 group">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all duration-300 cursor-pointer ${
+                    isCompleted ? "bg-foreground text-background"
+                      : isCurrent ? "bg-foreground/15 text-foreground border-2 border-foreground/30"
+                      : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
+                  }`}>
+                    {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
                   </div>
+                  <span className={`text-[8px] font-medium whitespace-nowrap transition-colors ${isCurrent ? "text-foreground" : isCompleted ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"}`}>
+                    {p.label}
+                  </span>
+                  {isCurrent && confidence > 0 && (
+                    <div className="flex items-center gap-1">
+                      <div className="w-10 h-1 rounded-full bg-secondary overflow-hidden">
+                        <motion.div className="h-full bg-foreground rounded-full" initial={{ width: 0 }} animate={{ width: `${confidence}%` }} transition={{ duration: 0.8, ease: "easeOut" }} />
+                      </div>
+                      <span className="text-[7px] text-muted-foreground">{confidence}%</span>
+                    </div>
+                  )}
+                </button>
+                {i < PHASES.length - 1 && (
+                  <div className={`flex-1 h-px mx-1.5 transition-colors duration-300 ${isCompleted ? "bg-foreground/60" : "bg-border"}`} />
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
