@@ -458,19 +458,66 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
 }
 
 // ─── VULNERABILITIES PANEL ───
-function VulnerabilitiesContent({ vulnerabilities }: { vulnerabilities: Vulnerability[] }) {
+function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
+
+  // Rank: critical first, then high, medium, low
+  const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  const ranked = [...vulnerabilities].sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
+
   return (
-    <div className="space-y-2">
-      {vulnerabilities.slice(0, 5).map(v => (
-        <div key={v.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-destructive/[0.04]">
-          <ShieldAlert className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${v.severity === "critical" ? "text-destructive" : "text-warning"}`} />
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-foreground leading-tight">{v.title}</p>
-            <p className="text-[10px] text-muted-foreground leading-snug line-clamp-2 mt-0.5">{v.description}</p>
+    <div className="space-y-1.5">
+      {ranked.slice(0, 8).map((v, i) => {
+        const isExpanded = expandedId === v.id;
+        const severityColor = v.severity === "critical" ? "text-destructive" : v.severity === "high" ? "text-warning" : "text-muted-foreground";
+        const severityBg = v.severity === "critical" ? "bg-destructive/[0.06]" : v.severity === "high" ? "bg-warning/[0.06]" : "bg-muted/30";
+
+        return (
+          <div key={v.id} className={`rounded-lg transition-colors ${severityBg}`}>
+            <button
+              onClick={() => setExpandedId(isExpanded ? null : v.id)}
+              className="w-full flex items-start gap-2.5 p-2.5 text-left"
+            >
+              <span className={`text-[10px] font-bold mt-0.5 shrink-0 w-4 text-center ${severityColor}`}>
+                {i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground leading-tight">{v.title}</p>
+                {!isExpanded && (
+                  <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1 mt-0.5">{v.description}</p>
+                )}
+              </div>
+              <ShieldAlert className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${severityColor}`} />
+            </button>
+
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-2.5 pb-2.5 pt-0 space-y-2">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed pl-6">{v.description}</p>
+                    {onResolve && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onResolve(v.id); }}
+                        className="ml-6 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
+                      >
+                        Spiega a Socrate che è risolta →
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -849,6 +896,18 @@ export default function UnifiedDashboard() {
     finally { setIsScanning(false); }
   }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
+  // Resolve vulnerability: open chat with pre-filled context, mark resolved
+  const resolveVulnerability = useCallback((vulnId: string) => {
+    const vuln = vulnerabilities.find(v => v.id === vulnId);
+    if (!vuln) return;
+    const msg = `Ho risolto la vulnerabilità "${vuln.title}". Ecco perché non è più un problema: `;
+    setInput(msg);
+    setChatOpen(true);
+    supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId).then(() => {
+      setVulnerabilities(prev => prev.filter(v => v.id !== vulnId));
+    });
+  }, [vulnerabilities]);
+
   // Compute career on demand
   const computeCareer = useCallback(async () => {
     if (!user || careerLoading) return;
@@ -1037,7 +1096,7 @@ export default function UnifiedDashboard() {
           <motion.div data-tutor-id="vulnerabilities" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
             <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
               action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-              <VulnerabilitiesContent vulnerabilities={vulnerabilities} />
+              <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
             </DashboardCard>
           </motion.div>
 
