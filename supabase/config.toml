@@ -2,3 +2,6 @@ project_id = "icxjkijvlhkcsjymckfw"
 
 [functions.socrate]
 verify_jwt = false
+
+[functions.fetch-google-doc]
+verify_jwt = false

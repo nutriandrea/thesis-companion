@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, ShieldAlert, Flame, Target, Users, Building2,
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
-  ChevronLeft, ChevronRight, X
+  ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -314,10 +314,16 @@ export default function UnifiedDashboard() {
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
 
+  // Google Docs state
+  const [googleDocUrl, setGoogleDocUrl] = useState("");
+  const [googleDocInput, setGoogleDocInput] = useState("");
+  const [thesisContent, setThesisContent] = useState("");
+  const [docLoading, setDocLoading] = useState(false);
+  const [docSynced, setDocSynced] = useState(false);
+
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
     : "";
-  const thesisContent = "";
 
   // Load data
   useEffect(() => {
@@ -346,6 +352,63 @@ export default function UnifiedDashboard() {
       if ((vulnRes as any).data) setVulnerabilities((vulnRes as any).data);
     });
   }, [user]);
+
+  // Load saved Google Doc URL from profile
+  useEffect(() => {
+    if (profile && (profile as any).google_doc_url) {
+      const url = (profile as any).google_doc_url;
+      setGoogleDocUrl(url);
+      setGoogleDocInput(url);
+    }
+  }, [profile]);
+
+  // Fetch Google Doc content
+  const fetchGoogleDoc = useCallback(async (url?: string) => {
+    const docUrl = url || googleDocUrl;
+    if (!docUrl || !user) return;
+    setDocLoading(true);
+    setDocSynced(false);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ google_doc_url: docUrl }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        toast({ variant: "destructive", title: "Errore Google Doc", description: err.error || "Impossibile leggere il documento." });
+        return;
+      }
+      const data = await resp.json();
+      setThesisContent(data.content || "");
+      setDocSynced(true);
+      toast({ title: "📄 Documento sincronizzato", description: `${Math.round((data.length || 0) / 1000)}k caratteri letti.` });
+    } catch {
+      toast({ variant: "destructive", title: "Errore", description: "Impossibile connettersi al documento." });
+    } finally {
+      setDocLoading(false);
+    }
+  }, [googleDocUrl, user, toast]);
+
+  // Auto-fetch on load if URL exists
+  useEffect(() => {
+    if (googleDocUrl && user && !thesisContent) {
+      fetchGoogleDoc(googleDocUrl);
+    }
+  }, [googleDocUrl, user]);
+
+  // Save Google Doc URL
+  const saveGoogleDocUrl = useCallback(async () => {
+    if (!googleDocInput.trim() || !user) return;
+    setGoogleDocUrl(googleDocInput.trim());
+    await updateProfile({ google_doc_url: googleDocInput.trim() } as any);
+    fetchGoogleDoc(googleDocInput.trim());
+    toast({ title: "✅ Link salvato", description: "Il tuo Google Doc è stato collegato." });
+  }, [googleDocInput, user, updateProfile, fetchGoogleDoc, toast]);
 
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
@@ -484,6 +547,33 @@ export default function UnifiedDashboard() {
             "{lastMessage.slice(0, 120)}…"
           </motion.p>
         )}
+      </div>
+
+      {/* ─── GOOGLE DOC LINK BAR ─── */}
+      <div className="px-4 lg:px-8 xl:px-16 mb-3">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-2 bg-card/60 border border-border rounded-xl px-4 py-2.5">
+            <FileText className="w-4 h-4 text-accent shrink-0" />
+            <input
+              value={googleDocInput}
+              onChange={e => setGoogleDocInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && saveGoogleDocUrl()}
+              placeholder="Incolla il link del tuo Google Doc..."
+              className="flex-1 bg-transparent text-xs text-foreground placeholder-muted-foreground focus:outline-none"
+            />
+            {docSynced && <span className="text-[10px] text-success font-medium shrink-0">● Sincronizzato</span>}
+            {googleDocUrl && (
+              <button onClick={() => fetchGoogleDoc()} disabled={docLoading}
+                className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-accent disabled:opacity-40">
+                <RefreshCw className={`w-3.5 h-3.5 ${docLoading ? "animate-spin" : ""}`} />
+              </button>
+            )}
+            <button onClick={saveGoogleDocUrl} disabled={!googleDocInput.trim() || docLoading}
+              className="text-[10px] font-medium px-3 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-30">
+              {docLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Link2 className="w-3 h-3" />}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* ─── CARDS GRID ─── */}
