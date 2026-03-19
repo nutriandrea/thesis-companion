@@ -317,7 +317,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       const reportContent = await streamResponse(resp, reportId);
 
       if (reportContent) {
-        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `📋 REPORT:\n${reportContent}` });
+        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `REPORT:\n${reportContent}` });
       }
 
       // Always run full extraction on report
