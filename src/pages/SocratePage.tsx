@@ -369,7 +369,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
   // TEXT MODE
   return (
-    <div className="flex flex-col h-[calc(100vh-3rem)]">
+    <div className={`flex flex-col ${explorationMode ? "h-screen max-w-3xl mx-auto px-6" : "h-[calc(100vh-3rem)]"}`}>
       {/* Header */}
       <div className="flex items-center gap-3 pb-4 border-b border-border">
         <GradientOrb size="sm" />
