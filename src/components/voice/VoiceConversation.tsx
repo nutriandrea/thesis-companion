@@ -66,6 +66,74 @@ function ListeningPulse({ active }: { active: boolean }) {
   );
 }
 
+// Progressive text reveal: shows a sliding window of ~4 lines worth of text
+// that advances based on speech progress (0-1)
+function ProgressiveText({ text, progress, isSpeaking }: { text: string; progress: number; isSpeaking: boolean }) {
+  // Strip markdown for word counting, but render with markdown
+  const plainWords = text.replace(/[*#`\[\]()]/g, "").split(/\s+/).filter(Boolean);
+  const totalWords = plainWords.length;
+  const VISIBLE_WORDS = 40; // ~4 lines worth
+
+  if (totalWords <= VISIBLE_WORDS || !isSpeaking) {
+    // Short text or not speaking: show full text (clamped)
+    return (
+      <div className="text-sm text-foreground/40 leading-relaxed line-clamp-4">
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+    );
+  }
+
+  // Calculate which word window to show based on progress
+  const currentWordIdx = Math.floor(progress * totalWords);
+  const startWord = Math.max(0, currentWordIdx - Math.floor(VISIBLE_WORDS * 0.3));
+  const endWord = Math.min(totalWords, startWord + VISIBLE_WORDS);
+
+  // Reconstruct visible text from the original markdown
+  // We split by whitespace preserving markdown tokens
+  const mdWords = text.split(/(\s+)/).filter(Boolean);
+  let wordCount = 0;
+  let startCharIdx = 0;
+  let endCharIdx = text.length;
+  let foundStart = false;
+
+  for (let i = 0; i < mdWords.length; i++) {
+    if (/\s+/.test(mdWords[i])) continue;
+    if (wordCount === startWord && !foundStart) {
+      startCharIdx = text.indexOf(mdWords[i], i > 0 ? text.indexOf(mdWords[i - 1] || "") : 0);
+      // find actual position
+      let pos = 0;
+      for (let j = 0; j < i; j++) pos += mdWords[j].length;
+      startCharIdx = pos;
+      foundStart = true;
+    }
+    wordCount++;
+    if (wordCount === endWord) {
+      let pos = 0;
+      for (let j = 0; j <= i; j++) pos += mdWords[j].length;
+      endCharIdx = pos;
+      break;
+    }
+  }
+
+  const visibleSlice = text.slice(startCharIdx, endCharIdx).trim();
+  const hasMore = endWord < totalWords;
+  const hasPrev = startWord > 0;
+
+  return (
+    <motion.div
+      key={startWord} // re-animate on chunk change
+      initial={{ opacity: 0.5, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="text-sm text-foreground/40 leading-relaxed"
+    >
+      {hasPrev && <span className="text-foreground/20">… </span>}
+      <ReactMarkdown>{visibleSlice}</ReactMarkdown>
+      {hasMore && <span className="text-foreground/20"> …</span>}
+    </motion.div>
+  );
+}
+
 export default function VoiceConversation({
   onTranscript,
   onClose,
@@ -81,6 +149,8 @@ export default function VoiceConversation({
   const [liveTranscript, setLiveTranscript] = useState("");
   const [muted, setMuted] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [speechProgress, setSpeechProgress] = useState(0); // 0-1
+  const progressTimerRef = useRef<number | null>(null);
   
   const [error, setError] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
@@ -151,9 +221,11 @@ export default function VoiceConversation({
   }, [startListening]);
 
   const stopAudio = useCallback(() => {
+    if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; }
     if (audioUrlRef.current) { URL.revokeObjectURL(audioUrlRef.current); audioUrlRef.current = null; }
     isSpeakingRef.current = false;
+    setSpeechProgress(0);
   }, []);
 
   const speakText = useCallback(async (text: string) => {
@@ -198,6 +270,8 @@ export default function VoiceConversation({
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       audio.onended = () => {
+        if (progressTimerRef.current) { clearInterval(progressTimerRef.current); progressTimerRef.current = null; }
+        setSpeechProgress(1);
         isSpeakingRef.current = false;
         URL.revokeObjectURL(audioUrl); audioUrlRef.current = null; audioRef.current = null;
         if (!unmountedRef.current) {
@@ -213,7 +287,14 @@ export default function VoiceConversation({
         }
       };
       if (unmountedRef.current) { URL.revokeObjectURL(audioUrl); return; }
+      setSpeechProgress(0);
       await audio.play();
+      // Start tracking progress
+      progressTimerRef.current = window.setInterval(() => {
+        if (audioRef.current && audioRef.current.duration) {
+          setSpeechProgress(audioRef.current.currentTime / audioRef.current.duration);
+        }
+      }, 200);
     } catch (e) {
       if ((e as any)?.name === "AbortError") return; // Expected on close
       console.error("TTS playback error:", e);
@@ -403,7 +484,7 @@ export default function VoiceConversation({
           )}
         </AnimatePresence>
 
-        {/* Last assistant message - shown below the coin, subtle */}
+        {/* Last assistant message - progressive reveal during speech */}
         <AnimatePresence>
           {lastAssistant && !showTranscript && (
             <motion.div
@@ -412,9 +493,7 @@ export default function VoiceConversation({
               exit={{ opacity: 0 }}
               className="mt-8 max-w-lg px-8 text-center"
             >
-              <div className="text-sm text-foreground/40 leading-relaxed line-clamp-4">
-                <ReactMarkdown>{lastAssistant}</ReactMarkdown>
-              </div>
+              <ProgressiveText text={lastAssistant} progress={speechProgress} isSpeaking={voiceState === "speaking"} />
             </motion.div>
           )}
         </AnimatePresence>
