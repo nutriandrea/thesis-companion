@@ -692,7 +692,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
 
   if (items.length === 0) return (
     <p className="text-xs text-muted-foreground text-center py-6 italic">
-      Suggestions will appear after your first conversations with Socrate.
+      I suggerimenti appariranno dopo le prime conversazioni con Socrate.
     </p>
   );
 
