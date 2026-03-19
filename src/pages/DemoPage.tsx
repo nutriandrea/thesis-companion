@@ -527,7 +527,8 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
           </motion.div>
         ))}
 
-        {isStreaming && messages[messages.length - 1]?.content === "" && (
+        {/* Typing indicator during auto-play or streaming */}
+        {((autoPlaying && visibleCount < DEMO_CONVERSATION_HISTORY.length) || (isStreaming && messages[messages.length - 1]?.content === "")) && (
           <div className="flex justify-start">
             <div className="flex gap-1.5 px-4 py-3">
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -535,6 +536,30 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
           </div>
+        )}
+
+        {/* Thesis chosen banner */}
+        {!autoPlaying && visibleCount >= DEMO_CONVERSATION_HISTORY.length && !isStreaming && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="mx-auto max-w-sm bg-accent/10 border border-accent/20 rounded-xl px-5 py-4 text-center space-y-2"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Target className="w-4 h-4 text-accent" />
+              <p className="text-xs font-bold text-accent uppercase tracking-wider">Thesis defined</p>
+            </div>
+            <p className="text-[11px] text-foreground/80 leading-relaxed italic">
+              "Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code"
+            </p>
+            <button
+              onClick={onSkip}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-accent text-accent-foreground text-[10px] font-semibold uppercase tracking-wider rounded-full hover:bg-accent/90 transition-colors"
+            >
+              <ArrowRight className="w-3 h-3" /> See my dashboard
+            </button>
+          </motion.div>
         )}
         <div ref={bottomRef} />
       </div>
