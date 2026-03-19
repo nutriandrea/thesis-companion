@@ -1,23 +1,13 @@
 import { useState, useCallback } from "react";
 import { AppProvider, useApp } from "@/contexts/AppContext";
-import AppLayout from "@/components/layout/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import SocrateIntro from "@/components/journey/SocrateIntro";
 import ThesisTransition from "@/components/journey/ThesisTransition";
-import DashboardPage from "@/pages/DashboardPage";
+import UnifiedDashboard from "@/pages/UnifiedDashboard";
 import SocratePage from "@/pages/SocratePage";
-import EditorPage from "@/pages/EditorPage";
-import SuggestionsPage from "@/pages/SuggestionsPage";
-import ContactsPage from "@/pages/ContactsPage";
-import MarketPage from "@/pages/MarketPage";
-import ProfilePage from "@/pages/ProfilePage";
-import FuturesPage from "@/pages/FuturesPage";
-import ActionsPage from "@/pages/ActionsPage";
-import MemoryPage from "@/pages/MemoryPage";
-import PathPage from "@/pages/PathPage";
 
 function AppContent() {
-  const { user, profile, loading, activeSection, setActiveSection, setInputMode } = useApp();
+  const { user, profile, loading, setActiveSection, setInputMode } = useApp();
   const [showTransition, setShowTransition] = useState(false);
 
   const handleTransitionComplete = useCallback(() => {
@@ -73,27 +63,8 @@ function AppContent() {
     );
   }
 
-  // CONSTRUCTION: Full dashboard with sidebar
-  const pages: Record<string, React.ReactNode> = {
-    "orientation": <DashboardPage />,
-    "topic-search": <DashboardPage />,
-    "planning": <DashboardPage />,
-    "execution": <DashboardPage />,
-    "writing": <DashboardPage />,
-    dashboard: <DashboardPage />,
-    socrate: <SocratePage />,
-    editor: <EditorPage />,
-    suggestions: <SuggestionsPage />,
-    contacts: <ContactsPage />,
-    market: <MarketPage />,
-    profile: <ProfilePage />,
-    futures: <FuturesPage />,
-    actions: <ActionsPage />,
-    memory: <MemoryPage />,
-    paths: <PathPage />,
-  };
-
-  return <AppLayout>{pages[activeSection] || <SocratePage />}</AppLayout>;
+  // CONSTRUCTION: Unified single-screen dashboard
+  return <UnifiedDashboard />;
 }
 
 export default function Index() {
