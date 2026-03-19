@@ -1350,7 +1350,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
               <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
               {lastSyncTime && (
                 <p className="text-[9px] text-muted-foreground mt-0.5">
-                  Last sync: {lastSyncTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                  Ultimo sync: {lastSyncTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
                 </p>
               )}
             </div>
