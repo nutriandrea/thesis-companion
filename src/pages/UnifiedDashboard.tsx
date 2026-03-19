@@ -603,8 +603,6 @@ function RoadmapCard({ currentPhase }: { currentPhase: PhaseKey }) {
   const isEditable = currentPhase === "planning";
 
   // Use mock roadmap data — in production this would come from DB
-  const { mockRoadmap } = require("@/data/mock-roadmap");
-  const phases = (mockRoadmap || []) as import("@/types/data").RoadmapPhase[];
 
   // Filter: in planning show from planning onward; in execution/writing show all with progress
   const visiblePhases = phases.filter((_: any, i: number) => i >= 2); // planning, execution, writing
