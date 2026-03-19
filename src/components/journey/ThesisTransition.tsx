@@ -84,8 +84,8 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
             transition={{ duration: 0.8 }}
             className="text-center px-6 max-w-lg"
           >
-            <div className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-6 ring-2 ring-accent/30">
-              <img src={socrateCoinImg} alt="Socrate" className="w-full h-full object-cover" style={{ filter: "contrast(1.1) grayscale(100%)" }} />
+            <div className="mx-auto mb-6">
+              <SocrateCoin size={64} interactive={false} />
             </div>
             <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-3">Your thesis</p>
             <h1 className="font-display text-white text-2xl md:text-3xl font-medium tracking-wide leading-tight italic">
