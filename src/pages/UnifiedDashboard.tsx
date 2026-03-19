@@ -348,7 +348,7 @@ function TaskContent({ userId }: { userId: string }) {
       {completedCount > 0 && (
         <div className="flex items-center gap-2 pt-2">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-[10px] text-muted-foreground">{completedCount} completati</span>
+          <span className="text-[10px] text-muted-foreground">{completedCount} completed</span>
           <div className="h-px flex-1 bg-border" />
         </div>
       )}
