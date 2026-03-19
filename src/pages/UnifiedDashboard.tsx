@@ -785,7 +785,7 @@ export default function UnifiedDashboard() {
         <button onClick={signOut} className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
           <LogOut className="w-4 h-4" />
         </button>
-        <GradientOrb size={120} isActive={isStreaming} />
+        <SocrateIcon size={48} isActive={isStreaming} />
         <motion.div className="text-center mt-3 space-y-0.5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <h1 className="text-lg font-bold text-foreground font-display">{name}</h1>
           <p className="text-xs text-muted-foreground max-w-md mx-auto px-4 truncate">{profile?.thesis_topic || "Tesi non definita"}</p>
