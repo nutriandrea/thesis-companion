@@ -164,16 +164,15 @@ export default function EditorPage() {
   const { suggestions: thesisFeedback } = useSocrateSuggestions(user?.id, ["thesis_feedback"]);
   const { suggestions: nextSteps } = useSocrateSuggestions(user?.id, ["next_step"]);
 
-  // Persist LaTeX to localStorage (debounced)
+  // Persist LaTeX to localStorage scoped by user ID (debounced)
   useEffect(() => {
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
-      localStorage.setItem("thesis-latex-content", latex);
-      // Dispatch storage event for Socrate page to pick up
+      localStorage.setItem(storageKey, latex);
       window.dispatchEvent(new Event("storage"));
     }, 500);
     return () => { if (syncTimerRef.current) clearTimeout(syncTimerRef.current); };
-  }, [latex]);
+  }, [latex, storageKey]);
 
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}`

@@ -73,7 +73,7 @@ export default function DashboardPage() {
     try {
       const msgs = await supabase.from("socrate_messages").select("role, content").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20);
       const studentCtx = profile ? `Nome: ${profile.first_name}\nCorso: ${profile.degree}\nUniversità: ${profile.university}\nTopic: ${profile.thesis_topic}` : "";
-      const latexContent = localStorage.getItem("thesis-latex-content") || "";
+      const latexContent = localStorage.getItem(`thesis-latex-content-${user.id}`) || "";
       const resp = await fetch(SOCRATE_URL, {
         method: "POST",
         headers: AUTH_HEADERS,
