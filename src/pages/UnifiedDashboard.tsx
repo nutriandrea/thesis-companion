@@ -33,13 +33,14 @@ const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`
 
 
 const PHASES = [
-  { key: "exploration", label: "Esplorazione", icon: "🔍" },
-  { key: "convergence", label: "Convergenza", icon: "🎯" },
-  { key: "thesis_defined", label: "Tesi Definita", icon: "📋" },
-  { key: "refinement", label: "Refinement", icon: "🔧" },
+  { key: "orientation", label: "Orientamento", icon: "🔍" },
+  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "🎯" },
+  { key: "planning", label: "Pianificazione", icon: "📋" },
+  { key: "execution", label: "Esecuzione", icon: "🔧" },
   { key: "writing", label: "Scrittura", icon: "✍️" },
-  { key: "revision", label: "Revisione", icon: "✅" },
 ];
+
+const POST_PLANNING_PHASES = ["planning", "execution", "writing"];
 
 // ─── GRADIENT ORB ───
 function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive?: boolean }) {
@@ -351,6 +352,79 @@ function VulnerabilitiesContent({ vulnerabilities }: { vulnerabilities: Vulnerab
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── GOOGLE DOC WIDGET ───
+function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updateProfile: any; user: any }) {
+  const { toast } = useToast();
+  const [docUrl, setDocUrl] = useState(profile?.google_doc_url || "");
+  const [syncing, setSyncing] = useState(false);
+  const [synced, setSynced] = useState(!!profile?.google_doc_url);
+
+  useEffect(() => {
+    if (profile?.google_doc_url) setDocUrl(profile.google_doc_url);
+  }, [profile?.google_doc_url]);
+
+  const saveAndSync = async () => {
+    if (!docUrl.trim() || !user) return;
+    setSyncing(true);
+    try {
+      await updateProfile({ google_doc_url: docUrl.trim() } as any);
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ google_doc_url: docUrl.trim() }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setSynced(true);
+        toast({ title: "📄 Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri. Sync automatico attivo.` });
+        if (data.content?.length > 100) {
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
+            method: "POST", headers: AUTH_HEADERS,
+            body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
+          }).catch(console.error);
+        }
+      } else {
+        toast({ variant: "destructive", title: "Errore", description: "Impossibile leggere il doc. Assicurati che sia condiviso." });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "Errore", description: "Connessione fallita." });
+    } finally { setSyncing(false); }
+  };
+
+  return (
+    <div className="space-y-3">
+      {synced ? (
+        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/[0.06]">
+          <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-foreground">Documento collegato</p>
+            <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
+          </div>
+          <button onClick={saveAndSync} disabled={syncing}
+            className="text-[10px] font-medium px-2 py-1 rounded-md bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+            {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          </button>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs text-muted-foreground">Collega il tuo Google Doc per analisi automatica della tesi.</p>
+          <div className="flex items-center gap-2">
+            <input
+              value={docUrl} onChange={e => setDocUrl(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && saveAndSync()}
+              placeholder="https://docs.google.com/document/d/..."
+              className="flex-1 bg-secondary border border-border rounded-md px-3 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+            <button onClick={saveAndSync} disabled={!docUrl.trim() || syncing}
+              className="text-[10px] font-medium px-3 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-30">
+              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Link2 className="w-3 h-3" />}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -710,8 +784,17 @@ export default function UnifiedDashboard() {
             </DashboardCard>
           </motion.div>
 
-          {/* Companies (spans 2 cols) */}
-          <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          {/* Google Doc - visible only after planning */}
+          {POST_PLANNING_PHASES.includes(currentPhase) && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+              <DashboardCard title="Documento Tesi" icon={FileText}>
+                <GoogleDocWidget profile={profile} updateProfile={updateProfile} user={user} />
+              </DashboardCard>
+            </motion.div>
+          )}
+
+          {/* Companies (spans remaining cols) */}
+          <motion.div className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
             <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
               action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
               <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
