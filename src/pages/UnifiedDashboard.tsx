@@ -653,6 +653,11 @@ function ExpertSuggestions({ userId }: { userId: string }) {
               >
                 <div className="px-2 pb-2 space-y-1.5">
                   <p className="text-[11px] text-foreground/80 leading-relaxed">{exp.reasoning}</p>
+                  {exp.email && (
+                    <a href={`mailto:${exp.email}`} className="flex items-center gap-1.5 text-[10px] text-accent hover:underline font-medium">
+                      <Mail className="w-3 h-3" /> {exp.email}
+                    </a>
+                  )}
                   <div className="flex flex-wrap gap-1">
                     {exp.matched_traits.slice(0, 4).map((t: string) => (
                       <span key={t} className="text-[8px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">{t}</span>
