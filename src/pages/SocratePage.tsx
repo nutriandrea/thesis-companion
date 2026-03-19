@@ -76,7 +76,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     Promise.all([
       supabase.from("memory_entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
-      supabase.from("student_profiles" as any).select("severita, thesis_stage").eq("user_id", user.id).single(),
+      supabase.from("student_profiles" as any).select("severita, thesis_stage").eq("user_id", user.id).maybeSingle(),
     ]).then(([memRes, sugRes, spRes]) => {
       if (memRes.data) memoryRef.current = memRes.data;
       if ((sugRes as any).data) suggestionsRef.current = (sugRes as any).data;
