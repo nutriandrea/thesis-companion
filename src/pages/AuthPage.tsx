@@ -9,6 +9,7 @@ import { useApp } from "@/contexts/AppContext";
 import LanguageSwitch from "@/components/shared/LanguageSwitch";
 
 export default function AuthPage() {
+  const { user, loading: appLoading } = useApp();
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +22,8 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
+
+  if (user && !appLoading) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
