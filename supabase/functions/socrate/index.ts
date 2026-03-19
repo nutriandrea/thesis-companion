@@ -1837,11 +1837,20 @@ Italiano, diretto, specifico, provocatorio.`;
     } else {
       // ─── CHAT MODE ───
 
+      // If studentContext is missing, fetch profile from DB as fallback
+      let resolvedStudentContext = studentContext || "";
+      if (!resolvedStudentContext && userId) {
+        const { data: dbProfile } = await supabase.from("profiles").select("first_name, last_name, degree, university, skills, thesis_topic").eq("user_id", userId).single();
+        if (dbProfile) {
+          resolvedStudentContext = `Nome: ${dbProfile.first_name} ${dbProfile.last_name}\nCorso: ${dbProfile.degree || "N/A"}\nUniversità: ${dbProfile.university || "N/A"}\nCompetenze: ${(dbProfile.skills as string[])?.join(", ") || "N/A"}\nArgomento: ${dbProfile.thesis_topic || "Non definito"}`;
+        }
+      }
+
       // Load vulnerabilities + dataset patterns + RAG context for post-thesis attack mode
       let vulnerabilitiesCtx = "";
       let datasetPatternsCtx = "";
       let ragContext = "";
-      const hasThesisTopic = studentContext?.includes("Argomento:") && !studentContext.includes("Non definito");
+      const hasThesisTopic = resolvedStudentContext?.includes("Argomento:") && !resolvedStudentContext.includes("Non definito");
 
       if (userId && hasThesisTopic) {
         // Load RAG context, vulnerabilities, and affinities in parallel
