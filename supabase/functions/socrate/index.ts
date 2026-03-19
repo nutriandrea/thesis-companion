@@ -1743,6 +1743,66 @@ Giudizio 1-10 e indicazioni per il prossimo step.
 Italiano, diretto, specifico, provocatorio.`;
     } else {
       // ─── CHAT MODE ───
+
+      // Load vulnerabilities + dataset patterns for post-thesis attack mode
+      let vulnerabilitiesCtx = "";
+      let datasetPatternsCtx = "";
+      const hasThesisTopic = studentContext?.includes("Argomento:") && !studentContext.includes("Non definito");
+
+      if (userId && hasThesisTopic) {
+        // Load unresolved vulnerabilities
+        const { data: vulns } = await supabase.from("vulnerabilities")
+          .select("type, title, description, severity")
+          .eq("user_id", userId).eq("resolved", false)
+          .order("created_at", { ascending: false }).limit(8);
+
+        if (vulns && vulns.length > 0) {
+          vulnerabilitiesCtx = `
+VULNERABILITÀ ATTIVE (usa queste per attaccare direttamente lo studente):
+${vulns.map((v: any) => `- [${v.severity.toUpperCase()}] ${v.type}: "${v.title}" — ${v.description}`).join("\n")}
+
+ISTRUZIONI ATTACCO:
+- Cita ESPLICITAMENTE queste vulnerabilità durante la conversazione.
+- Non aspettare che lo studente le menzioni. Attacca TU.
+- "Mi risulta che la tua tesi ha un problema serio: [vulnerabilità]. Come pensi di risolverlo?"
+- Se lo studente evita, insisti: "Non hai risposto. Questo punto è debole e lo sai."
+- Quando una vulnerabilità viene affrontata seriamente, riconosci il progresso ma alza il livello.`;
+        }
+
+        // Load affinity scores to identify dataset patterns
+        const { data: affinities } = await supabase.from("affinity_scores")
+          .select("entity_type, entity_name, score, reasoning")
+          .eq("user_id", userId).order("score", { ascending: false }).limit(10);
+
+        if (affinities && affinities.length > 0) {
+          const topMatches = affinities.filter((a: any) => a.score >= 60);
+          const weakMatches = affinities.filter((a: any) => a.score < 40);
+          datasetPatternsCtx = `
+PATTERN DAL DATASET (conoscenza interna — NON dire che "stai cercando"):
+${topMatches.length > 0 ? `Match forti: ${topMatches.map((a: any) => `${a.entity_name} (${a.score}% — ${a.reasoning})`).join("; ")}` : ""}
+${weakMatches.length > 0 ? `Match deboli: ${weakMatches.map((a: any) => `${a.entity_name} (${a.score}%)`).join(", ")} — usa questi per sfidare: "Perché non hai considerato [X]?"` : ""}
+
+COME USARE I PATTERN:
+- Fai finta di sapere già queste cose. Non dire MAI "dal database" o "dall'analisi".
+- "Conosco lavori simili al tuo. Quello di [entity_name] ha un approccio diverso. Perché il tuo è migliore?"
+- "Nel tuo settore, questo tipo di tesi è stato fatto molte volte. Cosa rende la tua diversa?"
+- Se lo studente non ha considerato un match forte: "C'è un professore/azienda che lavora esattamente su questo. Lo sapevi?"`;
+        }
+      }
+
+      // Post-thesis critical attack instructions
+      const postThesisAttack = hasThesisTopic ? `
+MODALITÀ POST-TESI ATTIVA — SEI IN FASE DI COSTRUZIONE:
+1. Non sei più esplorativo. Sei TECNICO e CRITICO.
+2. Ogni affermazione dello studente va verificata: "Hai evidenze per questo?"
+3. Identifica ERRORI COMUNI nelle tesi di questo campo e anticipali.
+4. Tono: "Questa cosa è già stata fatta mille volte. Perché la tua dovrebbe essere diversa?"
+5. Se lo studente è vago: "Non hai detto nulla di concreto. Riformula con dati."
+6. Se lo studente è troppo sicuro: "Perfetto, allora dimmi il punto più debole della tua tesi."
+7. Chiedi SEMPRE di giustificare le scelte metodologiche.
+8. Non accettare "perché è interessante" — chiedi "interessante PER CHI? Con quale impatto?"
+` : "";
+
       systemPrompt = `Sei Socrate, assistente AI per la tesi. NON sei il filosofo antico.
 
 IDENTITÀ E TONO:
@@ -1753,10 +1813,13 @@ IDENTITÀ E TONO:
 - Puoi essere duro, ma mai incomprensibile.
 
 ${severityInstructions}
+${postThesisAttack}
 
 CONTESTO DELLO STUDENTE:
 ${studentContext || "Nessun contesto. Chiedi allo studente di presentarsi."}
 ${studentProfileCtx}
+${vulnerabilitiesCtx}
+${datasetPatternsCtx}
 
 ${latexContent ? `CONTENUTO LATEX EDITOR:\n\`\`\`latex\n${latexContent.substring(0, 3000)}\n\`\`\`\nFai riferimento a sezioni specifiche.` : ""}
 
@@ -1773,6 +1836,7 @@ RUOLO DI HUB CENTRALE (SILENZIOSO):
 2. RACCOLTA: Registra competenze, lacune, interessi, stile
 3. FUSIONE: Integra chat + LaTeX + profilo DB
 4. NON menzionare MAI suggerimenti nella chat. Solo provocare e far ragionare.
+5. NON dire MAI che stai "cercando nel database" o "analizzando dati". SEMBRA che tu sappia già tutto.
 
 REGOLE (calibrate sulla severità ${severita}):
 1. ${severita >= 0.7 ? "Mai risposte dirette. Fai domande dirette e incalzanti." : "Fai domande stimolanti ma offri anche spunti costruttivi."}
