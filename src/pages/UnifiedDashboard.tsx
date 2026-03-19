@@ -976,7 +976,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
   // Empty state: offer to generate
   if (phases.length === 0) return (
     <div className="text-center py-8 space-y-3">
-      <p className="text-xs text-muted-foreground">Nessuna roadmap ancora. Socrate può generarne una basata sulla tua tesi.</p>
+      <p className="text-xs text-muted-foreground">No roadmap yet. Socrate can generate one based on your thesis.</p>
       <button
         onClick={generateRoadmap}
         disabled={generating}
