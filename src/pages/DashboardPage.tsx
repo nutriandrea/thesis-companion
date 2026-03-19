@@ -53,12 +53,14 @@ export default function DashboardPage() {
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "next_step").order("created_at", { ascending: false }).limit(5),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).eq("category", "thesis_feedback").order("created_at", { ascending: false }).limit(3),
       supabase.from("affinity_scores" as any).select("*").eq("user_id", user.id).order("score", { ascending: false }).limit(6),
-    ]).then(([mem, sug, steps, feedback, affinities]) => {
+      supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(10),
+    ]).then(([mem, sug, steps, feedback, affinities, vulns]) => {
       setMemoryCount(mem.count || 0);
       setSuggestionCount((sug as any).count || 0);
       if ((steps as any).data) setNextSteps((steps as any).data);
       if ((feedback as any).data) setThesisFeedback((feedback as any).data);
       if ((affinities as any).data) setTopAffinities((affinities as any).data);
+      if ((vulns as any).data) setVulnerabilities((vulns as any).data);
     });
   }, [user]);
 
