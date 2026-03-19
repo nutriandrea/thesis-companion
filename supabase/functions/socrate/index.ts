@@ -1973,7 +1973,7 @@ ${severityInstructions}
 ${postThesisAttack}
 
 CONTESTO DELLO STUDENTE:
-${studentContext || "Nessun contesto. Chiedi allo studente di presentarsi."}
+${resolvedStudentContext || "Nessun contesto disponibile. Saluta brevemente e chiedi su cosa vuole lavorare."}
 ${studentProfileCtx}
 ${vulnerabilitiesCtx}
 ${datasetPatternsCtx}
