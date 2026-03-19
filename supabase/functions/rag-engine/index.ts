@@ -145,17 +145,15 @@ Deno.serve(async (req) => {
       const chunks = chunkText(content, 2000, 300);
       const embeddings: any[] = [];
 
-      for (let i = 0; i < chunks.length; i++) {
-        const vector = await getEmbedding(chunks[i], OPENAI_API_KEY);
-        embeddings.push({
-          user_id: userId,
-          source_type: "thesis_chunk",
-          source_id: `thesis-chunk-${i}`,
-          content: chunks[i],
-          metadata: { chunk_index: i, total_chunks: chunks.length },
-          embedding: `[${vector.join(",")}]`,
-        });
-      }
+      const vectors = await getBatchEmbeddings(chunks, OPENAI_API_KEY);
+      const embeddings = chunks.map((chunk, i) => ({
+        user_id: userId,
+        source_type: "thesis_chunk",
+        source_id: `thesis-chunk-${i}`,
+        content: chunk,
+        metadata: { chunk_index: i, total_chunks: chunks.length },
+        embedding: `[${vectors[i].join(",")}]`,
+      }));
 
       const { error } = await supabase.from("embeddings").insert(embeddings);
       if (error) throw new Error(`DB insert error: ${error.message}`);
