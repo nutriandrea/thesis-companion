@@ -12,6 +12,7 @@ import VoiceConversation from "@/components/voice/VoiceConversation";
 import SocrateCoin from "@/components/shared/SocrateCoin";
 import SocrateTutor from "@/components/shared/SocrateTutor";
 import { supabase } from "@/integrations/supabase/client";
+import LanguageSwitch from "@/components/shared/LanguageSwitch";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks } from "@/hooks/useSocrateTasks";
