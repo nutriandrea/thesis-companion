@@ -35,12 +35,12 @@ export default function VoiceConversation({
 
   // Scribe (STT)
   const scribe = useScribe({
-    modelId: "scribe_v2_realtime",
-    commitStrategy: "vad",
-    onPartialTranscript: (data) => {
+    modelId: "scribe_v2_realtime" as any,
+    commitStrategy: "vad" as any,
+    onPartialTranscript: (data: any) => {
       setLiveTranscript(data.text);
     },
-    onCommittedTranscript: (data) => {
+    onCommittedTranscript: (data: any) => {
       if (data.text.trim()) {
         setLiveTranscript("");
         onTranscript(data.text.trim());
