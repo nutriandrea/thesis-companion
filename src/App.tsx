@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AppProvider } from "@/contexts/AppContext";
 import AuthPage from "@/pages/AuthPage";
+import Demo2Page from "@/pages/Demo2Page";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 import DemoPage from "@/pages/DemoPage";
