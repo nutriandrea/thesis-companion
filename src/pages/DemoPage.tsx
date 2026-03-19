@@ -948,7 +948,7 @@ function DemoDashboard() {
   // Invite supervisor is now inline in the header, not a card
   cards.push({ key: "tasks", delay, component: <DemoCard title="Tasks" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "rubrica", delay, component: <DemoCard title="Contatti" icon={Users}><DemoExperts /></DemoCard> });
+  cards.push({ key: "rubrica", delay, component: <DemoCard title="Contacts" icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
   cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
   delay += 0.05;
