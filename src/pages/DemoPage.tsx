@@ -5,15 +5,17 @@ import {
   MessageCircle, ChevronRight, ShieldAlert, BarChart3, BookOpen,
   ExternalLink, ArrowRight, TrendingUp, Link2, Loader2, Mic,
   Mail, Lock, User, Eye, EyeOff, MapPin, Calendar,
-  Compass, Lightbulb, PenTool, Sparkles, SkipForward, X,
+  Compass, Lightbulb, PenTool, Sparkles, SkipForward, X, Send,
   UserPlus, Share2, BarChart, Eye as EyeIcon,
 } from "lucide-react";
 import SocrateCoin from "@/components/shared/SocrateCoin";
+import ReactMarkdown from "react-markdown";
 
 // ─── DEMO STEPS ───
 type DemoStep = "login" | "onboarding" | "intro" | "socrate" | "dashboard";
 
 // ─── TYPES ───
+interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface CareerSector { name: string; percentage: number; reasoning?: string; }
 interface MockTask { id: string; title: string; description: string; priority: string; status: string; estimated_minutes: number; }
 interface MockVulnerability { id: string; type: string; title: string; description: string; severity: string; }
@@ -21,6 +23,88 @@ interface MockReference { title: string; authors: string; year: string; url: str
 interface MockSupervisor { id: string; name: string; fields: string[]; score: number; reasoning: string; email: string; university: string; }
 interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; email: string; }
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
+
+// ─── DEMO SOCRATE CHAT HOOK ───
+const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
+const DEMO_STUDENT_CONTEXT = `Name: Marco Demo\nDegree: MSc Computer Science\nUniversity: ETH Zurich\nSkills: Python, machine learning, NLP, data analysis\nState: topic_chosen\nTopic: Applying Large Language Models for Automated Vulnerability Detection in Source Code`;
+
+function useDemoChat(initialMessages?: ChatMsg[]) {
+  const [messages, setMessages] = useState<ChatMsg[]>(initialMessages || []);
+  const [input, setInput] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isStreaming) return;
+    const userMsg: ChatMsg = { id: `u-${Date.now()}`, role: "user", content: text };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setIsStreaming(true);
+
+    const apiMessages = [...messages, userMsg].slice(-20).map(m => ({ role: m.role, content: m.content }));
+
+    try {
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          messages: apiMessages,
+          studentContext: DEMO_STUDENT_CONTEXT,
+          mode: "chat",
+        }),
+      });
+
+      if (!resp.ok) {
+        setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Sorry, I couldn't process that. Try again." }]);
+        setIsStreaming(false);
+        return;
+      }
+
+      const assistantId = `a-${Date.now()}`;
+      setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+
+      // Stream the response
+      const reader = resp.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let content = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const delta = JSON.parse(jsonStr).choices?.[0]?.delta?.content;
+            if (delta) {
+              content += delta;
+              const cleaned = content.replace(/<!--\s*THESIS_TITLE:.*?-->/g, "").replace(/<!--\s*THESIS_READY\s*-->/g, "").trim();
+              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: cleaned } : m));
+            }
+          } catch {}
+        }
+      }
+    } catch {
+      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: "Connection error. Try again." }]);
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [isStreaming, messages]);
+
+  return { messages, setMessages, input, setInput, isStreaming, sendMessage, bottomRef };
+}
 
 // ─── MOCK DATA ───
 const MOCK_THESIS = "Applying Large Language Models for Automated Vulnerability Detection in Source Code";
@@ -361,18 +445,16 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
 // STEP 4: DEMO SOCRATE CONVERSATION
 // ══════════════════════════════════════════════════════
 function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
-  const [visibleMsgs, setVisibleMsgs] = useState<typeof MOCK_SOCRATE_MESSAGES>([]);
-  const [msgIdx, setMsgIdx] = useState(0);
+  const welcomeMsg: ChatMsg = {
+    id: "welcome", role: "assistant",
+    content: "You have a clear direction: LLMs for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?",
+  };
+  const { messages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([welcomeMsg]);
 
-  useEffect(() => {
-    if (msgIdx >= MOCK_SOCRATE_MESSAGES.length) return;
-    const delay = msgIdx === 0 ? 800 : MOCK_SOCRATE_MESSAGES[msgIdx].role === "assistant" ? 2500 : 1500;
-    const timer = setTimeout(() => {
-      setVisibleMsgs(prev => [...prev, MOCK_SOCRATE_MESSAGES[msgIdx]]);
-      setMsgIdx(prev => prev + 1);
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [msgIdx]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -380,50 +462,58 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
       <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
         <SocrateCoin size={36} interactive={false} />
         <div className="flex-1">
-          <p className="text-sm font-bold text-foreground font-display">Socrate</p>
+          <p className="text-sm font-bold text-foreground font-display">Socrates</p>
           <p className="text-[10px] text-muted-foreground">Exploration phase — thesis definition</p>
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
-        <AnimatePresence>
-          {visibleMsgs.map(msg => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div className={`max-w-[75%] px-4 py-3 text-xs rounded-2xl ${
-                msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
-              }`}>
-                <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+        {messages.map(msg => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div className={`max-w-[75%] px-4 py-3 text-xs rounded-2xl ${
+              msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
+            }`}>
+              <div className="leading-relaxed prose prose-xs prose-foreground max-w-none">
+                <ReactMarkdown>{msg.content || "…"}</ReactMarkdown>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            </div>
+          </motion.div>
+        ))}
 
-        {msgIdx < MOCK_SOCRATE_MESSAGES.length && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+        {isStreaming && messages[messages.length - 1]?.content === "" && (
+          <div className="flex justify-start">
             <div className="flex gap-1.5 px-4 py-3">
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
               <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
-          </motion.div>
+          </div>
         )}
+        <div ref={bottomRef} />
       </div>
 
-      {/* Bottom bar with Skip button */}
-      <div className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
-        <input placeholder="Reply to Socrates..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
-        <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
-        <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
-      </div>
+      {/* Input bar */}
+      <form onSubmit={handleSubmit} className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Reply to Socrates..."
+          disabled={isStreaming}
+          className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent/30 transition-colors disabled:opacity-50"
+        />
+        <button type="submit" disabled={isStreaming || !input.trim()} className="p-2.5 bg-accent text-accent-foreground rounded-full disabled:opacity-50 hover:bg-accent/90 transition-colors">
+          {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </button>
+      </form>
 
-      {/* Skip to my progress button */}
+      {/* Skip button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -904,17 +994,70 @@ function DemoRoadmap() {
   );
 }
 
-function DemoChat() {
+function DemoChatOverlay({ onClose }: { onClose: () => void }) {
+  const welcomeMsg: ChatMsg = {
+    id: "dash-welcome", role: "assistant",
+    content: "What would you like to discuss? I can help with your research methodology, review your approach, or challenge your assumptions.",
+  };
+  const { messages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([welcomeMsg]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
+  };
+
   return (
-    <div className="space-y-3">
-      {MOCK_SOCRATE_MESSAGES.map(msg => (
-        <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-          <div className={`max-w-[80%] px-4 py-3 text-xs rounded-2xl ${msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"}`}>
-            <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+    <>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-foreground/10 z-40" onClick={onClose} />
+      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+        className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
+          <SocrateCoin size={32} interactive={false} />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-foreground font-display">Socrates</p>
+            <p className="text-[10px] text-muted-foreground">Demo — interactive conversation</p>
           </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
         </div>
-      ))}
-    </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          {messages.map(msg => (
+            <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] px-4 py-3 text-xs rounded-2xl ${msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"}`}>
+                <div className="leading-relaxed prose prose-xs prose-foreground max-w-none">
+                  <ReactMarkdown>{msg.content || "…"}</ReactMarkdown>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+          {isStreaming && messages[messages.length - 1]?.content === "" && (
+            <div className="flex justify-start">
+              <div className="flex gap-1.5 px-4 py-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+        <form onSubmit={handleSubmit} className="border-t border-border px-5 py-3 flex items-center gap-3">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Reply to Socrates..."
+            disabled={isStreaming}
+            className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent/30 transition-colors disabled:opacity-50"
+          />
+          <button type="submit" disabled={isStreaming || !input.trim()} className="p-2.5 bg-accent text-accent-foreground rounded-full disabled:opacity-50 hover:bg-accent/90 transition-colors">
+            {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </form>
+      </motion.div>
+    </>
   );
 }
 
@@ -1058,33 +1201,7 @@ function DemoDashboard() {
 
       {/* Chat overlay */}
       <AnimatePresence>
-        {showChat && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-foreground/10 z-40" onClick={() => setShowChat(false)} />
-            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-              className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-                <SocrateCoin size={32} interactive={false} />
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-                  <p className="text-[10px] text-muted-foreground">Demo — simulated conversation</p>
-                </div>
-                <button onClick={() => setShowChat(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
-                  <span className="text-muted-foreground text-sm">✕</span>
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                <DemoChat />
-              </div>
-              <div className="border-t border-border px-5 py-3 flex items-center gap-3">
-                <input placeholder="Reply to Socrates..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
-                <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
-                <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
-              </div>
-            </motion.div>
-          </>
-        )}
+        {showChat && <DemoChatOverlay onClose={() => setShowChat(false)} />}
       </AnimatePresence>
     </div>
   );
