@@ -4,7 +4,8 @@ import {
   Send, Loader2, ShieldAlert, Flame, Target, Users, Building2,
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
   ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw,
-  TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3, Mic
+  TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3, Mic,
+  BookOpen, ExternalLink
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import VoiceConversation from "@/components/voice/VoiceConversation";
@@ -29,6 +30,7 @@ const fields = fieldsData as Field[];
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; }
+interface Reference { title: string; authors: string; year?: string; url: string; category: string; relevance: string; }
 interface CareerSector { name: string; percentage: number; reasoning?: string; }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
@@ -1028,6 +1030,90 @@ function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilitie
   );
 }
 
+// ─── MAIN REFERENCES ───
+function ReferencesContent({ references, loading, onRefresh }: {
+  references: Reference[]; loading: boolean; onRefresh: () => void;
+}) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+
+  const categoryLabel: Record<string, { text: string; cls: string }> = {
+    foundational: { text: "Base", cls: "bg-accent/10 text-accent" },
+    methodology: { text: "Metodo", cls: "bg-warning/10 text-warning" },
+    recent: { text: "Recente", cls: "bg-green-500/10 text-green-600" },
+    contrarian: { text: "Critico", cls: "bg-destructive/10 text-destructive" },
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-6">
+      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      <span className="text-xs text-muted-foreground ml-2">Cercando riferimenti...</span>
+    </div>
+  );
+
+  if (references.length === 0) return (
+    <div className="text-center py-6 space-y-2">
+      <p className="text-xs text-muted-foreground italic">Parla con Socrate per ricevere suggerimenti di lettura.</p>
+      <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
+        Genera riferimenti →
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-1.5">
+      {references.map((ref, i) => {
+        const isExpanded = expandedIdx === i;
+        const cat = categoryLabel[ref.category] || categoryLabel.foundational;
+
+        return (
+          <div key={i} className="rounded-lg hover:bg-secondary/30 transition-colors">
+            <button
+              onClick={() => setExpandedIdx(isExpanded ? null : i)}
+              className="w-full flex items-start gap-2.5 p-2.5 text-left"
+            >
+              <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {ref.authors}{ref.year ? ` (${ref.year})` : ""}
+                </p>
+              </div>
+              <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>
+                {cat.text}
+              </span>
+            </button>
+
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-2.5 pb-2.5 pt-0 space-y-2 pl-8">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ref.relevance}</p>
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Apri riferimento
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── THESIS DOCUMENT WIDGET ───
 function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updateProfile: any; user: any }) {
   const { toast } = useToast();
@@ -1237,8 +1323,12 @@ export default function UnifiedDashboard() {
   const [phaseEvalLoading, setPhaseEvalLoading] = useState(false);
   const [supervisorResponse, setSupervisorResponse] = useState<string | null>(null);
 
-  // Google Docs state - auto-sync from profile
-  const [thesisContent, setThesisContent] = useState("");
+   // Google Docs state - auto-sync from profile
+   const [thesisContent, setThesisContent] = useState("");
+
+   // References state
+   const [references, setReferences] = useState<Reference[]>([]);
+   const [isLoadingRefs, setIsLoadingRefs] = useState(false);
 
   // Auto-fetch Google Doc content silently on load
   const fetchGoogleDoc = useCallback(async () => {
@@ -1429,6 +1519,24 @@ export default function UnifiedDashboard() {
     } catch { toast({ variant: "destructive", title: "Errore" }); }
     finally { setIsScanning(false); }
   }, [user, isScanning, messages, studentContext, thesisContent, toast]);
+
+  // Fetch references
+  const fetchReferences = useCallback(async () => {
+    if (!user || isLoadingRefs) return;
+    setIsLoadingRefs(true);
+    try {
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ messages: messages.slice(-20).map(m => ({ role: m.role, content: m.content })), studentContext, latexContent: thesisContent, mode: "suggest_references" }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setReferences(data.references || []);
+        toast({ title: "Riferimenti aggiornati", description: `${data.references?.length || 0} riferimenti suggeriti.` });
+      }
+    } catch { toast({ variant: "destructive", title: "Errore nel caricamento riferimenti" }); }
+    finally { setIsLoadingRefs(false); }
+  }, [user, isLoadingRefs, messages, studentContext, thesisContent, toast]);
 
   // Resolve vulnerability: open chat with pre-filled context, mark resolved
   const resolveVulnerability = useCallback((vulnId: string) => {
@@ -1782,17 +1890,33 @@ export default function UnifiedDashboard() {
           });
           delay += 0.05;
 
-          // Vulnerabilities: always shown
-          cards.push({
-            key: "vulnerabilities",
-            delay: delay,
-            component: (
-              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
-              </DashboardCard>
-            ),
-          });
+          // References: pre-execution phases (orientation, topic_supervisor, planning)
+          if (!showExecution && !showWriting) {
+            cards.push({
+              key: "references",
+              delay: delay,
+              component: (
+                <DashboardCard title="Riferimenti principali" icon={BookOpen} badge={references.length || null}
+                  action={{ label: "Aggiorna", onClick: fetchReferences, loading: isLoadingRefs }}>
+                  <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} />
+                </DashboardCard>
+              ),
+            });
+          }
+
+          // Vulnerabilities: execution and writing only
+          if (showExecution || showWriting) {
+            cards.push({
+              key: "vulnerabilities",
+              delay: delay,
+              component: (
+                <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
+                  <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+                </DashboardCard>
+              ),
+            });
+          }
 
           return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
