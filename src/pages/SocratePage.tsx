@@ -169,7 +169,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
     if (!silent && (newMemories > 0 || newSuggestions > 0)) {
       toast({
-        title: "🧠 Analisi completata",
+        title: "Analisi completata",
         description: `${newMemories} memorie + ${newSuggestions} suggerimenti estratti e distribuiti nelle sezioni.`,
       });
     }
