@@ -595,7 +595,7 @@ function DemoIntro({ onNext }: { onNext: (mode: "voice" | "text") => void }) {
                     className="flex gap-14 mt-4"
                   >
                     <button
-                      onClick={onNext}
+                      onClick={() => onNext("voice")}
                       className="group flex flex-col items-center gap-3 transition-all"
                     >
                       <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
@@ -606,7 +606,7 @@ function DemoIntro({ onNext }: { onNext: (mode: "voice" | "text") => void }) {
                       </span>
                     </button>
                     <button
-                      onClick={onNext}
+                      onClick={() => onNext("text")}
                       className="group flex flex-col items-center gap-3 transition-all"
                     >
                       <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
