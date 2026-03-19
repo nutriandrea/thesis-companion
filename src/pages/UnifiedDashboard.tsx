@@ -116,32 +116,110 @@ const normalizePhase = (phase?: string | null): PhaseKey => normalizeSinglePhase
 
 // SocrateIcon is now the shared SocrateCoin component
 
-// ─── CARD COMPONENT ───
+// ─── CARD COMPONENT with overflow detection & expand dialog ───
 function DashboardCard({
-  title, icon: Icon, children, badge, action, className = ""
+  title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200,
 }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
   badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
+  maxContentHeight?: number;
 }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const check = () => setIsOverflowing(el.scrollHeight > maxContentHeight + 8);
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [maxContentHeight, children]);
+
   return (
-    <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
-          <span className="text-[6px] font-bold text-background">S</span>
+    <>
+      <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border shrink-0">
+          <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
+            <span className="text-[6px] font-bold text-background">S</span>
+          </div>
+          <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
+          {badge != null && badge > 0 && (
+            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+          )}
+          {action && (
+            <button onClick={action.onClick} disabled={action.loading}
+              className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+              {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+            </button>
+          )}
         </div>
-        <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
-        {badge != null && badge > 0 && (
-          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
-        )}
-        {action && (
-          <button onClick={action.onClick} disabled={action.loading}
-            className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
-            {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
-          </button>
-        )}
+        <div className="relative flex-1 min-h-0">
+          <div
+            ref={contentRef}
+            className="px-4 py-2.5 overflow-hidden"
+            style={{ maxHeight: maxContentHeight }}
+          >
+            {children}
+          </div>
+          {isOverflowing && (
+            <div className="absolute bottom-0 left-0 right-0">
+              <div className="h-10 bg-gradient-to-t from-card to-transparent" />
+              <div className="bg-card px-4 pb-2 pt-0">
+                <button
+                  onClick={() => setExpanded(true)}
+                  className="w-full text-center text-[10px] font-medium text-accent hover:text-accent/80 transition-colors py-1"
+                >
+                  Show more
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto px-4 py-3">{children}</div>
-    </div>
+
+      {/* Expanded modal */}
+      <AnimatePresence>
+        {expanded && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/10 backdrop-blur-sm z-[60]"
+              onClick={() => setExpanded(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-6 lg:inset-x-[15%] lg:inset-y-[10%] z-[61] bg-card border border-border rounded-lg shadow-xl flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-border shrink-0">
+                <div className="w-4 h-4 rounded-full bg-foreground/80 flex items-center justify-center">
+                  <span className="text-[6px] font-bold text-background">S</span>
+                </div>
+                <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
+                {badge != null && badge > 0 && (
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+                )}
+                {action && (
+                  <button onClick={action.onClick} disabled={action.loading}
+                    className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+                    {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+                  </button>
+                )}
+                <button onClick={() => setExpanded(false)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors ml-2">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                {children}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
