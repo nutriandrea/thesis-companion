@@ -445,6 +445,7 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
 // STEP 4: DEMO SOCRATE CONVERSATION
 // ══════════════════════════════════════════════════════
 function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
+  const [mode, setMode] = useState<"text" | "voice">("text");
   const welcomeMsg: ChatMsg = {
     id: "welcome", role: "assistant",
     content: "You have a clear direction: LLMs for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?",
@@ -456,6 +457,10 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
     sendMessage(input);
   };
 
+  if (mode === "voice") {
+    return <DemoVoiceView messages={messages} onSwitchToText={() => setMode("text")} onSkip={onSkip} />;
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
@@ -465,6 +470,11 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
           <p className="text-sm font-bold text-foreground font-display">Socrates</p>
           <p className="text-[10px] text-muted-foreground">Exploration phase — thesis definition</p>
         </div>
+        <button onClick={() => setMode("voice")}
+          className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          title="Switch to voice mode">
+          <Mic className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Messages */}
@@ -519,6 +529,207 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.5 }}
         className="fixed bottom-20 right-6 z-[60]"
+      >
+        <button
+          onClick={onSkip}
+          className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-foreground/90 transition-all shadow-lg"
+        >
+          <SkipForward className="w-3.5 h-3.5" />
+          Skip to my progress
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── DEMO VOICE VIEW (visual simulation of voice mode) ───
+type DemoVoiceState = "listening" | "speaking";
+
+function DemoVoiceView({ messages, onSwitchToText, onSkip }: {
+  messages: ChatMsg[];
+  onSwitchToText: () => void;
+  onSkip: () => void;
+}) {
+  const [voiceState, setVoiceState] = useState<DemoVoiceState>("speaking");
+  const [showTranscript, setShowTranscript] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Cycle between speaking and listening to simulate a conversation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVoiceState(prev => prev === "speaking" ? "listening" : "speaking");
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, showTranscript]);
+
+  const lastAssistant = messages.filter(m => m.role === "assistant").slice(-1)[0]?.content || "";
+  const stateLabel = voiceState === "speaking" ? "Speaking" : "Listening...";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col select-none overflow-hidden">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-6 py-4 shrink-0 relative z-10">
+        <div className="flex items-center gap-2">
+          <button className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <Mic className="w-4 h-4" />
+          </button>
+          <button className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <Volume2 className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTranscript(!showTranscript)}
+            className={`p-2 rounded-full transition-colors ${showTranscript ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            title="Toggle transcript">
+            <FileText className="w-4 h-4" />
+          </button>
+          <button onClick={onSwitchToText}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Switch to text chat">
+            <Keyboard className="w-4 h-4" />
+          </button>
+          <button onClick={onSwitchToText}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Central area — coin hero */}
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10">
+        <div className="relative flex items-center justify-center">
+          {/* Speaking rings */}
+          {voiceState === "speaking" && (
+            <>
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="absolute rounded-full border border-foreground/[0.08]"
+                  style={{ width: 200, height: 200 }}
+                  initial={{ scale: 1, opacity: 0 }}
+                  animate={{
+                    scale: [1, 1.3 + i * 0.2, 1.5 + i * 0.3],
+                    opacity: [0.3 - i * 0.08, 0.15, 0],
+                  }}
+                  transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.6, ease: "easeOut" }}
+                />
+              ))}
+            </>
+          )}
+
+          {/* Listening pulse */}
+          {voiceState === "listening" && (
+            <motion.div
+              className="absolute rounded-full border border-foreground/10"
+              style={{ width: 200, height: 200 }}
+              animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.15, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+          )}
+
+          {/* Coin */}
+          <motion.div
+            animate={
+              voiceState === "speaking"
+                ? { scale: [1, 1.03, 1] }
+                : { scale: [1, 1.01, 1] }
+            }
+            transition={
+              voiceState === "speaking"
+                ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+                : { duration: 3, repeat: Infinity, ease: "easeInOut" }
+            }
+          >
+            <SocrateCoin size={180} interactive={false} isActive={true} />
+          </motion.div>
+        </div>
+
+        {/* State label */}
+        <motion.p
+          key={stateLabel}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 text-xs text-muted-foreground uppercase tracking-[0.2em] font-medium"
+        >
+          {stateLabel}
+        </motion.p>
+
+        {/* Simulated live transcript when listening */}
+        <AnimatePresence>
+          {voiceState === "listening" && (
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-6 text-sm text-foreground/50 italic text-center max-w-md px-6"
+            >
+              I think the key differentiator is...
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* Last assistant message below coin */}
+        <AnimatePresence>
+          {lastAssistant && !showTranscript && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-8 max-w-lg px-8 text-center"
+            >
+              <div className="text-sm text-foreground/40 leading-relaxed line-clamp-4">
+                <ReactMarkdown>{lastAssistant}</ReactMarkdown>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Transcript panel */}
+      <AnimatePresence>
+        {showTranscript && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="absolute bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border max-h-[50vh] flex flex-col"
+          >
+            <div className="px-5 py-3 border-b border-border flex items-center justify-between shrink-0">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Transcript</p>
+              <button onClick={() => setShowTranscript(false)} className="p-1 rounded hover:bg-secondary">
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2.5">
+              {messages.map(msg => (
+                <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] px-3 py-2 text-xs rounded-lg ${
+                    msg.role === "assistant"
+                      ? "bg-secondary/30 text-foreground/70"
+                      : "bg-accent/5 text-foreground/60"
+                  }`}>
+                    <div className="prose prose-xs max-w-none [&_p]:my-0.5 [&_strong]:text-foreground/80">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Skip button */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.5 }}
+        className="fixed bottom-6 right-6 z-[60]"
       >
         <button
           onClick={onSkip}
