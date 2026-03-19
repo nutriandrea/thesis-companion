@@ -2232,9 +2232,9 @@ ${vulnerabilitiesCtx}
 ${datasetPatternsCtx}
 ${ragContext}
 
-${latexContent ? \`CONTENUTO TESI (da Google Docs):\n\${latexContent.substring(0, 3000)}\nFai riferimento a sezioni specifiche.\` : ""}
+${latexContent ? "CONTENUTO TESI (da Google Docs):\n" + latexContent.substring(0, 3000) + "\nFai riferimento a sezioni specifiche." : ""}
 
-${memoryEntries && (memoryEntries as any[]).length > 0 ? \`MEMORIA PRECEDENTE:\n\${JSON.stringify((memoryEntries as any[]).slice(-15).map((m: any) => ({ type: m.type, title: m.title })))}\` : ""}
+${memoryEntries && (memoryEntries as any[]).length > 0 ? "MEMORIA PRECEDENTE:\n" + JSON.stringify((memoryEntries as any[]).slice(-15).map((m: any) => ({ type: m.type, title: m.title }))) : ""}
 
 FASI DEL PERCORSO TESI (5 fasi sovrapposte):
 1. Orientation (Sett. 1-4): scoprire su cosa scrivere → domande esplorative, severità massima
