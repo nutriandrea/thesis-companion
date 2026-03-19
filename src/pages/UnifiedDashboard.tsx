@@ -312,11 +312,11 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
         const sup = supervisors.find(s => s.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [] };
+        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [], reasoning: a.reasoning };
       });
     }
     return supervisors.slice(0, 5).map(s => ({
-      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2),
+      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2), reasoning: "",
     }));
   }, [affinities]);
 
