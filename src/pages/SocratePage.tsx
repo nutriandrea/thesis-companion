@@ -65,7 +65,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
   const suggestionsRef = useRef<any[]>([]);
 
   const studentContext = profile
-    ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
+    ? `Name: ${profile.first_name} ${profile.last_name}\nDegree: ${profile.degree || "N/A"}\nUniversity: ${profile.university || "N/A"}\nSkills: ${profile.skills?.join(", ") || "N/A"}\nState: ${profile.journey_state}\nTopic: ${profile.thesis_topic || "Not defined"}`
     : "";
 
   // Load chat history + memory + suggestions
