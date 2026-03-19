@@ -2086,21 +2086,34 @@ export default function UnifiedDashboard() {
               className="fixed inset-0 bg-foreground/10 z-40"
               onClick={closeChat}
             />
-            <motion.div
-              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-              className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
-            >
-              <VoiceConversation
-                onTranscript={(text) => sendMessage(text)}
-                onClose={closeChat}
-                isStreaming={isStreaming}
-                lastAssistantMessage={lastMessage}
-                severity={studentProfile?.severita ?? 0.5}
+            {inputMode === "voice" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+              >
+                <VoiceConversation
+                  onTranscript={(text) => sendMessage(text)}
+                  onClose={closeChat}
+                  onSwitchToText={switchChatToText}
+                  isStreaming={isStreaming}
+                  lastAssistantMessage={lastMessage}
+                  severity={studentProfile?.severita ?? 0.5}
+                  messages={messages}
+                  onGenerateReport={generateReport}
+                  isGeneratingReport={isGeneratingReport}
+                />
+              </motion.div>
+            ) : (
+              <ChatOverlay
                 messages={messages}
-                onGenerateReport={generateReport}
-                isGeneratingReport={isGeneratingReport}
+                input={input}
+                setInput={setInput}
+                sendMessage={sendMessage}
+                isStreaming={isStreaming}
+                onClose={closeChat}
+                onSwitchToVoice={switchChatToVoice}
               />
-            </motion.div>
+            )}
           </>
         )}
       </AnimatePresence>
