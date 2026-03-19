@@ -603,6 +603,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
           title: exp?.title || "",
           offerInterviews: exp?.offerInterviews ?? false,
           fieldIds: exp?.fieldIds || [],
+          email: exp?.email || "",
         };
       });
     }
