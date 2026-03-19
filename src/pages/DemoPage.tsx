@@ -23,14 +23,14 @@ interface MockExpert { id: string; name: string; title: string; score: number; r
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
 
 // ─── MOCK DATA ───
-const MOCK_THESIS = "Applicazione di Large Language Models per l'Analisi Automatica di Vulnerabilità nel Codice Sorgente";
+const MOCK_THESIS = "Applying Large Language Models for Automated Vulnerability Detection in Source Code";
 
 const MOCK_SECTORS: CareerSector[] = [
-  { name: "AI & Machine Learning", percentage: 42, reasoning: "Cuore della tesi" },
-  { name: "Cybersecurity", percentage: 28, reasoning: "Dominio applicativo" },
-  { name: "DevOps & Automazione", percentage: 15, reasoning: "Pipeline CI/CD" },
-  { name: "Ricerca Accademica", percentage: 10, reasoning: "Pubblicazioni" },
-  { name: "Consulenza Tech", percentage: 5, reasoning: "Applicazioni enterprise" },
+  { name: "AI & Machine Learning", percentage: 42, reasoning: "Core of the thesis" },
+  { name: "Cybersecurity", percentage: 28, reasoning: "Application domain" },
+  { name: "DevOps & Automation", percentage: 15, reasoning: "CI/CD pipelines" },
+  { name: "Academic Research", percentage: 10, reasoning: "Publications" },
+  { name: "Tech Consulting", percentage: 5, reasoning: "Enterprise applications" },
 ];
 
 const MOCK_TASKS: Record<string, MockTask[]> = {
