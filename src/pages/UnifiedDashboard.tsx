@@ -603,14 +603,14 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
 function RoadmapCard({ currentPhase }: { currentPhase: PhaseKey }) {
   const isEditable = currentPhase === "planning";
 
-  // Use mock roadmap data — in production this would come from DB
+  const roadmapPhases = mockRoadmap;
 
   // Filter: in planning show from planning onward; in execution/writing show all with progress
-  const visiblePhases = phases.filter((_: any, i: number) => i >= 2); // planning, execution, writing
+  const visiblePhases = roadmapPhases.filter((_: RoadmapPhase, i: number) => i >= 2); // planning, execution, writing
 
   return (
     <div className="space-y-3">
-      {visiblePhases.map((phase: import("@/types/data").RoadmapPhase) => (
+      {visiblePhases.map((phase: RoadmapPhase) => (
         <div key={phase.id} className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{phase.title}</span>
