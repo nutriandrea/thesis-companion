@@ -191,7 +191,7 @@ export default function VoiceConversation({
   }, [lastAssistantMessage, isStreaming, audioEnabled, speakText]);
 
   useEffect(() => { if (isStreaming && voiceState !== "speaking") setVoiceState("processing"); }, [isStreaming]);
-  useEffect(() => { return () => { scribe.disconnect(); stopAudio(); }; }, []);
+  useEffect(() => { return () => { try { scribe.disconnect(); } catch(e) {} stopAudio(); }; }, [scribe, stopAudio]);
 
   const toggleMute = useCallback(() => {
     if (muted) { setMuted(false); if (!isSpeakingRef.current) setTimeout(() => startListening(), 100); }
