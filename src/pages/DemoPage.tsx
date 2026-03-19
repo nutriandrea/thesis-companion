@@ -1125,6 +1125,8 @@ function DemoExperts() {
 }
 
 function DemoReferences() {
+  const { data, loading } = useDemoEngine<{ references: MockReference[] }>("generate_references");
+  const refs = data?.references?.length ? data.references : MOCK_REFERENCES;
   const categoryLabel: Record<string, { text: string; cls: string }> = {
     foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
     methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
@@ -1132,9 +1134,11 @@ function DemoReferences() {
     contrarian: { text: "Critical", cls: "bg-destructive/10 text-destructive" },
   };
 
+  if (loading) return <DemoLoadingSkeleton lines={4} />;
+
   return (
     <div className="space-y-1.5">
-      {MOCK_REFERENCES.map((ref, i) => {
+      {refs.map((ref, i) => {
         const cat = categoryLabel[ref.category] || categoryLabel.foundational;
         return (
           <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
