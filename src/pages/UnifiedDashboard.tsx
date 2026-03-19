@@ -20,7 +20,8 @@ import supervisorsData from "@/data/supervisors.json";
 import companiesData from "@/data/companies.json";
 import expertsData from "@/data/experts.json";
 import fieldsData from "@/data/fields.json";
-import type { Supervisor, Company, Expert, Field } from "@/types/data";
+import type { Supervisor, Company, Expert, Field, RoadmapPhase, RoadmapTask } from "@/types/data";
+import { mockRoadmap } from "@/data/mock-roadmap";
 
 const supervisors = supervisorsData as Supervisor[];
 const companies = companiesData as Company[];
