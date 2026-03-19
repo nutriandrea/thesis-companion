@@ -427,7 +427,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
             <button onClick={runFusionAnalysis} disabled={isStreaming || isExtracting}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ai/10 border border-ai/20 text-xs text-ai hover:bg-ai/20 transition-colors disabled:opacity-30">
               {isExtracting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-              Fusione
+              Fusion
             </button>
           )}
           {profile?.socrate_done && profile?.thesis_topic && !explorationMode && (
