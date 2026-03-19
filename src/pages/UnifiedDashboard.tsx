@@ -369,7 +369,7 @@ function CareerBar({ sectors, onSectorClick, loading }: {
   );
 
   if (sectors.length === 0) return (
-    <p className="text-xs text-muted-foreground text-center py-6">Talk to Socrate to calculate your orientation.</p>
+    <p className="text-xs text-muted-foreground text-center py-6">Parla con Socrate per calcolare il tuo orientamento.</p>
   );
 
   const sorted = [...sectors].sort((a, b) => b.percentage - a.percentage);
