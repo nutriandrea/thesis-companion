@@ -35,10 +35,10 @@ interface StudentProfile {
 }
 
 const maturityLabels: Record<string, { label: string; color: string; percent: number }> = {
-  beginner: { label: "Principiante", color: "text-warning", percent: 20 },
-  developing: { label: "In sviluppo", color: "text-accent", percent: 45 },
-  intermediate: { label: "Intermedio", color: "text-accent", percent: 70 },
-  advanced: { label: "Avanzato", color: "text-success", percent: 95 },
+  beginner: { label: "Beginner", color: "text-warning", percent: 20 },
+  developing: { label: "Developing", color: "text-accent", percent: 45 },
+  intermediate: { label: "Intermediate", color: "text-accent", percent: 70 },
+  advanced: { label: "Advanced", color: "text-success", percent: 95 },
 };
 
 // GoogleDocConfig moved to UnifiedDashboard
@@ -86,7 +86,7 @@ export default function ProfilePage() {
     });
     setSaving(false);
     setEditing(false);
-    toast({ title: "Profilo aggiornato" });
+    toast({ title: "Profile updated" });
   };
 
   return (
@@ -117,11 +117,11 @@ export default function ProfilePage() {
                   {universities.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
                 </select>
                 <input value={formData.degree} onChange={e => setFormData(p => ({ ...p, degree: e.target.value }))}
-                  placeholder="Corso di studi" className="w-full bg-secondary border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+                  placeholder="Course of study" className="w-full bg-secondary border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
                 <input value={formData.thesis_topic} onChange={e => setFormData(p => ({ ...p, thesis_topic: e.target.value }))}
-                  placeholder="Argomento tesi" className="w-full bg-secondary border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+                  placeholder="Thesis topic" className="w-full bg-secondary border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
                 <input value={formData.skills} onChange={e => setFormData(p => ({ ...p, skills: e.target.value }))}
-                  placeholder="Competenze (separate da virgola)" className="w-full bg-secondary border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
+                  placeholder="Skills (comma-separated)" className="w-full bg-secondary border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent" />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
                     {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Salva
@@ -134,7 +134,7 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-bold font-display">{profile.first_name} {profile.last_name}</h2>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1"><Mail className="w-3.5 h-3.5" /> {profile.email}</div>
                 {profile.university && <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1"><GraduationCap className="w-3.5 h-3.5" /> {profile.degree} · {profile.university}</div>}
-                {profile.thesis_topic && <p className="text-sm text-muted-foreground mt-3"><strong>Tema:</strong> {profile.thesis_topic}</p>}
+                {profile.thesis_topic && <p className="text-sm text-muted-foreground mt-3"><strong>Topic:</strong> {profile.thesis_topic}</p>}
               </>
             )}
           </div>

@@ -20,118 +20,118 @@ interface RoadmapPhase { key: string; title: string; tasks: { id: string; title:
 const MOCK_THESIS = "Applicazione di Large Language Models per l'Analisi Automatica di Vulnerabilità nel Codice Sorgente";
 
 const MOCK_SECTORS: CareerSector[] = [
-  { name: "AI & Machine Learning", percentage: 42, reasoning: "Core della tesi" },
-  { name: "Cybersecurity", percentage: 28, reasoning: "Dominio applicativo" },
-  { name: "DevOps & Automazione", percentage: 15, reasoning: "Pipeline CI/CD" },
-  { name: "Ricerca Accademica", percentage: 10, reasoning: "Pubblicazioni" },
-  { name: "Consulenza Tech", percentage: 5, reasoning: "Applicazioni enterprise" },
+  { name: "AI & Machine Learning", percentage: 42, reasoning: "Core of the thesis" },
+  { name: "Cybersecurity", percentage: 28, reasoning: "Application domain" },
+  { name: "DevOps & Automazione", percentage: 15, reasoning: "CI/CD Pipeline" },
+  { name: "Ricerca Accademica", percentage: 10, reasoning: "Publications" },
+  { name: "Consulenza Tech", percentage: 5, reasoning: "Enterprise applications" },
 ];
 
 const MOCK_TASKS: Record<string, MockTask[]> = {
   orientation: [
-    { id: "t1", title: "Esplorare 3 aree di interesse", description: "Identifica almeno tre macro-aree che ti interessano e scrivi pro/contro di ciascuna.", priority: "high", status: "completed", estimated_minutes: 30 },
-    { id: "t2", title: "Leggere survey su LLM per code analysis", description: "Cerca e leggi almeno un survey paper recente sull'uso di LLM per analisi del codice.", priority: "high", status: "completed", estimated_minutes: 60 },
-    { id: "t3", title: "Definire domanda di ricerca preliminare", description: "Formula una prima bozza della tua research question.", priority: "critical", status: "pending", estimated_minutes: 45 },
+    { id: "t1", title: "Explore 3 areas of interest", description: "Identify at least three macro-areas of interest and write pros/cons for each.", priority: "high", status: "completed", estimated_minutes: 30 },
+    { id: "t2", title: "Read survey on LLM for code analysis", description: "Find and read at least one recent survey paper on LLM for code analysis.", priority: "high", status: "completed", estimated_minutes: 60 },
+    { id: "t3", title: "Define preliminary research question", description: "Draft a first version of your research question.", priority: "critical", status: "pending", estimated_minutes: 45 },
   ],
   topic_supervisor: [
-    { id: "t4", title: "Contattare Prof. Rossi per supervisione", description: "Scrivi una email motivata al Prof. Rossi spiegando il tuo interesse per la ricerca su LLM.", priority: "critical", status: "pending", estimated_minutes: 30 },
-    { id: "t5", title: "Preparare outline tesi (5 capitoli)", description: "Definisci la struttura macro della tesi con titoli provvisori dei capitoli.", priority: "high", status: "pending", estimated_minutes: 60 },
-    { id: "t6", title: "Raccogliere dataset di vulnerabilità", description: "Identifica e scarica almeno 2 dataset pubblici di vulnerabilità software.", priority: "medium", status: "pending", estimated_minutes: 90 },
+    { id: "t4", title: "Contact Prof. Rossi for supervision", description: "Write a motivated email to Prof. Rossi explaining your interest in LLM research.", priority: "critical", status: "pending", estimated_minutes: 30 },
+    { id: "t5", title: "Prepare thesis outline (5 chapters)", description: "Define the macro structure of the thesis with provisional chapter titles.", priority: "high", status: "pending", estimated_minutes: 60 },
+    { id: "t6", title: "Collect vulnerability dataset", description: "Identify and download at least 2 public software vulnerability datasets.", priority: "medium", status: "pending", estimated_minutes: 90 },
   ],
   planning: [
-    { id: "t7", title: "Creare timeline dettagliata", description: "Dividi il lavoro in sprint bisettimanali con deliverable misurabili.", priority: "high", status: "completed", estimated_minutes: 45 },
-    { id: "t8", title: "Setup ambiente sperimentale", description: "Configura GPU cloud, repository Git, e pipeline di training.", priority: "critical", status: "pending", estimated_minutes: 120 },
-    { id: "t9", title: "Definire metriche di valutazione", description: "Scegli precision, recall, F1 e metriche specifiche per vulnerability detection.", priority: "high", status: "pending", estimated_minutes: 30 },
+    { id: "t7", title: "Create detailed timeline", description: "Break work into biweekly sprints with measurable deliverables.", priority: "high", status: "completed", estimated_minutes: 45 },
+    { id: "t8", title: "Setup experimental environment", description: "Configure cloud GPU, Git repository, and training pipeline.", priority: "critical", status: "pending", estimated_minutes: 120 },
+    { id: "t9", title: "Define evaluation metrics", description: "Choose precision, recall, F1 and specific metrics for vulnerability detection.", priority: "high", status: "pending", estimated_minutes: 30 },
   ],
   execution: [
-    { id: "t10", title: "Fine-tuning GPT-4 su dataset CWE", description: "Esegui il fine-tuning del modello sul dataset di vulnerabilità CWE.", priority: "critical", status: "pending", estimated_minutes: 240 },
-    { id: "t11", title: "Benchmark contro SAST tools", description: "Confronta i risultati del modello con SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
-    { id: "t12", title: "Analisi qualitativa dei falsi positivi", description: "Classifica e analizza i pattern dei falsi positivi più comuni.", priority: "medium", status: "pending", estimated_minutes: 120 },
-    { id: "t10b", title: "Leggere paper: VulDeePecker (Li et al.)", description: "Leggi in dettaglio il paper VulDeePecker per confrontare il tuo approccio di detection con il baseline deep learning.", priority: "high", status: "completed", estimated_minutes: 90 },
-    { id: "t10c", title: "Leggere tesi: 'LLM-based SAST' (ETH 2025)", description: "Analizza la tesi di master di K. Meier (ETH Zurich) sul confronto LLM vs SAST tradizionali per code review.", priority: "medium", status: "pending", estimated_minutes: 120 },
+    { id: "t10", title: "Fine-tuning GPT-4 on CWE dataset", description: "Execute model fine-tuning on the CWE vulnerability dataset.", priority: "critical", status: "pending", estimated_minutes: 240 },
+    { id: "t11", title: "Benchmark against SAST tools", description: "Compare model results with SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
+    { id: "t12", title: "Qualitative analysis of false positives", description: "Classify and analyze the most common false positive patterns.", priority: "medium", status: "pending", estimated_minutes: 120 },
+    { id: "t10b", title: "Read paper: VulDeePecker (Li et al.)", description: "Read the VulDeePecker paper in detail to compare your detection approach with the deep learning baseline.", priority: "high", status: "completed", estimated_minutes: 90 },
+    { id: "t10c", title: "Read thesis: 'LLM-based SAST' (ETH 2025)", description: "Analyze K. Meier's master thesis (ETH Zurich) comparing LLM vs traditional SAST for code review.", priority: "medium", status: "pending", estimated_minutes: 120 },
   ],
   writing: [
-    { id: "t13", title: "Scrivere capitolo Methodology", description: "Descrivi in dettaglio la pipeline sperimentale, i modelli usati, e i parametri di training.", priority: "critical", status: "pending", estimated_minutes: 300 },
-    { id: "t14", title: "Creare grafici risultati", description: "Genera confusion matrix, ROC curves, e tabelle comparative.", priority: "high", status: "pending", estimated_minutes: 120 },
-    { id: "t15", title: "Revisione finale con supervisore", description: "Invia la bozza completa al supervisore per la review finale.", priority: "critical", status: "pending", estimated_minutes: 60 },
-    { id: "t15b", title: "Leggere paper: Limits of LLMs in Security", description: "Rileggi il paper critico di Pearce et al. per rafforzare la sezione Discussion e anticipare obiezioni.", priority: "high", status: "pending", estimated_minutes: 60 },
-    { id: "t15c", title: "Leggere tesi: 'Automated Vuln Detection' (EPFL 2024)", description: "Consulta la tesi di dottorato di S. Dupont (EPFL) per approfondire related work sulla vulnerability detection automatizzata.", priority: "medium", status: "pending", estimated_minutes: 90 },
+    { id: "t13", title: "Write Methodology chapter", description: "Describe in detail the experimental pipeline, models used, and training parameters.", priority: "critical", status: "pending", estimated_minutes: 300 },
+    { id: "t14", title: "Create result charts", description: "Generate confusion matrix, ROC curves, and comparative tables.", priority: "high", status: "pending", estimated_minutes: 120 },
+    { id: "t15", title: "Final review with supervisor", description: "Send the complete draft to the supervisor for final review.", priority: "critical", status: "pending", estimated_minutes: 60 },
+    { id: "t15b", title: "Read paper: Limits of LLMs in Security", description: "Re-read the critical paper by Pearce et al. to strengthen the Discussion section and anticipate objections.", priority: "high", status: "pending", estimated_minutes: 60 },
+    { id: "t15c", title: "Read thesis: 'Automated Vuln Detection' (EPFL 2024)", description: "Consult S. Dupont's doctoral thesis (EPFL) to deepen related work on automated vulnerability detection.", priority: "medium", status: "pending", estimated_minutes: 90 },
   ],
 };
 
 const MOCK_ROADMAP: RoadmapPhase[] = [
   {
-    key: "planning", title: "Pianificazione",
+    key: "planning", title: "Planning",
     tasks: [
-      { id: "r1", title: "Definire research questions finali", completed: true },
-      { id: "r2", title: "Ottenere approvazione supervisore", completed: true },
+      { id: "r1", title: "Define final research questions", completed: true },
+      { id: "r2", title: "Get supervisor approval", completed: true },
       { id: "r3", title: "Setup ambiente cloud (GPU)", completed: false, due_date: "2026-04-15" },
-      { id: "r4", title: "Acquisire dataset di training", completed: false, due_date: "2026-04-20" },
+      { id: "r4", title: "Acquire training dataset", completed: false, due_date: "2026-04-20" },
     ],
   },
   {
-    key: "execution", title: "Esecuzione",
+    key: "execution", title: "Execution",
     tasks: [
-      { id: "r5", title: "Training modello baseline", completed: false, due_date: "2026-05-01" },
-      { id: "r6", title: "Fine-tuning su vulnerability data", completed: false, due_date: "2026-05-15" },
-      { id: "r7", title: "Benchmark comparativo", completed: false, due_date: "2026-06-01" },
-      { id: "r8", title: "Analisi risultati + ablation study", completed: false, due_date: "2026-06-15" },
+      { id: "r5", title: "Train baseline model", completed: false, due_date: "2026-05-01" },
+      { id: "r6", title: "Fine-tune on vulnerability data", completed: false, due_date: "2026-05-15" },
+      { id: "r7", title: "Comparative benchmark", completed: false, due_date: "2026-06-01" },
+      { id: "r8", title: "Results analysis + ablation study", completed: false, due_date: "2026-06-15" },
     ],
   },
   {
-    key: "writing", title: "Scrittura",
+    key: "writing", title: "Writing",
     tasks: [
-      { id: "r9", title: "Capitoli 1-2 (Intro + Related Work)", completed: false, due_date: "2026-07-01" },
-      { id: "r10", title: "Capitolo 3 (Methodology)", completed: false, due_date: "2026-07-15" },
-      { id: "r11", title: "Capitoli 4-5 (Results + Conclusion)", completed: false, due_date: "2026-08-01" },
-      { id: "r12", title: "Revisione finale", completed: false, due_date: "2026-08-15" },
+      { id: "r9", title: "Chapters 1-2 (Intro + Related Work)", completed: false, due_date: "2026-07-01" },
+      { id: "r10", title: "Chapter 3 (Methodology)", completed: false, due_date: "2026-07-15" },
+      { id: "r11", title: "Chapters 4-5 (Results + Conclusion)", completed: false, due_date: "2026-08-01" },
+      { id: "r12", title: "Final revision", completed: false, due_date: "2026-08-15" },
     ],
   },
 ];
 
 const MOCK_SUPERVISORS: MockSupervisor[] = [
-  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "Esperto di NLP applicato al software engineering con 15 pubblicazioni sul tema.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
-  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Ricerca attiva su vulnerability detection con approcci ML.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
-  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Focus su testing automatico e qualità del codice.", email: "luigi.verdi@uzh.ch", university: "UZH" },
-  { id: "s4", name: "Prof.ssa Anna Neri", fields: ["AI Safety", "LLM"], score: 74, reasoning: "Lavora su alignment e safety dei large language models.", email: "anna.neri@unisg.ch", university: "HSG" },
+  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "NLP expert applied to software engineering with 15 publications on the topic.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
+  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Active research on vulnerability detection with ML approaches.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
+  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Focus on automated testing and code quality.", email: "luigi.verdi@uzh.ch", university: "UZH" },
+  { id: "s4", name: "Prof.ssa Anna Neri", fields: ["AI Safety", "LLM"], score: 74, reasoning: "Works on alignment and safety of large language models.", email: "anna.neri@unisg.ch", university: "HSG" },
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
-  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Esperto di fuzzing e vulnerability research, potrebbe dare insight pratici.", offerInterviews: true, email: "p.ferretti@google.com" },
-  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Ha pubblicato su LLM per code generation, conosce le limitazioni.", offerInterviews: true, email: "m.conti@deepmind.com" },
-  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Esperienza industriale nell'applicazione di AI alla cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
-  { id: "e4", name: "Prof. James Chen", title: "Stanford University", score: 71, reasoning: "Autore del framework VulnBench, reference nella vulnerability detection.", offerInterviews: false, email: "jchen@stanford.edu" },
+  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Fuzzing and vulnerability research expert, could provide practical insights.", offerInterviews: true, email: "p.ferretti@google.com" },
+  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Published on LLM for code generation, knows the limitations.", offerInterviews: true, email: "m.conti@deepmind.com" },
+  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Industry experience in applying AI to cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
+  { id: "e4", name: "Prof. James Chen", title: "Stanford University", score: 71, reasoning: "Author of the VulnBench framework, reference in vulnerability detection.", offerInterviews: false, email: "jchen@stanford.edu" },
 ];
 
 const MOCK_REFERENCES: MockReference[] = [
-  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "https://arxiv.org/abs/2401.00001", category: "foundational", relevance: "Survey fondamentale che copre lo stato dell'arte di LLM applicati al codice." },
-  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "https://arxiv.org/abs/1801.01681", category: "methodology", relevance: "Primo paper a usare deep learning per vulnerability detection, approccio baseline." },
-  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "https://scholar.google.com/scholar?q=automated+vulnerability+detection+ML", category: "recent", relevance: "Review sistematica delle tecniche ML per il rilevamento di vulnerabilità." },
-  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "https://arxiv.org/abs/2502.00001", category: "contrarian", relevance: "Analisi critica dei limiti attuali dei LLM nell'analisi di sicurezza." },
-  { title: "CodeBERT: A Pre-Trained Model for Programming Languages", authors: "Feng et al.", year: "2020", url: "https://arxiv.org/abs/2002.08155", category: "foundational", relevance: "Modello pre-trained per codice che ha aperto la strada ai transformer per SE." },
+  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "https://arxiv.org/abs/2401.00001", category: "foundational", relevance: "Fundamental survey covering the state of the art of LLMs applied to code." },
+  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "https://arxiv.org/abs/1801.01681", category: "methodology", relevance: "First paper to use deep learning for vulnerability detection, baseline approach." },
+  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "https://scholar.google.com/scholar?q=automated+vulnerability+detection+ML", category: "recent", relevance: "Systematic review of ML techniques for vulnerability detection." },
+  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "https://arxiv.org/abs/2502.00001", category: "contrarian", relevance: "Critical analysis of current LLM limitations in security analysis." },
+  { title: "CodeBERT: A Pre-Trained Model for Programming Languages", authors: "Feng et al.", year: "2020", url: "https://arxiv.org/abs/2002.08155", category: "foundational", relevance: "Pre-trained model for code that paved the way for transformers in SE." },
 ];
 
 const MOCK_VULNERABILITIES: MockVulnerability[] = [
-  { id: "v1", type: "methodology_flaw", title: "Dataset troppo piccolo per generalizzazione", description: "Con solo 5000 campioni di training, il modello rischia di overfittare e non generalizzare a vulnerabilità non viste. Servono almeno 20k campioni diversificati.", severity: "critical" },
-  { id: "v2", type: "logic_gap", title: "Mancanza di baseline non-ML", description: "Non stai confrontando con approcci rule-based (SAST) standard. Senza questo confronto, non puoi dimostrare il valore aggiunto del ML.", severity: "high" },
-  { id: "v3", type: "superficiality", title: "Related work troppo generico", description: "La sezione related work elenca paper senza analisi critica. Devi spiegare cosa manca in ciascun approccio e come il tuo lo migliora.", severity: "medium" },
-  { id: "v4", type: "originality_deficit", title: "Fine-tuning standard senza innovazione", description: "Stai facendo fine-tuning vanilla di GPT-4. Qual è il tuo contributo originale rispetto a chi ha già fatto la stessa cosa?", severity: "high" },
+  { id: "v1", type: "methodology_flaw", title: "Dataset too small for generalization", description: "With only 5000 training samples, the model risks overfitting and not generalizing to unseen vulnerabilities. At least 20k diverse samples are needed.", severity: "critical" },
+  { id: "v2", type: "logic_gap", title: "Lack of non-ML baseline", description: "You are not comparing with standard rule-based (SAST) approaches. Without this comparison, you cannot demonstrate the added value of ML.", severity: "high" },
+  { id: "v3", type: "superficiality", title: "Related work too generic", description: "The related work section lists papers without critical analysis. You need to explain what each approach lacks and how yours improves it.", severity: "medium" },
+  { id: "v4", type: "originality_deficit", title: "Standard fine-tuning without innovation", description: "You are doing vanilla fine-tuning of GPT-4. What is your original contribution compared to those who have already done the same?", severity: "high" },
 ];
 
 const MOCK_MESSAGES = [
-  { id: "m1", role: "assistant" as const, content: "Hai una direzione chiara: LLM per vulnerability detection. Ottimo punto di partenza. Ma dimmi: **cosa rende il tuo approccio diverso** da chi ha già fatto fine-tuning di modelli su dataset di vulnerabilità?" },
-  { id: "m2", role: "user" as const, content: "Voglio combinare analisi statica tradizionale con LLM, creando un sistema ibrido." },
-  { id: "m3", role: "assistant" as const, content: "Interessante. Un approccio ibrido SAST + LLM ha potenziale, ma devi essere preciso: **quale componente gestisce cosa?** Il rischio è che finisci con un sistema dove l'LLM è solo un wrapper glorificato attorno a regole statiche. Definisci chiaramente il confine." },
-  { id: "m4", role: "user" as const, content: "Il SAST farebbe il primo screening, poi l'LLM analizzerebbe i risultati per ridurre i falsi positivi." },
-  { id: "m5", role: "assistant" as const, content: "Questo è un **contributo concreto**: riduzione dei falsi positivi tramite LLM post-processing. È misurabile, è utile, è pubblicabile. Ora la domanda critica: **hai accesso a un dataset con annotazioni di falsi positivi?** Senza quello, non puoi addestrare il modello a distinguerli." },
+  { id: "m1", role: "assistant" as const, content: "You have a clear direction: LLM for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?" },
+  { id: "m2", role: "user" as const, content: "I want to combine traditional static analysis with LLM, creating a hybrid system." },
+  { id: "m3", role: "assistant" as const, content: "Interesting. A hybrid SAST + LLM approach has potential, but you need to be precise: **which component handles what?** The risk is that you end up with a system where the LLM is just a glorified wrapper around static rules. Define the boundary clearly." },
+  { id: "m4", role: "user" as const, content: "SAST would do the initial screening, then the LLM would analyze the results to reduce false positives." },
+  { id: "m5", role: "assistant" as const, content: "This is a **concrete contribution**: reducing false positives via LLM post-processing. It's measurable, useful, and publishable. Now the critical question: **do you have access to a dataset with false positive annotations?** Without that, you can't train the model to distinguish them." },
 ];
 
 const PHASES = [
-  { key: "orientation", label: "Orientamento", icon: "1" },
-  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "2" },
-  { key: "planning", label: "Pianificazione", icon: "3" },
-  { key: "execution", label: "Esecuzione", icon: "4" },
-  { key: "writing", label: "Scrittura", icon: "5" },
+  { key: "orientation", label: "Orientation", icon: "1" },
+  { key: "topic_supervisor", label: "Topic & Supervisor", icon: "2" },
+  { key: "planning", label: "Planning", icon: "3" },
+  { key: "execution", label: "Execution", icon: "4" },
+  { key: "writing", label: "Writing", icon: "5" },
 ] as const;
 
 const PHASE_COMPLETION: Record<string, number> = {
@@ -183,10 +183,10 @@ function DemoTasks({ phase }: { phase: string }) {
   const tasks = MOCK_TASKS[phase] || MOCK_TASKS.orientation;
   const priorityLabel = (p: string) => {
     switch (p) {
-      case "critical": return { text: "Critico", cls: "bg-destructive/10 text-destructive" };
-      case "high": return { text: "Alta", cls: "bg-warning/10 text-warning" };
-      case "medium": return { text: "Media", cls: "bg-accent/10 text-accent" };
-      default: return { text: "Bassa", cls: "bg-muted text-muted-foreground" };
+      case "critical": return { text: "Critical", cls: "bg-destructive/10 text-destructive" };
+      case "high": return { text: "High", cls: "bg-warning/10 text-warning" };
+      case "medium": return { text: "Medium", cls: "bg-accent/10 text-accent" };
+      default: return { text: "Low", cls: "bg-muted text-muted-foreground" };
     }
   };
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -222,7 +222,7 @@ function DemoTasks({ phase }: { phase: string }) {
       })}
       <div className="flex items-center gap-2 pt-2">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-[10px] text-muted-foreground">{tasks.filter(t => t.status === "completed").length} completati</span>
+        <span className="text-[10px] text-muted-foreground">{tasks.filter(t => t.status === "completed").length} completed</span>
         <div className="h-px flex-1 bg-border" />
       </div>
     </div>
@@ -339,10 +339,10 @@ function DemoExperts() {
 function DemoReferences() {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const categoryLabel: Record<string, { text: string; cls: string }> = {
-    foundational: { text: "Base", cls: "bg-accent/10 text-accent" },
-    methodology: { text: "Metodo", cls: "bg-warning/10 text-warning" },
-    recent: { text: "Recente", cls: "bg-green-500/10 text-green-600" },
-    contrarian: { text: "Critico", cls: "bg-destructive/10 text-destructive" },
+    foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
+    methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
+    recent: { text: "Recent", cls: "bg-green-500/10 text-green-600" },
+    contrarian: { text: "Critical", cls: "bg-destructive/10 text-destructive" },
   };
 
   return (
@@ -492,20 +492,20 @@ export default function DemoPage() {
   if (showPlanning || showExecution || showWriting) {
     cards.push({
       key: "roadmap", colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined, delay,
-      component: <DemoCard title={showPlanning ? "Roadmap (in costruzione)" : "Roadmap"} icon={BarChart3}><DemoRoadmap /></DemoCard>,
+      component: <DemoCard title={showPlanning ? "Roadmap (under construction)" : "Roadmap"} icon={BarChart3}><DemoRoadmap /></DemoCard>,
     });
     delay += 0.05;
   }
 
   // Supervisors: topic_supervisor
   if (showTopicSupervisor) {
-    cards.push({ key: "supervisors", delay, component: <DemoCard title="Supervisori suggeriti" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
+    cards.push({ key: "supervisors", delay, component: <DemoCard title="Suggested Supervisors" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
     delay += 0.05;
   }
 
   // Career Tree: topic_supervisor
   if (showTopicSupervisor) {
-    cards.push({ key: "career-tree", colSpan: !showPlanning ? "md:col-span-2" : undefined, delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
+    cards.push({ key: "career-tree", colSpan: !showPlanning ? "md:col-span-2" : undefined, delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
 
@@ -514,16 +514,16 @@ export default function DemoPage() {
   delay += 0.05;
 
   // Experts: always
-  cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Rubrica"} icon={Users}><DemoExperts /></DemoCard> });
+  cards.push({ key: "rubrica", delay, component: <DemoCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
 
   // References: all phases
-  cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
+  cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
   delay += 0.05;
 
   // Vulnerabilities: execution+
   if (showExecution || showWriting) {
-    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilità" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
+    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
     delay += 0.05;
   }
 
@@ -531,7 +531,7 @@ export default function DemoPage() {
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Demo banner */}
       <div className="bg-accent/10 border-b border-accent/20 px-4 py-2 text-center shrink-0">
-        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Dati simulati — Clicca sulle fasi per navigare</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Simulated data — Click on phases to navigate</span>
       </div>
 
       {/* Top: Identity */}
@@ -630,7 +630,7 @@ export default function DemoPage() {
                 <SocrateCoin size={32} interactive={false} />
                 <div className="flex-1">
                   <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-                  <p className="text-[10px] text-muted-foreground">Demo — conversazione simulata</p>
+                  <p className="text-[10px] text-muted-foreground">Demo — simulated conversation</p>
                 </div>
                 <button onClick={() => setShowChat(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                   <span className="text-muted-foreground text-sm">✕</span>
@@ -640,7 +640,7 @@ export default function DemoPage() {
                 <DemoChat />
               </div>
               <div className="border-t border-border px-5 py-3 flex items-center gap-3">
-                <input placeholder="Rispondi a Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
+                <input placeholder="Reply to Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
                 <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
                 <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
               </div>

@@ -116,7 +116,7 @@ export default function VoiceConversation({
     setError(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      if (fnError || !data?.token) { setError("Impossibile avviare la trascrizione"); return; }
+      if (fnError || !data?.token) { setError("Unable to start transcription"); return; }
       await scribe.connect({
         token: data.token,
         microphone: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
@@ -124,7 +124,7 @@ export default function VoiceConversation({
       setVoiceState("listening");
     } catch (e) {
       console.error("Start listening error:", e);
-      setError("Microfono non disponibile");
+      setError("Microphone not available");
     }
   }, [scribe]);
 
@@ -287,7 +287,7 @@ export default function VoiceConversation({
               (onSwitchToText ?? onClose)();
             }}
             className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            title="Passa alla chat testuale">
+            title="Switch to text chat">
             <Keyboard className="w-4 h-4" />
           </button>
           {showReport && (

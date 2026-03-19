@@ -13,7 +13,7 @@ interface Scenario {
   topicTitle: string;
   careers: { title: string; probability: number; salary: string }[];
   completionTime: string;
-  riskLevel: "basso" | "medio" | "alto";
+  riskLevel: "low" | "medium" | "high";
   impactScore: number;
   publications: number;
   networkGrowth: number;
@@ -21,7 +21,7 @@ interface Scenario {
 
 function generateScenario(topic: Topic): Scenario {
   const hash = topic.id.charCodeAt(topic.id.length - 1);
-  const riskLevels: ("basso" | "medio" | "alto")[] = ["basso", "medio", "alto"];
+  const riskLevels: ("low" | "medium" | "high")[] = ["low", "medium", "high"];
   return {
     topicTitle: topic.title,
     careers: [

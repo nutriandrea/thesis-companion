@@ -160,12 +160,12 @@ export default function ActionsPage() {
   };
 
   const generateEmail = (sup: Supervisor) => {
-    const prompt = `Scrivi una email formale in italiano per contattare ${sup.title} ${sup.firstName} ${sup.lastName} dell'università, esperto in ${sup.researchInterests.slice(0, 3).join(", ")}. Lo studente vuole chiedergli di essere il supervisore della tesi. Includi: presentazione, motivazione, competenze, richiesta di incontro. Tono professionale ma personale. NON fare domande socratiche, scrivi SOLO la email pronta da inviare.`;
+    const prompt = `Write a formal email per contattare ${sup.title} ${sup.firstName} ${sup.lastName} dell'università, esperto in ${sup.researchInterests.slice(0, 3).join(", ")}. The student wants to ask them to be the thesis supervisor. Include: introduction, motivation, skills, request for a meeting. Professional but personal tone. Do NOT ask Socratic questions, write ONLY the email ready to send.`;
     generateWithAI(prompt, `Email per ${sup.title} ${sup.lastName}`, "email", `email-${sup.id}`);
   };
 
   const generateCompanyEmail = (company: Company) => {
-    const prompt = `Scrivi una email formale in italiano per contattare ${company.name} riguardo una potenziale collaborazione per la tesi. L'azienda opera in: ${company.domains.join(", ")}. Lo studente vuole proporre un progetto di tesi in partnership. Includi: presentazione, proposta di valore per l'azienda, competenze, richiesta di incontro. Tono professionale. NON fare domande socratiche, scrivi SOLO la email.`;
+    const prompt = `Write a formal email per contattare ${company.name} riguardo una potenziale collaborazione per la tesi. L'azienda opera in: ${company.domains.join(", ")}. Lo studente vuole proporre un progetto di tesi in partnership. Includi: presentazione, proposta di valore per l'azienda, competenze, richiesta di incontro. Tono professionale. NON fare domande socratiche, scrivi SOLO la email.`;
     generateWithAI(prompt, `Email per ${company.name}`, "email", `company-${company.id}`);
   };
 

@@ -40,11 +40,11 @@ const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`
 
 
 const PHASES = [
-  { key: "orientation", label: "Orientamento", icon: "1" },
-  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "2" },
-  { key: "planning", label: "Pianificazione", icon: "3" },
-  { key: "execution", label: "Esecuzione", icon: "4" },
-  { key: "writing", label: "Scrittura", icon: "5" },
+  { key: "orientation", label: "Orientation", icon: "1" },
+  { key: "topic_supervisor", label: "Topic & Supervisor", icon: "2" },
+  { key: "planning", label: "Planning", icon: "3" },
+  { key: "execution", label: "Execution", icon: "4" },
+  { key: "writing", label: "Writing", icon: "5" },
 ] as const;
 
 type SinglePhaseKey = (typeof PHASES)[number]["key"];
@@ -165,14 +165,14 @@ function TaskContent({ userId }: { userId: string }) {
       if (result.approved) {
         await updateTaskStatus(taskId, "completed");
         setRejectedIds(prev => { const n = new Set(prev); n.delete(taskId); return n; });
-        toast({ title: "Task completato", description: result.feedback || "Ben fatto." });
+        toast({ title: "Task completed", description: result.feedback || "Well done." });
       } else {
         setRejectedIds(prev => new Set(prev).add(taskId));
-        toast({ variant: "destructive", title: "Non ancora", description: result.feedback || "Socrate non è convinto. Riprova." });
+        toast({ variant: "destructive", title: "Not yet", description: result.feedback || "Socrate is not convinced. Try again." });
       }
     } catch {
       await updateTaskStatus(taskId, "completed");
-      toast({ title: "Task completato" });
+      toast({ title: "Task completed" });
     } finally {
       setValidatingId(null);
     }
@@ -181,7 +181,7 @@ function TaskContent({ userId }: { userId: string }) {
   const forceComplete = async (taskId: string) => {
     await updateTaskStatus(taskId, "completed");
     setRejectedIds(prev => { const n = new Set(prev); n.delete(taskId); return n; });
-    toast({ title: "Task forzato come completato" });
+    toast({ title: "Task forced as completed" });
   };
 
   const priorityLabel = (p: string) => {
@@ -290,12 +290,12 @@ function CareerBar({ sectors, onSectorClick, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-6">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analizzando carriera...</span>
+      <span className="text-xs text-muted-foreground ml-2">Analyzing career...</span>
     </div>
   );
 
   if (sectors.length === 0) return (
-    <p className="text-xs text-muted-foreground text-center py-6">Parla con Socrate per calcolare il tuo orientamento.</p>
+    <p className="text-xs text-muted-foreground text-center py-6">Talk to Socrate to calculate your orientation.</p>
   );
 
   const sorted = [...sectors].sort((a, b) => b.percentage - a.percentage);
@@ -385,13 +385,13 @@ function CareerTree({ sectors, userId, loading }: {
   if (loading) return (
     <div className="flex items-center justify-center py-8">
       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      <span className="text-xs text-muted-foreground ml-2">Analizzando direzioni...</span>
+      <span className="text-xs text-muted-foreground ml-2">Analyzing directions...</span>
     </div>
   );
 
   if (sorted.length === 0) return (
     <p className="text-xs text-muted-foreground text-center py-8 italic">
-      Parla con Socrate per scoprire le direzioni possibili della tua tesi.
+      Talk to Socrate to discover possible directions for your thesis.
     </p>
   );
 
@@ -400,7 +400,7 @@ function CareerTree({ sectors, userId, loading }: {
       {/* Trunk label */}
       <div className="flex items-center gap-2 pb-2">
         <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
-        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">La tua tesi</span>
+        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
@@ -472,10 +472,10 @@ function CareerTree({ sectors, userId, loading }: {
                     {isLoading ? (
                       <div className="flex items-center gap-2 py-3 pl-4">
                         <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                        <span className="text-[10px] text-muted-foreground">Cercando aziende...</span>
+                        <span className="text-[10px] text-muted-foreground">Searching companies...</span>
                       </div>
                     ) : comps.length === 0 ? (
-                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">Nessuna azienda trovata per questo settore.</p>
+                      <p className="text-[10px] text-muted-foreground py-2 pl-4 italic">No companies found for this sector.</p>
                     ) : (
                       comps.slice(0, 5).map((comp: any, j: number) => (
                         <div key={j} className="relative flex items-center gap-2.5 pl-4 py-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
@@ -566,7 +566,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                   <textarea
                     value={motivation}
                     onChange={e => setMotivation(e.target.value)}
-                    placeholder="Spiega la tua motivazione..."
+                    placeholder="Explain your motivation..."
                     className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent resize-none"
                     rows={2}
                   />
@@ -618,7 +618,7 @@ function ExpertSuggestions({ userId }: { userId: string }) {
 
   if (items.length === 0) return (
     <p className="text-xs text-muted-foreground text-center py-6 italic">
-      I suggerimenti appariranno dopo le prime conversazioni con Socrate.
+      Suggestions will appear after your first conversations with Socrate.
     </p>
   );
 
@@ -713,7 +713,7 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
     if (loadingAi) return (
       <div className="flex items-center justify-center py-6">
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        <span className="text-xs text-muted-foreground ml-2">Cercando aziende in {activeSector}...</span>
+        <span className="text-xs text-muted-foreground ml-2">Searching companies in {activeSector}...</span>
       </div>
     );
 
@@ -811,7 +811,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
         </div>
       )}
       {!sup && topSectors.length === 0 && (
-        <p className="text-xs text-muted-foreground text-center py-4 italic">Conferma supervisore e orientamento per procedere.</p>
+        <p className="text-xs text-muted-foreground text-center py-4 italic">Confirm supervisor and orientation to proceed.</p>
       )}
     </div>
   );
@@ -857,12 +857,12 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
         body: JSON.stringify({ mode: "generate_roadmap" }),
       });
       if (resp.ok) {
-        toast({ title: "Roadmap generata", description: "La roadmap è stata creata in base alla tua tesi." });
+        toast({ title: "Roadmap generated", description: "The roadmap has been created based on your thesis." });
         await fetchRoadmap();
       } else {
-        toast({ variant: "destructive", title: "Errore", description: "Impossibile generare la roadmap." });
+        toast({ variant: "destructive", title: "Error", description: "Unable to generate the roadmap." });
       }
-    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    } catch { toast({ variant: "destructive", title: "Error" }); }
     finally { setGenerating(false); }
   }, [generating, toast, fetchRoadmap]);
 
@@ -905,7 +905,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
         className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground text-xs font-medium rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-40"
       >
         {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <BarChart3 className="w-3 h-3" />}
-        {generating ? "Generando..." : "Genera Roadmap"}
+        {generating ? "Generating..." : "Generate Roadmap"}
       </button>
     </div>
   );
@@ -1069,24 +1069,24 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
       if (isSaved(ref.url)) {
         await supabase.from("saved_references" as any).delete().eq("user_id", userId).eq("url", ref.url);
         setSavedRefs(prev => prev.filter(s => s.url !== ref.url));
-        toast({ title: "Rimosso dai salvati" });
+        toast({ title: "Removed from saved" });
       } else {
         const { data } = await supabase.from("saved_references" as any).insert({
           user_id: userId, title: ref.title, authors: ref.authors, year: ref.year || null,
           url: ref.url, category: ref.category, relevance: ref.relevance,
         } as any).select().single();
         if (data) setSavedRefs(prev => [data as any, ...prev]);
-        toast({ title: "Salvato nei preferiti ⭐" });
+        toast({ title: "Saved to favorites ⭐" });
       }
-    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    } catch { toast({ variant: "destructive", title: "Error" }); }
     setSavingUrl(null);
   };
 
   const categoryLabel: Record<string, { text: string; cls: string }> = {
-    foundational: { text: "Base", cls: "bg-accent/10 text-accent" },
-    methodology: { text: "Metodo", cls: "bg-warning/10 text-warning" },
-    recent: { text: "Recente", cls: "bg-green-500/10 text-green-600" },
-    contrarian: { text: "Critico", cls: "bg-destructive/10 text-destructive" },
+    foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
+    methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
+    recent: { text: "Recent", cls: "bg-green-500/10 text-green-600" },
+    contrarian: { text: "Critical", cls: "bg-destructive/10 text-destructive" },
   };
 
   const renderRef = (ref: Reference | SavedRef, i: number, canSave: boolean) => {
@@ -1118,7 +1118,7 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
               onClick={() => toggleSave(ref as Reference)}
               disabled={savingUrl === ref.url}
               className={`p-2.5 shrink-0 transition-colors ${saved ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"}`}
-              title={saved ? "Rimuovi dai salvati" : "Salva"}
+              title={saved ? "Remove from saved" : "Save"}
             >
               {savingUrl === ref.url ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
                 saved ? <span className="text-sm">⭐</span> : <span className="text-sm opacity-50">☆</span>}
@@ -1171,20 +1171,20 @@ function ReferencesContent({ references, loading, onRefresh, userId }: {
           onClick={() => { setShowSaved(false); setExpandedIdx(null); }}
           className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${!showSaved ? "text-accent border-b-2 border-accent" : "text-muted-foreground hover:text-foreground"}`}
         >
-          Suggeriti ({references.length})
+          Suggested ({references.length})
         </button>
         <button
           onClick={() => { setShowSaved(true); setExpandedIdx(null); }}
           className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${showSaved ? "text-yellow-500 border-b-2 border-yellow-500" : "text-muted-foreground hover:text-foreground"}`}
         >
-          ⭐ Salvati ({savedRefs.length})
+          ⭐ Saved ({savedRefs.length})
         </button>
       </div>
 
       {displayList.length === 0 ? (
         <div className="text-center py-6 space-y-2">
           <p className="text-xs text-muted-foreground italic">
-            {showSaved ? "Nessun riferimento salvato. Clicca ☆ per salvare." : "Parla con Socrate per ricevere suggerimenti di lettura."}
+            {showSaved ? "No saved references. Click ☆ to save." : "Talk to Socrate to get reading suggestions."}
           </p>
           {!showSaved && (
             <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
@@ -1228,7 +1228,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
   const saveAndSync = async () => {
     if (!docUrl.trim() || !user) return;
     if (!isValidUrl(docUrl)) {
-      toast({ variant: "destructive", title: "Link non valido", description: "Inserisci un link Google Docs o Overleaf valido." });
+      toast({ variant: "destructive", title: "Invalid link", description: "Enter a valid Google Docs or Overleaf link." });
       return;
     }
     setSyncing(true);
@@ -1242,7 +1242,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
         const data = await resp.json();
         setSynced(true);
         setLastSyncTime(new Date());
-        toast({ title: "Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri sincronizzati.` });
+        toast({ title: "Document connected", description: `${Math.round((data.length || 0) / 1000)}k characters synced.` });
         if (data.content?.length > 100) {
           fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
             method: "POST", headers: AUTH_HEADERS,
@@ -1250,10 +1250,10 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
           }).catch(console.error);
         }
       } else {
-        toast({ variant: "destructive", title: "Errore", description: "Impossibile leggere il documento. Assicurati che sia condiviso con 'Chiunque abbia il link'." });
+        toast({ variant: "destructive", title: "Error", description: "Unable to read the document. Make sure it is shared with 'Anyone with the link'." });
       }
     } catch {
-      toast({ variant: "destructive", title: "Errore", description: "Connessione fallita." });
+      toast({ variant: "destructive", title: "Error", description: "Connection failed." });
     } finally { setSyncing(false); }
   };
 
@@ -1262,7 +1262,7 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
     setDocUrl("");
     setSynced(false);
     setLastSyncTime(null);
-    toast({ title: "Documento scollegato" });
+    toast({ title: "Document disconnected" });
   };
 
   return (
@@ -1276,12 +1276,12 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
               <p className="text-[10px] text-muted-foreground truncate">{docUrl}</p>
               {lastSyncTime && (
                 <p className="text-[9px] text-muted-foreground mt-0.5">
-                  Ultimo sync: {lastSyncTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
+                  Last sync: {lastSyncTime.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
                 </p>
               )}
             </div>
             <button onClick={saveAndSync} disabled={syncing}
-              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Risincronizza">
+              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors" title="Resync">
               {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
             </button>
           </div>
@@ -1302,12 +1302,12 @@ function ThesisDocWidget({ profile, updateProfile, user }: { profile: any; updat
             <input
               value={docUrl} onChange={e => setDocUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveAndSync()}
-              placeholder="Incolla link Google Docs / Overleaf"
+              placeholder="Paste Google Docs / Overleaf link"
               className="flex-1 bg-secondary/50 border border-border px-3 py-2.5 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-foreground/20 transition-colors"
             />
             <button onClick={saveAndSync} disabled={!docUrl.trim() || syncing}
               className="px-3 py-2.5 bg-foreground text-background text-[10px] font-medium uppercase tracking-[0.1em] hover:bg-foreground/90 transition-colors disabled:opacity-20">
-              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Collega"}
+              {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Connect"}
             </button>
           </div>
         </>
@@ -1366,14 +1366,14 @@ function ChatOverlay({
         <input
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-          placeholder="Rispondi a Socrate..."
+          placeholder="Reply to Socrate..."
           disabled={isStreaming}
           className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
         {onSwitchToVoice && (
           <button onClick={onSwitchToVoice}
             className="p-2.5 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            title="Passa alla modalità vocale">
+            title="Switch to voice mode">
             <Mic className="w-4 h-4" />
           </button>
         )}
@@ -1527,7 +1527,7 @@ export default function UnifiedDashboard() {
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Errore" }));
-        toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
+        toast({ variant: "destructive", title: "Error", description: err.error || `Error ${resp.status}` });
         setIsStreaming(false); return;
       }
       const assistantId = `a-${Date.now()}`;
@@ -1539,7 +1539,7 @@ export default function UnifiedDashboard() {
       if (exchangeCountRef.current % 3 === 0) runBackgroundExtraction([...messages, userMsg, { id: assistantId, role: "assistant", content: assistantContent }]);
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
+      toast({ variant: "destructive", title: "Error", description: "Unable to contact Socrate." });
     } finally { setIsStreaming(false); }
   }, [isStreaming, user, messages, studentContext, thesisContent, profile, updateProfile, toast, streamResponse]);
 
@@ -1553,7 +1553,7 @@ export default function UnifiedDashboard() {
         method: "POST", headers: AUTH_HEADERS,
         body: JSON.stringify({ messages: apiMessages, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-15), mode: "report" }),
       });
-      if (!resp.ok) { toast({ variant: "destructive", title: "Errore" }); setIsGeneratingReport(false); return; }
+      if (!resp.ok) { toast({ variant: "destructive", title: "Error" }); setIsGeneratingReport(false); return; }
       const reportId = `report-${Date.now()}`;
       setMessages(prev => [...prev,
         { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## Report di Sessione\n" },
@@ -1561,8 +1561,8 @@ export default function UnifiedDashboard() {
       ]);
       const reportContent = await streamResponse(resp, reportId);
       if (reportContent) await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `REPORT:\n${reportContent}` });
-      toast({ title: "Report generato" });
-    } catch (e) { console.error(e); toast({ variant: "destructive", title: "Errore" }); }
+      toast({ title: "Report generated" });
+    } catch (e) { console.error(e); toast({ variant: "destructive", title: "Error" }); }
     finally { setIsGeneratingReport(false); }
   }, [isStreaming, isGeneratingReport, user, messages, studentContext, thesisContent, toast, streamResponse]);
 
@@ -1599,11 +1599,11 @@ export default function UnifiedDashboard() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        toast({ title: "Scansione completata", description: `${data.vulnerabilities?.length || 0} vulnerabilità rilevate.` });
+        toast({ title: "Scan completed", description: `${data.vulnerabilities?.length || 0} vulnerabilities detected.` });
         const { data: fresh } = await supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(8);
         if (fresh) setVulnerabilities(fresh as any);
       }
-    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    } catch { toast({ variant: "destructive", title: "Error" }); }
     finally { setIsScanning(false); }
   }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
@@ -1619,9 +1619,9 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         setReferences(data.references || []);
-        toast({ title: "Riferimenti aggiornati", description: `${data.references?.length || 0} riferimenti suggeriti.` });
+        toast({ title: "References updated", description: `${data.references?.length || 0} references suggested.` });
       }
-    } catch { toast({ variant: "destructive", title: "Errore nel caricamento riferimenti" }); }
+    } catch { toast({ variant: "destructive", title: "Error loading references" }); }
     finally { setIsLoadingRefs(false); }
   }, [user, isLoadingRefs, messages, studentContext, thesisContent, toast]);
 
@@ -1629,7 +1629,7 @@ export default function UnifiedDashboard() {
   const resolveVulnerability = useCallback((vulnId: string) => {
     const vuln = vulnerabilities.find(v => v.id === vulnId);
     if (!vuln) return;
-    const msg = `Ho risolto la vulnerabilità "${vuln.title}". Ecco perché non è più un problema: `;
+    const msg = `I resolved the vulnerability "${vuln.title}". Here's why it's no longer an issue: `;
     setInput(msg);
     setChatOpen(true);
     supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId).then(() => {
@@ -1649,9 +1649,9 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         if (data.sectors) setCareerSectors(data.sectors);
-        toast({ title: "Orientamento aggiornato" });
+        toast({ title: "Orientation updated" });
       }
-    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    } catch { toast({ variant: "destructive", title: "Error" }); }
     finally { setCareerLoading(false); }
   }, [user, careerLoading, thesisContent, toast]);
 
@@ -1684,15 +1684,15 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         if (data.can_advance) {
-          toast({ title: "Fase avanzata", description: data.socrate_comment?.substring(0, 100) || "Sei passato alla fase successiva." });
+          toast({ title: "Phase advanced", description: data.socrate_comment?.substring(0, 100) || "You have moved to the next phase." });
         } else {
-          toast({ title: "Non ancora", description: data.socrate_comment?.substring(0, 100) || "Ci sono blocchi da risolvere." });
+          toast({ title: "Non ancora", description: data.socrate_comment?.substring(0, 100) || "There are blockers to resolve." });
         }
         // Refresh student profile
         const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
         if (sp) setStudentProfile(sp);
       }
-    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    } catch { toast({ variant: "destructive", title: "Error" }); }
     finally { setPhaseEvalLoading(false); }
   }, [user, phaseEvalLoading, toast]);
 
@@ -1708,7 +1708,7 @@ export default function UnifiedDashboard() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        toast({ title: "Supervisore selezionato", description: supName });
+        toast({ title: "Supervisor selected", description: supName });
         if (data.socrate_response) {
           setSupervisorResponse(data.socrate_response);
           // Also inject into chat
@@ -1720,7 +1720,7 @@ export default function UnifiedDashboard() {
         const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
         if (sp) setStudentProfile(sp);
       }
-    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    } catch { toast({ variant: "destructive", title: "Error" }); }
   }, [user, toast]);
 
   // Progress — support hybrid phases
@@ -1765,7 +1765,7 @@ export default function UnifiedDashboard() {
       if (criticalTasks && criticalTasks.length > 0) return;
 
       autoAdvanceTriggered.current = true;
-      toast({ title: "🎉 Tutte le task completate!", description: "Valutazione automatica dell'avanzamento in corso..." });
+      toast({ title: "All tasks completed!", description: "Automatic phase advancement evaluation in progress..." });
       evaluatePhase();
     };
 
@@ -1803,7 +1803,7 @@ export default function UnifiedDashboard() {
         <motion.div className="text-center space-y-1 px-16" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-lg font-bold text-foreground font-display">
-              {profile?.thesis_topic || "Tesi non definita"}
+              {profile?.thesis_topic || "Thesis not defined"}
             </h1>
             {profile?.google_doc_url ? (
               <a
@@ -1811,7 +1811,7 @@ export default function UnifiedDashboard() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Apri documento tesi"
+                title="Open thesis document"
               >
                 <Link2 className="w-4 h-4" />
               </a>
@@ -1819,7 +1819,7 @@ export default function UnifiedDashboard() {
               <button
                 onClick={() => setShowDocModal(true)}
                 className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Collega documento tesi"
+                title="Connect thesis document"
               >
                 <Link2 className="w-4 h-4" />
               </button>
@@ -1941,7 +1941,7 @@ export default function UnifiedDashboard() {
               key: "supervisors",
               delay: delay,
               component: (
-                <DashboardCard title="Supervisori suggeriti" icon={GraduationCap}>
+                <DashboardCard title="Suggested Supervisors" icon={GraduationCap}>
                   <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
                 </DashboardCard>
               ),
@@ -1956,7 +1956,7 @@ export default function UnifiedDashboard() {
               colSpan: !showPlanning ? "md:col-span-2" : undefined,
               delay: delay,
               component: (
-                <DashboardCard title="Direzioni possibili" icon={TrendingUp}>
+                <DashboardCard title="Possible Directions" icon={TrendingUp}>
                   <CareerTree sectors={careerSectors} userId={user?.id || ""} loading={careerLoading} />
                 </DashboardCard>
               ),
@@ -1969,7 +1969,7 @@ export default function UnifiedDashboard() {
             key: "tasks",
             delay: delay,
             component: (
-              <DashboardCard title="Task" icon={Target}>
+              <DashboardCard title="Tasks" icon={Target}>
                 <TaskContent userId={user?.id || ""} />
               </DashboardCard>
             ),
@@ -1981,7 +1981,7 @@ export default function UnifiedDashboard() {
             key: "rubrica",
             delay: delay,
             component: (
-              <DashboardCard title={showTopicSupervisor ? "Interview Partners" : "Rubrica"} icon={Users}>
+              <DashboardCard title={showTopicSupervisor ? "Interview Partners" : "Contacts"} icon={Users}>
                 <ExpertSuggestions userId={user?.id || ""} />
               </DashboardCard>
             ),
@@ -1993,8 +1993,8 @@ export default function UnifiedDashboard() {
             key: "references",
             delay: delay,
             component: (
-              <DashboardCard title="Riferimenti principali" icon={BookOpen} badge={references.length || null}
-                action={{ label: "Aggiorna", onClick: fetchReferences, loading: isLoadingRefs }}>
+              <DashboardCard title="Main References" icon={BookOpen} badge={references.length || null}
+                action={{ label: "Update", onClick: fetchReferences, loading: isLoadingRefs }}>
                 <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} userId={user?.id} />
               </DashboardCard>
             ),
@@ -2007,8 +2007,8 @@ export default function UnifiedDashboard() {
               key: "vulnerabilities",
               delay: delay,
               component: (
-                <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
+                <DashboardCard title="Vulnerabilities" icon={ShieldAlert} badge={vulnerabilities.length}
+                  action={{ label: "Scan", onClick: scanVulnerabilities, loading: isScanning }}>
                   <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
                 </DashboardCard>
               ),
@@ -2080,7 +2080,7 @@ export default function UnifiedDashboard() {
           })}
           <button onClick={evaluatePhase} disabled={phaseEvalLoading}
             className="ml-4 p-2 rounded-full bg-foreground/10 text-foreground hover:bg-foreground/20 transition-colors disabled:opacity-40 shrink-0"
-            title="Valuta avanzamento fase">
+            title="Evaluate phase">
             {phaseEvalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
           </button>
         </div>

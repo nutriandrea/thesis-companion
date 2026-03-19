@@ -163,8 +163,8 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
     if (!silent && (newMemories > 0 || newSuggestions > 0)) {
       toast({
-        title: "Analisi completata",
-        description: `${newMemories} memorie + ${newSuggestions} suggerimenti estratti e distribuiti nelle sezioni.`,
+        title: "Analysis completed",
+        description: `${newMemories} memories + ${newSuggestions} suggestions extracted and distributed across sections.`,
       });
     }
     if (!silent) setIsExtracting(false);
@@ -228,11 +228,11 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Errore" }));
         if (resp.status === 402) {
-          toast({ variant: "destructive", title: "Crediti AI esauriti", description: "I crediti AI del workspace sono terminati. Vai su Settings → Workspace → Usage per ricaricarli." });
+          toast({ variant: "destructive", title: "AI credits exhausted", description: "Workspace AI credits have run out. Go to Settings → Workspace → Usage to recharge." });
         } else if (resp.status === 429) {
-          toast({ variant: "destructive", title: "Troppo veloci", description: "Troppe richieste. Attendi qualche secondo e riprova." });
+          toast({ variant: "destructive", title: "Too fast", description: "Too many requests. Wait a few seconds and try again." });
         } else {
-          toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
+          toast({ variant: "destructive", title: "Errore", description: err.error || `Error ${resp.status}` });
         }
         setIsStreaming(false);
         return;
@@ -276,7 +276,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       }
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
+      toast({ variant: "destructive", title: "Error", description: "Unable to contact Socrate." });
     } finally {
       setIsStreaming(false);
     }
@@ -302,7 +302,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       });
 
       if (!resp.ok) {
-        toast({ variant: "destructive", title: "Errore", description: "Impossibile generare il report." });
+        toast({ variant: "destructive", title: "Error", description: "Unable to generate the report." });
         setIsGeneratingReport(false);
         return;
       }
@@ -322,10 +322,10 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       // Always run full extraction on report
       await runBackgroundExtraction(messages);
-      toast({ title: "Report generato", description: "I contenuti sono stati distribuiti nelle sezioni del sito." });
+      toast({ title: "Report generated", description: "Contents have been distributed across site sections." });
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Errore", description: "Errore nella generazione del report." });
+      toast({ variant: "destructive", title: "Error", description: "Error generating the report." });
     } finally {
       setIsGeneratingReport(false);
     }
@@ -355,19 +355,19 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       });
 
       if (!resp.ok) {
-        toast({ variant: "destructive", title: "Errore", description: "Fusione fallita." });
+        toast({ variant: "destructive", title: "Error", description: "Fusion failed." });
         setIsExtracting(false);
         return;
       }
 
       const result = await resp.json();
       toast({
-        title: "Fusione completata",
-        description: `Profilo aggiornato · ${result.summary?.affinitiesComputed || 0} affinità calcolate · ${result.summary?.newSuggestionsGenerated || 0} nuovi suggerimenti`,
+        title: "Fusion completed",
+        description: `Profilo aggiornato · ${result.summary?.affinitiesComputed || 0} affinities calculated · ${result.summary?.newSuggestionsGenerated || 0} new suggestions`,
       });
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Errore", description: "Errore nella fusione dati." });
+      toast({ variant: "destructive", title: "Error", description: "Error in data fusion." });
     } finally {
       setIsExtracting(false);
     }
@@ -481,11 +481,11 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         <div className="flex-1 flex gap-2">
           <input value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-            placeholder="Rispondi a Socrate..." disabled={isStreaming}
+            placeholder="Reply to Socrate..." disabled={isStreaming}
             className="flex-1 bg-card border border-border rounded-full px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
           <button onClick={() => setInputMode("voice")}
             className="px-3 py-3 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            title="Passa alla modalità vocale">
+            title="Switch to voice mode">
             <Mic className="w-4 h-4" />
           </button>
           <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}

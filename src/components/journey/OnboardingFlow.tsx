@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Compass, Lightbulb, Target, Users, PenTool, ArrowRight, Sparkles } from "lucide-react";
 
 const journeyOptions: { state: JourneyState; icon: React.ElementType; title: string; desc: string }[] = [
-  { state: "lost", icon: Compass, title: "Sono perduto", desc: "Non ho ancora idea di cosa scrivere. Ho bisogno di brainstorming e ispirazione." },
-  { state: "vague_idea", icon: Lightbulb, title: "Ho un'idea vaga", desc: "Ho una bozza di argomento ma ho bisogno di affinarlo e strutturarlo." },
-  { state: "topic_chosen", icon: Target, title: "Ho scelto il topic", desc: "So cosa voglio scrivere. Mi serve una roadmap, timeline e supervisore." },
-  { state: "finding_contacts", icon: Users, title: "Cerco contatti", desc: "Ho bisogno di trovare professori, esperti o collaboratori per la mia tesi." },
+  { state: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet. I need brainstorming and inspiration." },
+  { state: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine and structure it." },
+  { state: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write. I need a roadmap, timeline and supervisor." },
+  { state: "finding_contacts", icon: Users, title: "Looking for contacts", desc: "I need to find professors, experts or collaborators for my thesis." },
   { state: "writing", icon: PenTool, title: "Sto scrivendo", desc: "Ho già iniziato. Mi serve supporto per la stesura, revisione e difesa." },
 ];
 
