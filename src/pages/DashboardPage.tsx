@@ -15,11 +15,14 @@ interface Vulnerability { id: string; type: string; title: string; description: 
 
 export default function DashboardPage() {
   const { roadmap, toggleTask, profile, overallProgress, setActiveSection, user } = useApp();
+  const { toast } = useToast();
   const [memoryCount, setMemoryCount] = useState(0);
   const [suggestionCount, setSuggestionCount] = useState(0);
   const [nextSteps, setNextSteps] = useState<AISuggestion[]>([]);
   const [thesisFeedback, setThesisFeedback] = useState<AISuggestion[]>([]);
   const [topAffinities, setTopAffinities] = useState<AffinityScore[]>([]);
+  const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
 
   // Session stats (realtime)
   const { data: sessionData } = useSessionStats(user?.id);
