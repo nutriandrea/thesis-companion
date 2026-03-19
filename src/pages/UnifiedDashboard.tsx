@@ -74,17 +74,7 @@ const normalizePhase = (phase?: string | null): PhaseKey => {
   }
 };
 
-// ─── GRADIENT ORB ───
-function SocrateIcon({ size = 40, isActive = false }: { size?: number; isActive?: boolean }) {
-  return (
-    <div
-      className="rounded-full bg-foreground flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      <span className="font-display font-bold text-background" style={{ fontSize: size * 0.4 }}>S</span>
-    </div>
-  );
-}
+// SocrateIcon is now the shared SocrateCoin component
 
 // ─── CARD COMPONENT ───
 function DashboardCard({
