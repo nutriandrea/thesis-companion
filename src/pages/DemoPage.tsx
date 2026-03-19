@@ -794,12 +794,12 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
       {!confirmed ? (
         <>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Una volta scelto il relatore, potrai invitarlo sulla piattaforma per condividere i tuoi progressi in tempo reale.
+            Once you've chosen your supervisor, you can invite them to the platform to share your progress in real time.
           </p>
           <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/5 border border-accent/10">
             <Share2 className="w-3.5 h-3.5 text-accent shrink-0" />
             <p className="text-[11px] text-foreground leading-snug">
-              Il relatore potrà <strong>visualizzare roadmap, task e avanzamenti</strong>, ma non avrà accesso a Socrate.
+              The supervisor can <strong>view roadmap, tasks and progress</strong>, but won't have access to Socrates.
             </p>
           </div>
         </>
