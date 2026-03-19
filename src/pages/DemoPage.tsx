@@ -997,8 +997,9 @@ function DemoVoiceView({ messages, onSwitchToText, onSkip }: {
 // ══════════════════════════════════════════════════════
 
 // ─── CARD COMPONENT with overflow detection & expand dialog ───
-function DemoCard({ title, icon: Icon, children, badge, className = "", maxContentHeight = 200 }: {
-  title: string; icon: React.ElementType; children: React.ReactNode; badge?: number | null; className?: string; maxContentHeight?: number;
+function DemoCard({ title, icon: Icon, children, badge, action, className = "", maxContentHeight = 200 }: {
+  title: string; icon: React.ElementType; children: React.ReactNode; badge?: number | null;
+  action?: { label: string; onClick: () => void; loading?: boolean }; className?: string; maxContentHeight?: number;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -1022,6 +1023,12 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
           <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
           {badge != null && badge > 0 && (
             <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+          )}
+          {action && (
+            <button onClick={action.onClick} disabled={action.loading}
+              className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+              {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+            </button>
           )}
         </div>
         <div className="relative flex-1 min-h-0">
@@ -1067,6 +1074,12 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
                 <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
                 {badge != null && badge > 0 && (
                   <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-destructive/20 text-destructive">{badge}</span>
+                )}
+                {action && (
+                  <button onClick={action.onClick} disabled={action.loading}
+                    className="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40">
+                    {action.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : action.label}
+                  </button>
                 )}
                 <button onClick={() => setExpanded(false)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors ml-2">
                   <X className="w-4 h-4 text-muted-foreground" />
