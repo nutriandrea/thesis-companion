@@ -1147,7 +1147,7 @@ export default function UnifiedDashboard() {
               </motion.div>
             ) : (
               <ChatOverlay messages={messages} input={input} setInput={setInput}
-                sendMessage={sendMessage} isStreaming={isStreaming} onClose={() => setChatOpen(false)}
+                sendMessage={sendMessage} isStreaming={isStreaming} onClose={closeChat}
                 onSwitchToVoice={() => setInputMode("voice")} />
             )}
           </>
