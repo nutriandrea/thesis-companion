@@ -731,9 +731,9 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         if (data.can_advance) {
-          toast({ title: "🚀 Fase avanzata!", description: data.socrate_comment?.substring(0, 100) || "Sei passato alla fase successiva." });
+          toast({ title: "Fase avanzata", description: data.socrate_comment?.substring(0, 100) || "Sei passato alla fase successiva." });
         } else {
-          toast({ title: "⏸ Non ancora", description: data.socrate_comment?.substring(0, 100) || "Ci sono blocchi da risolvere." });
+          toast({ title: "Non ancora", description: data.socrate_comment?.substring(0, 100) || "Ci sono blocchi da risolvere." });
         }
         // Refresh student profile
         const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
