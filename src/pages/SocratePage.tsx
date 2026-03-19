@@ -27,18 +27,20 @@ interface ChatMsg {
 
 // SocrateIcon is now the shared SocrateCoin component
 
-function useLatexContent() {
+function useLatexContent(userId?: string) {
   const [latex, setLatex] = useState("");
   useEffect(() => {
-    const stored = localStorage.getItem("thesis-latex-content");
+    if (!userId) return;
+    const key = `thesis-latex-content-${userId}`;
+    const stored = localStorage.getItem(key);
     if (stored) setLatex(stored);
     const handler = () => {
-      const updated = localStorage.getItem("thesis-latex-content");
-      if (updated) setLatex(updated);
+      const updated = localStorage.getItem(key);
+      setLatex(updated || "");
     };
     window.addEventListener("storage", handler);
     return () => window.removeEventListener("storage", handler);
-  }, []);
+  }, [userId]);
   return latex;
 }
 
@@ -57,7 +59,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
   const [isExtracting, setIsExtracting] = useState(false);
   const [severita, setSeverita] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const latexContent = useLatexContent();
+  const latexContent = useLatexContent(user?.id);
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
   const suggestionsRef = useRef<any[]>([]);

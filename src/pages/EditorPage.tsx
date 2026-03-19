@@ -153,7 +153,8 @@ const priorityColors: Record<string, string> = {
 export default function EditorPage() {
   const { user, profile } = useApp();
   const { toast } = useToast();
-  const [latex, setLatex] = useState(() => localStorage.getItem("thesis-latex-content") || SAMPLE_LATEX);
+  const storageKey = user?.id ? `thesis-latex-content-${user.id}` : "thesis-latex-content-anonymous";
+  const [latex, setLatex] = useState(() => localStorage.getItem(storageKey) || SAMPLE_LATEX);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<LatexAnalysis | null>(null);
   const [showPanel, setShowPanel] = useState(true);
@@ -163,16 +164,15 @@ export default function EditorPage() {
   const { suggestions: thesisFeedback } = useSocrateSuggestions(user?.id, ["thesis_feedback"]);
   const { suggestions: nextSteps } = useSocrateSuggestions(user?.id, ["next_step"]);
 
-  // Persist LaTeX to localStorage (debounced)
+  // Persist LaTeX to localStorage scoped by user ID (debounced)
   useEffect(() => {
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
-      localStorage.setItem("thesis-latex-content", latex);
-      // Dispatch storage event for Socrate page to pick up
+      localStorage.setItem(storageKey, latex);
       window.dispatchEvent(new Event("storage"));
     }, 500);
     return () => { if (syncTimerRef.current) clearTimeout(syncTimerRef.current); };
-  }, [latex]);
+  }, [latex, storageKey]);
 
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}`
