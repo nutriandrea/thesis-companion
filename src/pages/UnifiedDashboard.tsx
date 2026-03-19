@@ -1651,7 +1651,15 @@ export default function UnifiedDashboard() {
     if (messages.length > 2) {
       setTimeout(() => computeCareer(), 500);
     }
-  }, [messages.length, computeCareer]);
+  }, [messages.length, computeCareer, setInputMode]);
+
+  const switchChatToText = useCallback(() => {
+    setInputMode("text");
+  }, [setInputMode]);
+
+  const switchChatToVoice = useCallback(() => {
+    setInputMode("voice");
+  }, [setInputMode]);
 
   // Evaluate phase
   const evaluatePhase = useCallback(async () => {
