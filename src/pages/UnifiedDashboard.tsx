@@ -1193,7 +1193,7 @@ export default function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* ─── CHAT / VOICE OVERLAY ─── */}
+      {/* ─── SOCRATE OVERLAY ─── */}
       <AnimatePresence>
         {chatOpen && (
           <>
@@ -1202,36 +1202,21 @@ export default function UnifiedDashboard() {
               className="fixed inset-0 bg-foreground/10 z-40"
               onClick={closeChat}
             />
-            {inputMode === "voice" ? (
-              <motion.div
-                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
-              >
-                <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-                  <SocrateCoin size={32} interactive={false} isActive />
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-foreground">Socrate</p>
-                    <p className="text-[10px] text-muted-foreground">Modalità vocale</p>
-                  </div>
-                  <button onClick={closeChat} className="p-2 rounded-lg hover:bg-secondary transition-colors">
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-                <div className="flex-1">
-                  <VoiceConversation
-                    onTranscript={(text) => sendMessage(text)}
-                    onSwitchToText={() => setInputMode("text")}
-                    isStreaming={isStreaming}
-                    lastAssistantMessage={lastMessage}
-                    severity={studentProfile?.severita ?? 0.5}
-                  />
-                </div>
-              </motion.div>
-            ) : (
-              <ChatOverlay messages={messages} input={input} setInput={setInput}
-                sendMessage={sendMessage} isStreaming={isStreaming} onClose={closeChat}
-                onSwitchToVoice={() => setInputMode("voice")} />
-            )}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+              className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+            >
+              <VoiceConversation
+                onTranscript={(text) => sendMessage(text)}
+                onClose={closeChat}
+                isStreaming={isStreaming}
+                lastAssistantMessage={lastMessage}
+                severity={studentProfile?.severita ?? 0.5}
+                messages={messages}
+                onGenerateReport={generateReport}
+                isGeneratingReport={isGeneratingReport}
+              />
+            </motion.div>
           </>
         )}
       </AnimatePresence>
