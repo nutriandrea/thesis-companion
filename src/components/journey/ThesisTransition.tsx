@@ -85,7 +85,7 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
             className="text-center px-6 max-w-lg"
           >
             <div className="mx-auto mb-12">
-              <SocrateCoin size={120} interactive={false} />
+              <SocrateCoin size={180} interactive={false} />
             </div>
             <p className="text-white/40 text-xs tracking-[0.3em] uppercase mb-3">Your thesis</p>
             <h1 className="font-display text-white text-2xl md:text-3xl font-medium tracking-wide leading-tight italic">
