@@ -860,7 +860,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
       )}
       {sup && (
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Supervisore</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Supervisor</p>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
               <GraduationCap className="w-3 h-3 text-accent" />
