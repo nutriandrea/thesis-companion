@@ -1623,41 +1623,43 @@ Chiama TUTTE le funzioni disponibili.`,
     // ─── REPORT MODE ───
     let systemPrompt = "";
 
+    // ─── 5-PHASE THESIS JOURNEY MODEL ───
+    const THESIS_PHASES = {
+      orientation: { name: "Orientation Stage", weeks: "1-4", goal: "Aiutare lo studente a scoprire su cosa scrivere, esplorare idee e interessi.", guidance: "Socrate fa domande stimolanti per far emergere le aree di interesse dello studente, senza dire cosa scrivere direttamente.", severity: 1.0 },
+      topic_supervisor: { name: "Topic and Supervisor Search", weeks: "2-8", goal: "Scegliere il topic della tesi, il supervisore e eventualmente un partner aziendale.", guidance: "Socrate analizza le risposte precedenti e suggerisce opzioni di topic e supervisore, spiegando perché ogni scelta è rilevante.", severity: 0.85 },
+      planning: { name: "Planning Stage", weeks: "4-10", goal: "Strutturare metodologia, timeline e aspettative.", guidance: "Socrate aiuta a definire milestone chiare, strumenti di lavoro e indicatori di progresso.", severity: 0.7 },
+      execution: { name: "Execution Stage", weeks: "6-20", goal: "Condurre la ricerca, raccogliere dati e iterare sul lavoro.", guidance: "Socrate fornisce feedback mirati sui risultati, fa domande critiche per migliorare la ricerca e mantiene lo studente focalizzato.", severity: 0.55 },
+      writing: { name: "Writing and Finalization", weeks: "16-24", goal: "Produrre e consegnare il documento finale della tesi.", guidance: "Socrate guida nella stesura, revisione e ottimizzazione del documento, offrendo consigli su struttura, chiarezza e impatto.", severity: 0.4 },
+    };
+    type ThesisPhaseKey = keyof typeof THESIS_PHASES;
+    function mapStageToPhase(stage: string): ThesisPhaseKey {
+      const m: Record<string, ThesisPhaseKey> = { exploration: "orientation", topic_chosen: "topic_supervisor", structuring: "planning", writing: "execution", revision: "writing" };
+      return m[stage] || "orientation";
+    }
+
     // Load student profile for richer context + compute severity
     let studentProfileCtx = "";
-    let severita = 1.0; // Default: maximum severity
-    let currentStage = "exploration";
+    let severita = 1.0;
+    let currentPhase: ThesisPhaseKey = "orientation";
     if (userId) {
       const { data: sp } = await supabase.from("student_profiles").select("*").eq("user_id", userId).single();
       if (sp) {
-        currentStage = sp.thesis_stage || "exploration";
+        currentPhase = (sp.current_phase as ThesisPhaseKey) || mapStageToPhase(sp.thesis_stage || "exploration");
+        const phaseConfig = THESIS_PHASES[currentPhase];
+        severita = phaseConfig.severity;
 
-        // ─── COMPUTE SEVERITY DYNAMICALLY ───
-        // Based on thesis stage, completion, and overall maturity
-        const stageSeverity: Record<string, number> = {
-          exploration: 1.0,    // Maximum: student needs strong provocation
-          topic_chosen: 0.85,  // Still high: validate the choice
-          structuring: 0.7,    // Moderate: help organize
-          writing: 0.55,       // Lower: constructive feedback
-          revision: 0.4,       // Lowest: collaborative refinement
-        };
-        severita = stageSeverity[currentStage] ?? 1.0;
-
-        // Adjust based on completion (more complete = slightly less severe)
         const completion = sp.overall_completion || 0;
         if (completion > 50) severita = Math.max(0.3, severita - 0.1);
         if (completion > 80) severita = Math.max(0.25, severita - 0.1);
-
-        // Adjust based on research maturity
         if (sp.research_maturity === "advanced") severita = Math.max(0.3, severita - 0.1);
         else if (sp.research_maturity === "beginner") severita = Math.min(1.0, severita + 0.1);
-
-        // Round to 2 decimals
         severita = Math.round(severita * 100) / 100;
 
-        // Persist the computed severity if it changed
-        if (sp.severita !== severita) {
-          await supabase.from("student_profiles").update({ severita }).eq("user_id", userId);
+        const updates: any = {};
+        if (sp.severita !== severita) updates.severita = severita;
+        if (sp.current_phase !== currentPhase) updates.current_phase = currentPhase;
+        if (Object.keys(updates).length > 0) {
+          await supabase.from("student_profiles").update(updates).eq("user_id", userId);
         }
 
         studentProfileCtx = `
@@ -1669,7 +1671,8 @@ PROFILO INTELLETTUALE (dal database):
 - Maturità ricerca: ${sp.research_maturity}
 - Pensiero critico: ${sp.critical_thinking || "non valutato"}
 - Qualità scrittura: ${sp.writing_quality || "non valutata"}
-- Fase tesi: ${sp.thesis_stage}
+- FASE ATTUALE: ${phaseConfig.name} (Settimane ${phaseConfig.weeks})
+- Obiettivo fase: ${phaseConfig.goal}
 - Punteggio tesi: ${sp.thesis_quality_score}/10
 - Sessioni totali: ${sp.total_exchanges} scambi, ${sp.total_extractions} analisi
 - SEVERITÀ ATTUALE: ${severita} (1.0=massima, 0.0=minima)
