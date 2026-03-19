@@ -24,9 +24,34 @@ interface MockSupervisor { id: string; name: string; fields: string[]; score: nu
 interface MockExpert { id: string; name: string; title: string; score: number; reasoning: string; offerInterviews: boolean; email: string; }
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
 
-// ─── DEMO SOCRATE CHAT HOOK ───
+// ─── BACKEND URLS ───
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
-const DEMO_STUDENT_CONTEXT = `Name: Marco Demo\nDegree: MSc Computer Science\nUniversity: ETH Zurich\nSkills: Python, machine learning, NLP, data analysis\nState: topic_chosen\nTopic: Applying Large Language Models for Automated Vulnerability Detection in Source Code`;
+const DEMO_ENGINE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/demo-engine`;
+const DEMO_STUDENT_CONTEXT = `Name: Marco Demo\nDegree: MSc Computer Science\nUniversity: ETH Zurich\nSkills: Python, machine learning, NLP, data analysis\nState: topic_chosen\nTopic: Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code`;
+
+// ─── DEMO ENGINE HOOK ───
+function useDemoEngine<T>(mode: string, extraParams?: Record<string, any>) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(DEMO_ENGINE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      body: JSON.stringify({ mode, ...extraParams }),
+    })
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setData(d); setLoading(false); } })
+      .catch(e => { if (!cancelled) { setError(e.message); setLoading(false); } });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, JSON.stringify(extraParams)]);
+
+  return { data, loading, error };
+}
 
 function useDemoChat(initialMessages?: ChatMsg[]) {
   const [messages, setMessages] = useState<ChatMsg[]>(initialMessages || []);
