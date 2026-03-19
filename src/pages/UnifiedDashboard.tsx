@@ -861,7 +861,7 @@ export default function UnifiedDashboard() {
       </div>
 
       {/* ─── BOTTOM PHASE STEPPER ─── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md border-t border-border py-2.5 px-6">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2.5 px-6">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
           {PHASES.map((p, i) => {
             const isCompleted = i < currentPhaseIndex;
