@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks, type SocrateTask } from "@/hooks/useSocrateTasks";
 import supervisorsData from "@/data/supervisors.json";
@@ -19,7 +20,7 @@ const companies = companiesData as Company[];
 interface Action { id: string; type: string; title: string; content: string; }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
-const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
+
 
 const priorityConfig: Record<string, { icon: typeof AlertTriangle; color: string; label: string; order: number }> = {
   critical: { icon: AlertTriangle, color: "text-destructive", label: "Critico", order: 0 },

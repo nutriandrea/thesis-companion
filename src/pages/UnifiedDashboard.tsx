@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks } from "@/hooks/useSocrateTasks";
 import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
@@ -27,7 +28,9 @@ interface CareerSector { name: string; percentage: number; reasoning?: string; }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
 const CAREER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/career-engine`;
-const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
+const RAG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`;
+const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
+
 
 const PHASES = [
   { key: "exploration", label: "Esplorazione", icon: "🔍" },
@@ -530,7 +533,7 @@ export default function UnifiedDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-google-doc`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: AUTH_HEADERS,
         body: JSON.stringify({ google_doc_url: docUrl }),
       });
       if (!resp.ok) {
@@ -546,7 +549,7 @@ export default function UnifiedDashboard() {
       if (data.content && data.content.length > 100) {
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+          headers: AUTH_HEADERS,
           body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
         }).catch(console.error);
       }

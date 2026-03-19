@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 
 interface SessionStats {
   totalMessages: number;
@@ -33,7 +34,7 @@ interface SessionData {
 }
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
-const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
+
 
 export function useSessionStats(userId: string | undefined) {
   const [data, setData] = useState<SessionData | null>(null);

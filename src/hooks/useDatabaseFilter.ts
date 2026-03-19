@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { AUTH_HEADERS } from "@/lib/auth-headers";
 import supervisorsData from "@/data/supervisors.json";
 import topicsData from "@/data/topics.json";
 import companiesData from "@/data/companies.json";
 
 const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
-const AUTH_HEADERS = { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
+
 
 interface FilterResult {
   professors: FilteredEntity[];
