@@ -4,7 +4,7 @@ import {
   Send, Loader2, ShieldAlert, Flame, Target, Users, Building2,
   CheckCircle2, Circle, GraduationCap, LogOut, MessageCircle,
   ChevronLeft, ChevronRight, X, FileText, Link2, RefreshCw,
-  TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3
+  TrendingUp, ArrowRight, Lock, Unlock, Briefcase, BarChart3, Mic
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { supabase } from "@/integrations/supabase/client";
