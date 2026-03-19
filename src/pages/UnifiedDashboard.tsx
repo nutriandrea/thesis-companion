@@ -450,10 +450,10 @@ function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updat
 
 // ─── CHAT OVERLAY ───
 function ChatOverlay({
-  messages, input, setInput, sendMessage, isStreaming, onClose
+  messages, input, setInput, sendMessage, isStreaming, onClose, onSwitchToVoice
 }: {
   messages: ChatMsg[]; input: string; setInput: (v: string) => void;
-  sendMessage: (text: string) => void; isStreaming: boolean; onClose: () => void;
+  sendMessage: (text: string) => void; isStreaming: boolean; onClose: () => void; onSwitchToVoice?: () => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -504,6 +504,13 @@ function ChatOverlay({
           disabled={isStreaming}
           className="flex-1 bg-secondary/50 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent"
         />
+        {onSwitchToVoice && (
+          <button onClick={onSwitchToVoice}
+            className="p-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Passa alla modalità vocale">
+            <Mic className="w-4 h-4" />
+          </button>
+        )}
         <button onClick={() => sendMessage(input)} disabled={!input.trim() || isStreaming}
           className="p-2.5 bg-accent text-accent-foreground rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-30">
           <Send className="w-4 h-4" />
