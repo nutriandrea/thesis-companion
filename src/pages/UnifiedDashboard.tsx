@@ -228,6 +228,7 @@ function DashboardCard({
 
 // ─── TASK PANEL ───
 function TaskContent({ userId }: { userId: string }) {
+  const t = useT();
   const { tasks, updateTaskStatus, validateTask } = useSocrateTasks(userId);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [validatingId, setValidatingId] = useState<string | null>(null);
