@@ -33,11 +33,11 @@ const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`
 
 
 const PHASES = [
-  { key: "orientation", label: "Orientamento", icon: "🔍" },
-  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "🎯" },
-  { key: "planning", label: "Pianificazione", icon: "📋" },
-  { key: "execution", label: "Esecuzione", icon: "🔧" },
-  { key: "writing", label: "Scrittura", icon: "✍️" },
+  { key: "orientation", label: "Orientamento", icon: "1" },
+  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "2" },
+  { key: "planning", label: "Pianificazione", icon: "3" },
+  { key: "execution", label: "Esecuzione", icon: "4" },
+  { key: "writing", label: "Scrittura", icon: "5" },
 ] as const;
 
 type PhaseKey = (typeof PHASES)[number]["key"];
