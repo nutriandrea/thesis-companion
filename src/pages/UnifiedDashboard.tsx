@@ -474,7 +474,7 @@ function CareerTree({ sectors, userId, loading }: {
       {/* Trunk label */}
       <div className="flex items-center gap-2 pb-2">
         <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
-        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
+        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">La tua tesi</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
