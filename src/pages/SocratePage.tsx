@@ -23,12 +23,12 @@ interface ChatMsg {
   content: string;
 }
 
-function GradientOrb({ size = "lg" }: { size?: "sm" | "lg" }) {
-  const dim = size === "lg" ? "w-64 h-64 md:w-80 md:h-80" : "w-10 h-10";
+function SocrateIcon({ size = "sm" }: { size?: "sm" | "lg" }) {
+  const dim = size === "lg" ? "w-16 h-16" : "w-8 h-8";
   return (
-    <div className={`${dim} rounded-full shrink-0`} style={{
-      background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)",
-    }} />
+    <div className={`${dim} rounded-full bg-foreground flex items-center justify-center shrink-0`}>
+      <span className={`font-display font-bold text-background ${size === "lg" ? "text-2xl" : "text-xs"}`}>S</span>
+    </div>
   );
 }
 
