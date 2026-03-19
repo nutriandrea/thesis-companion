@@ -1,62 +1,14 @@
-import { useState, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Demo2Provider, useDemo2 } from "@/contexts/Demo2Context";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Demo2Dashboard from "@/components/demo2/Demo2Dashboard";
 import Demo2Socrate from "@/components/demo2/Demo2Socrate";
 import Demo2Management from "@/components/demo2/Demo2Management";
-import Demo2Intro from "@/components/demo2/Demo2Intro";
-import Demo2Onboarding from "@/components/demo2/Demo2Onboarding";
 import { MessageCircle, LayoutDashboard, Settings } from "lucide-react";
 import LanguageSwitch from "@/components/shared/LanguageSwitch";
 
-type Demo2Step = "intro" | "onboarding" | "app";
-
 function Demo2Inner() {
   const { activeView, setActiveView } = useDemo2();
-  const [step, setStep] = useState<Demo2Step>("intro");
-  const [showFadeOut, setShowFadeOut] = useState(false);
 
-  const handleIntroComplete = useCallback((mode: "voice" | "text") => {
-    // Fade out transition like the real app
-    setShowFadeOut(true);
-  }, []);
-
-  const handleFadeOutComplete = useCallback(() => {
-    setShowFadeOut(false);
-    setStep("onboarding");
-  }, []);
-
-  const handleOnboardingComplete = useCallback(() => {
-    setStep("app");
-    setActiveView("socrate");
-  }, [setActiveView]);
-
-  // Intro fade-out overlay
-  if (showFadeOut) {
-    return (
-      <motion.div
-        key="intro-exit"
-        initial={{ opacity: 1 }}
-        animate={{ opacity: 0 }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-        onAnimationComplete={handleFadeOutComplete}
-        className="fixed inset-0 z-[200] bg-foreground"
-      />
-    );
-  }
-
-  // Intro (SocrateIntro equivalent)
-  if (step === "intro") {
-    return <Demo2Intro onComplete={handleIntroComplete} />;
-  }
-
-  // Onboarding flow
-  if (step === "onboarding") {
-    return <Demo2Onboarding onComplete={handleOnboardingComplete} />;
-  }
-
-  // Main app
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Top nav tabs */}
