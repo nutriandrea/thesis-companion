@@ -538,7 +538,7 @@ I would prefer to carry out this exchange through voice rather than writing; I b
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = localStorage.getItem("app-language");
-    return (stored === "en" || stored === "it") ? stored : "it";
+    return (stored === "en" || stored === "it") ? stored : "en";
   });
 
   const setLanguage = useCallback((lang: Language) => {
