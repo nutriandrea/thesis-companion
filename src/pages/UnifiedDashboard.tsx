@@ -1010,7 +1010,7 @@ export default function UnifiedDashboard() {
       <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
           {/* Career Distribution */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <motion.div data-tutor-id="career" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}
               action={{ label: "Calcola", onClick: computeCareer, loading: careerLoading }}>
               <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
@@ -1018,14 +1018,14 @@ export default function UnifiedDashboard() {
           </motion.div>
 
           {/* Tasks */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+          <motion.div data-tutor-id="tasks" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
             <DashboardCard title="Task" icon={Target}>
               <TaskContent userId={user?.id || ""} />
             </DashboardCard>
           </motion.div>
 
           {/* Vulnerabilities */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <motion.div data-tutor-id="vulnerabilities" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
             <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
               action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
               <VulnerabilitiesContent vulnerabilities={vulnerabilities} />
@@ -1033,21 +1033,21 @@ export default function UnifiedDashboard() {
           </motion.div>
 
           {/* Supervisors */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+          <motion.div data-tutor-id="supervisor" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
             <DashboardCard title="Supervisore" icon={Users}>
               <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
             </DashboardCard>
           </motion.div>
 
           {/* Thesis Document - always visible */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <motion.div data-tutor-id="thesis-doc" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
             <DashboardCard title="Documento Tesi" icon={FileText}>
               <ThesisDocWidget profile={profile} updateProfile={updateProfile} user={user} />
             </DashboardCard>
           </motion.div>
 
           {/* Companies (spans remaining cols) */}
-          <motion.div className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+          <motion.div data-tutor-id="companies" className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
             <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
               action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
               <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
