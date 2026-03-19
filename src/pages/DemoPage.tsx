@@ -241,8 +241,8 @@ function DemoOnboarding({ onNext }: { onNext: () => void }) {
           <Sparkles className="w-8 h-8 text-accent" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-display">Benvenuto, Marco</h1>
-          <p className="text-muted-foreground mt-2">A che punto sei nel tuo percorso di tesi?</p>
+          <h1 className="text-2xl font-bold text-foreground font-display">Welcome, Marco</h1>
+          <p className="text-muted-foreground mt-2">Where are you in your thesis journey?</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
