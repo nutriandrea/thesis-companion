@@ -125,7 +125,7 @@ export default function SocrateIntro({ onComplete }: Props) {
               <motion.div
                 layout
                 transition={{ layout: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
-                className="flex flex-col items-center max-w-xl px-8 mt-32"
+                className="flex flex-col items-center max-w-xl px-8"
               >
                 {(phase === "text-appear" || phase === "mode-choice") && (
                   <motion.div
