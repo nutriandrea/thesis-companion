@@ -1,7 +1,9 @@
+import { useState, useCallback } from "react";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import AppLayout from "@/components/layout/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import SocrateIntro from "@/components/journey/SocrateIntro";
+import ThesisTransition from "@/components/journey/ThesisTransition";
 import DashboardPage from "@/pages/DashboardPage";
 import SocratePage from "@/pages/SocratePage";
 import EditorPage from "@/pages/EditorPage";
@@ -16,6 +18,12 @@ import PathPage from "@/pages/PathPage";
 
 function AppContent() {
   const { user, profile, loading, activeSection, setActiveSection, setInputMode } = useApp();
+  const [showTransition, setShowTransition] = useState(false);
+
+  const handleTransitionComplete = useCallback(() => {
+    setShowTransition(false);
+    setActiveSection("dashboard");
+  }, [setActiveSection]);
 
   if (loading) {
     return (
@@ -41,14 +49,37 @@ function AppContent() {
     );
   }
 
+  // Thesis transition animation
+  if (showTransition && profile?.thesis_topic) {
+    return (
+      <ThesisTransition
+        thesisTopic={profile.thesis_topic}
+        onComplete={handleTransitionComplete}
+      />
+    );
+  }
+
+  const isExplorationPhase = !profile?.thesis_topic;
+
+  // EXPLORATION: Socrate-only, no sidebar/dashboard
+  if (isExplorationPhase) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SocratePage
+          explorationMode
+          onThesisConfirmed={() => setShowTransition(true)}
+        />
+      </div>
+    );
+  }
+
+  // CONSTRUCTION: Full dashboard with sidebar
   const pages: Record<string, React.ReactNode> = {
-    // Journey stages → Dashboard with stage focus
     "orientation": <DashboardPage />,
     "topic-search": <DashboardPage />,
     "planning": <DashboardPage />,
     "execution": <DashboardPage />,
     "writing": <DashboardPage />,
-    // Building blocks
     dashboard: <DashboardPage />,
     socrate: <SocratePage />,
     editor: <EditorPage />,
