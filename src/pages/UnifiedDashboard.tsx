@@ -1031,16 +1031,116 @@ function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilitie
 }
 
 // ─── MAIN REFERENCES ───
-function ReferencesContent({ references, loading, onRefresh }: {
-  references: Reference[]; loading: boolean; onRefresh: () => void;
+interface SavedRef { id: string; title: string; authors: string; year?: string; url: string; category: string; relevance: string; }
+
+function ReferencesContent({ references, loading, onRefresh, userId }: {
+  references: Reference[]; loading: boolean; onRefresh: () => void; userId?: string;
 }) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [savedRefs, setSavedRefs] = useState<SavedRef[]>([]);
+  const [savingUrl, setSavingUrl] = useState<string | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
+  const { toast } = useToast();
+
+  // Load saved references
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from("saved_references" as any).select("*").eq("user_id", userId).order("created_at", { ascending: false })
+      .then(({ data }) => { if (data) setSavedRefs(data as any); });
+  }, [userId]);
+
+  const isSaved = (url: string) => savedRefs.some(s => s.url === url);
+
+  const toggleSave = async (ref: Reference) => {
+    if (!userId) return;
+    setSavingUrl(ref.url);
+    try {
+      if (isSaved(ref.url)) {
+        await supabase.from("saved_references" as any).delete().eq("user_id", userId).eq("url", ref.url);
+        setSavedRefs(prev => prev.filter(s => s.url !== ref.url));
+        toast({ title: "Rimosso dai salvati" });
+      } else {
+        const { data } = await supabase.from("saved_references" as any).insert({
+          user_id: userId, title: ref.title, authors: ref.authors, year: ref.year || null,
+          url: ref.url, category: ref.category, relevance: ref.relevance,
+        } as any).select().single();
+        if (data) setSavedRefs(prev => [data as any, ...prev]);
+        toast({ title: "Salvato nei preferiti ⭐" });
+      }
+    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    setSavingUrl(null);
+  };
 
   const categoryLabel: Record<string, { text: string; cls: string }> = {
     foundational: { text: "Base", cls: "bg-accent/10 text-accent" },
     methodology: { text: "Metodo", cls: "bg-warning/10 text-warning" },
     recent: { text: "Recente", cls: "bg-green-500/10 text-green-600" },
     contrarian: { text: "Critico", cls: "bg-destructive/10 text-destructive" },
+  };
+
+  const renderRef = (ref: Reference | SavedRef, i: number, canSave: boolean) => {
+    const isExpanded = expandedIdx === i + (showSaved ? 10000 : 0);
+    const idx = i + (showSaved ? 10000 : 0);
+    const cat = categoryLabel[ref.category] || categoryLabel.foundational;
+    const saved = isSaved(ref.url);
+
+    return (
+      <div key={ref.url + i} className="rounded-lg hover:bg-secondary/30 transition-colors">
+        <div className="flex items-start">
+          <button
+            onClick={() => setExpandedIdx(isExpanded ? null : idx)}
+            className="flex-1 flex items-start gap-2.5 p-2.5 text-left"
+          >
+            <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {ref.authors}{ref.year ? ` (${ref.year})` : ""}
+              </p>
+            </div>
+            <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>
+              {cat.text}
+            </span>
+          </button>
+          {canSave && (
+            <button
+              onClick={() => toggleSave(ref as Reference)}
+              disabled={savingUrl === ref.url}
+              className={`p-2.5 shrink-0 transition-colors ${saved ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"}`}
+              title={saved ? "Rimuovi dai salvati" : "Salva"}
+            >
+              {savingUrl === ref.url ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
+                saved ? <span className="text-sm">⭐</span> : <span className="text-sm opacity-50">☆</span>}
+            </button>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="px-2.5 pb-2.5 pt-0 space-y-2 pl-8">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{ref.relevance}</p>
+                <a
+                  href={ref.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Apri riferimento
+                </a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
   };
 
   if (loading) return (
@@ -1050,66 +1150,42 @@ function ReferencesContent({ references, loading, onRefresh }: {
     </div>
   );
 
-  if (references.length === 0) return (
-    <div className="text-center py-6 space-y-2">
-      <p className="text-xs text-muted-foreground italic">Parla con Socrate per ricevere suggerimenti di lettura.</p>
-      <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
-        Genera riferimenti →
-      </button>
-    </div>
-  );
+  const displayList = showSaved ? savedRefs : references;
 
   return (
-    <div className="space-y-1.5">
-      {references.map((ref, i) => {
-        const isExpanded = expandedIdx === i;
-        const cat = categoryLabel[ref.category] || categoryLabel.foundational;
+    <div className="space-y-2">
+      {/* Tabs: Suggeriti / Salvati */}
+      <div className="flex gap-1 border-b border-border/50 pb-1">
+        <button
+          onClick={() => { setShowSaved(false); setExpandedIdx(null); }}
+          className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${!showSaved ? "text-accent border-b-2 border-accent" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Suggeriti ({references.length})
+        </button>
+        <button
+          onClick={() => { setShowSaved(true); setExpandedIdx(null); }}
+          className={`px-2.5 py-1 text-[10px] font-medium rounded-t transition-colors ${showSaved ? "text-yellow-500 border-b-2 border-yellow-500" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          ⭐ Salvati ({savedRefs.length})
+        </button>
+      </div>
 
-        return (
-          <div key={i} className="rounded-lg hover:bg-secondary/30 transition-colors">
-            <button
-              onClick={() => setExpandedIdx(isExpanded ? null : i)}
-              className="w-full flex items-start gap-2.5 p-2.5 text-left"
-            >
-              <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-foreground leading-tight">{ref.title}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {ref.authors}{ref.year ? ` (${ref.year})` : ""}
-                </p>
-              </div>
-              <span className={`px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider shrink-0 rounded ${cat.cls}`}>
-                {cat.text}
-              </span>
+      {displayList.length === 0 ? (
+        <div className="text-center py-6 space-y-2">
+          <p className="text-xs text-muted-foreground italic">
+            {showSaved ? "Nessun riferimento salvato. Clicca ☆ per salvare." : "Parla con Socrate per ricevere suggerimenti di lettura."}
+          </p>
+          {!showSaved && (
+            <button onClick={onRefresh} className="text-[10px] text-accent hover:text-accent/80 font-medium transition-colors">
+              Genera riferimenti →
             </button>
-
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="px-2.5 pb-2.5 pt-0 space-y-2 pl-8">
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{ref.relevance}</p>
-                    <a
-                      href={ref.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:text-accent/80 font-medium transition-colors"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      Apri riferimento
-                    </a>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
+          )}
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {displayList.map((ref, i) => renderRef(ref, i, !showSaved))}
+        </div>
+      )}
     </div>
   );
 }
