@@ -164,8 +164,7 @@ export default function ProfilePage() {
         )}
       </motion.div>
 
-      {/* Google Doc Configuration */}
-      <GoogleDocConfig />
+      {/* Google Doc config moved to Dashboard */}
 
       {/* Socrate's Intellectual Profile */}
       {studentProfile && studentProfile.reasoning_style && (
