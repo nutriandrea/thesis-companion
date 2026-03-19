@@ -101,6 +101,7 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
             className="flex flex-col items-center"
+            className="flex flex-col items-center -mt-32"
           >
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
