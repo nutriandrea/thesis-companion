@@ -23,113 +23,113 @@ interface MockExpert { id: string; name: string; title: string; score: number; r
 interface RoadmapPhase { key: string; title: string; tasks: { id: string; title: string; completed: boolean; due_date?: string }[]; }
 
 // ─── MOCK DATA ───
-const MOCK_THESIS = "Applicazione di Large Language Models per l'Analisi Automatica di Vulnerabilità nel Codice Sorgente";
+const MOCK_THESIS = "Applying Large Language Models for Automated Vulnerability Detection in Source Code";
 
 const MOCK_SECTORS: CareerSector[] = [
-  { name: "AI & Machine Learning", percentage: 42, reasoning: "Cuore della tesi" },
-  { name: "Cybersecurity", percentage: 28, reasoning: "Dominio applicativo" },
-  { name: "DevOps & Automazione", percentage: 15, reasoning: "Pipeline CI/CD" },
-  { name: "Ricerca Accademica", percentage: 10, reasoning: "Pubblicazioni" },
-  { name: "Consulenza Tech", percentage: 5, reasoning: "Applicazioni enterprise" },
+  { name: "AI & Machine Learning", percentage: 42, reasoning: "Core of the thesis" },
+  { name: "Cybersecurity", percentage: 28, reasoning: "Application domain" },
+  { name: "DevOps & Automation", percentage: 15, reasoning: "CI/CD pipelines" },
+  { name: "Academic Research", percentage: 10, reasoning: "Publications" },
+  { name: "Tech Consulting", percentage: 5, reasoning: "Enterprise applications" },
 ];
 
 const MOCK_TASKS: Record<string, MockTask[]> = {
   orientation: [
-    { id: "t1", title: "Esplorare 3 aree di interesse", description: "Identificare almeno tre macro-aree di interesse e scrivere pro/contro per ciascuna.", priority: "high", status: "completed", estimated_minutes: 30 },
-    { id: "t2", title: "Leggere survey su LLM per analisi codice", description: "Trovare e leggere almeno una survey recente su LLM per analisi del codice.", priority: "high", status: "completed", estimated_minutes: 60 },
-    { id: "t3", title: "Definire domanda di ricerca preliminare", description: "Scrivere una prima versione della domanda di ricerca.", priority: "critical", status: "pending", estimated_minutes: 45 },
+    { id: "t1", title: "Explore 3 areas of interest", description: "Identify at least three macro-areas of interest and write pros/cons for each.", priority: "high", status: "completed", estimated_minutes: 30 },
+    { id: "t2", title: "Read survey on LLMs for code analysis", description: "Find and read at least one recent survey on LLMs for code analysis.", priority: "high", status: "completed", estimated_minutes: 60 },
+    { id: "t3", title: "Define preliminary research question", description: "Write a first version of the research question.", priority: "critical", status: "pending", estimated_minutes: 45 },
   ],
   topic_supervisor: [
-    { id: "t4", title: "Contattare Prof. Rossi per supervisione", description: "Scrivere un'email motivata al Prof. Rossi spiegando il tuo interesse nella ricerca su LLM.", priority: "critical", status: "pending", estimated_minutes: 30 },
-    { id: "t5", title: "Preparare outline tesi (5 capitoli)", description: "Definire la macro-struttura della tesi con titoli provvisori dei capitoli.", priority: "high", status: "pending", estimated_minutes: 60 },
-    { id: "t6", title: "Raccogliere dataset vulnerabilità", description: "Identificare e scaricare almeno 2 dataset pubblici di vulnerabilità software.", priority: "medium", status: "pending", estimated_minutes: 90 },
+    { id: "t4", title: "Contact Prof. Rossi for supervision", description: "Write a motivated email to Prof. Rossi explaining your interest in LLM research.", priority: "critical", status: "pending", estimated_minutes: 30 },
+    { id: "t5", title: "Prepare thesis outline (5 chapters)", description: "Define the macro-structure of the thesis with provisional chapter titles.", priority: "high", status: "pending", estimated_minutes: 60 },
+    { id: "t6", title: "Collect vulnerability datasets", description: "Identify and download at least 2 public software vulnerability datasets.", priority: "medium", status: "pending", estimated_minutes: 90 },
   ],
   planning: [
-    { id: "t7", title: "Creare timeline dettagliata", description: "Suddividere il lavoro in sprint bisettimanali con deliverable misurabili.", priority: "high", status: "completed", estimated_minutes: 45 },
-    { id: "t8", title: "Configurare ambiente sperimentale", description: "Configurare GPU cloud, repository Git e pipeline di training.", priority: "critical", status: "pending", estimated_minutes: 120 },
-    { id: "t9", title: "Definire metriche di valutazione", description: "Scegliere precision, recall, F1 e metriche specifiche per il rilevamento vulnerabilità.", priority: "high", status: "pending", estimated_minutes: 30 },
+    { id: "t7", title: "Create detailed timeline", description: "Break down the work into bi-weekly sprints with measurable deliverables.", priority: "high", status: "completed", estimated_minutes: 45 },
+    { id: "t8", title: "Set up experimental environment", description: "Configure cloud GPU, Git repository and training pipeline.", priority: "critical", status: "pending", estimated_minutes: 120 },
+    { id: "t9", title: "Define evaluation metrics", description: "Choose precision, recall, F1 and specific metrics for vulnerability detection.", priority: "high", status: "pending", estimated_minutes: 30 },
   ],
   execution: [
-    { id: "t10", title: "Fine-tuning GPT-4 su dataset CWE", description: "Eseguire il fine-tuning del modello sul dataset di vulnerabilità CWE.", priority: "critical", status: "pending", estimated_minutes: 240 },
-    { id: "t11", title: "Benchmark contro strumenti SAST", description: "Confrontare i risultati del modello con SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
-    { id: "t12", title: "Analisi qualitativa dei falsi positivi", description: "Classificare e analizzare i pattern di falsi positivi più comuni.", priority: "medium", status: "pending", estimated_minutes: 120 },
+    { id: "t10", title: "Fine-tune GPT-4 on CWE dataset", description: "Run fine-tuning of the model on the CWE vulnerability dataset.", priority: "critical", status: "pending", estimated_minutes: 240 },
+    { id: "t11", title: "Benchmark against SAST tools", description: "Compare model results with SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
+    { id: "t12", title: "Qualitative analysis of false positives", description: "Classify and analyze the most common false positive patterns.", priority: "medium", status: "pending", estimated_minutes: 120 },
   ],
   writing: [
-    { id: "t13", title: "Scrivere capitolo Metodologia", description: "Descrivere in dettaglio la pipeline sperimentale, i modelli usati e i parametri di training.", priority: "critical", status: "pending", estimated_minutes: 300 },
-    { id: "t14", title: "Creare grafici dei risultati", description: "Generare matrice di confusione, curve ROC e tabelle comparative.", priority: "high", status: "pending", estimated_minutes: 120 },
-    { id: "t15", title: "Revisione finale con relatore", description: "Inviare la bozza completa al relatore per la revisione finale.", priority: "critical", status: "pending", estimated_minutes: 60 },
+    { id: "t13", title: "Write Methodology chapter", description: "Describe in detail the experimental pipeline, models used and training parameters.", priority: "critical", status: "pending", estimated_minutes: 300 },
+    { id: "t14", title: "Create result charts", description: "Generate confusion matrix, ROC curves and comparative tables.", priority: "high", status: "pending", estimated_minutes: 120 },
+    { id: "t15", title: "Final review with supervisor", description: "Send the complete draft to the supervisor for final review.", priority: "critical", status: "pending", estimated_minutes: 60 },
   ],
 };
 
 const MOCK_ROADMAP: RoadmapPhase[] = [
   {
-    key: "planning", title: "Pianificazione",
+    key: "planning", title: "Planning",
     tasks: [
-      { id: "r1", title: "Definire domande di ricerca finali", completed: true },
-      { id: "r2", title: "Ottenere approvazione relatore", completed: true },
-      { id: "r3", title: "Configurare ambiente cloud (GPU)", completed: false, due_date: "2026-04-15" },
-      { id: "r4", title: "Acquisire dataset di training", completed: false, due_date: "2026-04-20" },
+      { id: "r1", title: "Define final research questions", completed: true },
+      { id: "r2", title: "Get supervisor approval", completed: true },
+      { id: "r3", title: "Set up cloud environment (GPU)", completed: false, due_date: "2026-04-15" },
+      { id: "r4", title: "Acquire training dataset", completed: false, due_date: "2026-04-20" },
     ],
   },
   {
-    key: "execution", title: "Esecuzione",
+    key: "execution", title: "Execution",
     tasks: [
-      { id: "r5", title: "Addestrare modello baseline", completed: false, due_date: "2026-05-01" },
-      { id: "r6", title: "Fine-tune su dati vulnerabilità", completed: false, due_date: "2026-05-15" },
-      { id: "r7", title: "Benchmark comparativo", completed: false, due_date: "2026-06-01" },
-      { id: "r8", title: "Analisi risultati + ablation study", completed: false, due_date: "2026-06-15" },
+      { id: "r5", title: "Train baseline model", completed: false, due_date: "2026-05-01" },
+      { id: "r6", title: "Fine-tune on vulnerability data", completed: false, due_date: "2026-05-15" },
+      { id: "r7", title: "Comparative benchmark", completed: false, due_date: "2026-06-01" },
+      { id: "r8", title: "Results analysis + ablation study", completed: false, due_date: "2026-06-15" },
     ],
   },
   {
-    key: "writing", title: "Scrittura",
+    key: "writing", title: "Writing",
     tasks: [
-      { id: "r9", title: "Capitoli 1-2 (Intro + Stato dell'arte)", completed: false, due_date: "2026-07-01" },
-      { id: "r10", title: "Capitolo 3 (Metodologia)", completed: false, due_date: "2026-07-15" },
-      { id: "r11", title: "Capitoli 4-5 (Risultati + Conclusioni)", completed: false, due_date: "2026-08-01" },
-      { id: "r12", title: "Revisione finale", completed: false, due_date: "2026-08-15" },
+      { id: "r9", title: "Chapters 1-2 (Intro + State of the art)", completed: false, due_date: "2026-07-01" },
+      { id: "r10", title: "Chapter 3 (Methodology)", completed: false, due_date: "2026-07-15" },
+      { id: "r11", title: "Chapters 4-5 (Results + Conclusions)", completed: false, due_date: "2026-08-01" },
+      { id: "r12", title: "Final review", completed: false, due_date: "2026-08-15" },
     ],
   },
 ];
 
 const MOCK_SUPERVISORS: MockSupervisor[] = [
-  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Analisi Codice"], score: 92, reasoning: "Il Prof. Rossi è uno dei principali ricercatori europei in NLP applicato all'ingegneria del software. Ha pubblicato oltre 40 paper sull'analisi automatica del codice e supervisionato 12 tesi magistrali su tematiche affini alla tua. La sua esperienza con modelli transformer per il code understanding lo rende il candidato ideale per guidarti nella parte sperimentale.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
-  { id: "s2", name: "Prof.ssa Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "La Prof.ssa Bianchi ha una ricerca attiva sul rilevamento automatico di vulnerabilità tramite tecniche di machine learning. Il suo laboratorio ha sviluppato strumenti open-source per l'analisi statica del codice che potresti integrare come baseline nel tuo lavoro. La sua competenza nel dominio della cybersecurity è complementare al tuo focus sugli LLM.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
-  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Ingegneria Software", "Testing"], score: 78, reasoning: "Considerando che sei nella fase di pianificazione, l'esperienza del Prof. Verdi in ingegneria del software e testing automatizzato potrebbe aiutarti a strutturare la pipeline sperimentale. Tuttavia, il suo focus è più orientato al testing funzionale che al rilevamento di vulnerabilità, il che potrebbe limitare il supporto nella parte più specifica della tesi.", email: "luigi.verdi@uzh.ch", university: "UZH" },
+  { id: "s1", name: "Prof. Marco Rossi", fields: ["NLP", "Code Analysis"], score: 92, reasoning: "Prof. Rossi is one of the leading European researchers in NLP applied to software engineering. He has published over 40 papers on automated code analysis and supervised 12 master's theses on topics related to yours. His experience with transformer models for code understanding makes him the ideal candidate to guide you through the experimental part.", email: "marco.rossi@ethz.ch", university: "ETH Zurich" },
+  { id: "s2", name: "Prof. Elena Bianchi", fields: ["Cybersecurity", "ML"], score: 85, reasoning: "Prof. Bianchi has active research on automated vulnerability detection using machine learning techniques. Her lab has developed open-source tools for static code analysis that you could integrate as a baseline in your work. Her expertise in the cybersecurity domain is complementary to your LLM focus.", email: "elena.bianchi@epfl.ch", university: "EPFL" },
+  { id: "s3", name: "Prof. Luigi Verdi", fields: ["Software Engineering", "Testing"], score: 78, reasoning: "Considering you're in the planning phase, Prof. Verdi's experience in software engineering and automated testing could help you structure the experimental pipeline. However, his focus is more oriented toward functional testing than vulnerability detection, which could limit support on the more specific part of the thesis.", email: "luigi.verdi@uzh.ch", university: "UZH" },
 ];
 
 const MOCK_EXPERTS: MockExpert[] = [
-  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Esperto di fuzzing e ricerca vulnerabilità.", offerInterviews: true, email: "p.ferretti@google.com" },
-  { id: "e2", name: "Dr.ssa Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Pubblicazioni su LLM per generazione codice.", offerInterviews: true, email: "m.conti@deepmind.com" },
-  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Esperienza industriale in AI per cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
+  { id: "e1", name: "Dr. Paolo Ferretti", title: "Security Researcher @ Google", score: 88, reasoning: "Expert in fuzzing and vulnerability research.", offerInterviews: true, email: "p.ferretti@google.com" },
+  { id: "e2", name: "Dr. Maria Conti", title: "ML Engineer @ DeepMind", score: 82, reasoning: "Publications on LLMs for code generation.", offerInterviews: true, email: "m.conti@deepmind.com" },
+  { id: "e3", name: "Ing. Luca Barbieri", title: "CTO @ CyberNext", score: 75, reasoning: "Industry experience in AI for cybersecurity.", offerInterviews: false, email: "l.barbieri@cybernext.ch" },
 ];
 
 const MOCK_REFERENCES: MockReference[] = [
-  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "#", category: "foundational", relevance: "Survey fondamentale su LLM per il codice." },
-  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "#", category: "methodology", relevance: "Primo paper a usare deep learning per rilevamento vulnerabilità." },
-  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "#", category: "recent", relevance: "Revisione sistematica di ML per rilevamento vulnerabilità." },
-  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "#", category: "contrarian", relevance: "Analisi critica dei limiti degli LLM nella sicurezza." },
+  { title: "Large Language Models for Code: Opportunities and Challenges", authors: "Chen et al.", year: "2024", url: "#", category: "foundational", relevance: "Foundational survey on LLMs for code." },
+  { title: "VulDeePecker: A Deep Learning-Based System for Vulnerability Detection", authors: "Li et al.", year: "2018", url: "#", category: "methodology", relevance: "First paper to use deep learning for vulnerability detection." },
+  { title: "Automated Vulnerability Detection with ML: A Systematic Review", authors: "Zhang, Wang", year: "2025", url: "#", category: "recent", relevance: "Systematic review of ML for vulnerability detection." },
+  { title: "The Limits of LLMs in Security Analysis", authors: "Pearce et al.", year: "2025", url: "#", category: "contrarian", relevance: "Critical analysis of LLM limitations in security." },
 ];
 
 const MOCK_VULNERABILITIES: MockVulnerability[] = [
-  { id: "v1", type: "methodology_flaw", title: "Dataset troppo piccolo per generalizzare", description: "Con solo 5000 campioni di training, il modello rischia overfitting.", severity: "critical" },
-  { id: "v2", type: "logic_gap", title: "Manca baseline non-ML", description: "Non si confronta con approcci SAST standard.", severity: "high" },
-  { id: "v3", type: "superficiality", title: "Related work troppo generica", description: "I lavori correlati elencano paper senza analisi critica.", severity: "medium" },
+  { id: "v1", type: "methodology_flaw", title: "Dataset too small to generalize", description: "With only 5000 training samples, the model risks overfitting.", severity: "critical" },
+  { id: "v2", type: "logic_gap", title: "Missing non-ML baseline", description: "No comparison with standard SAST approaches.", severity: "high" },
+  { id: "v3", type: "superficiality", title: "Related work too generic", description: "Related works list papers without critical analysis.", severity: "medium" },
 ];
 
 const MOCK_SOCRATE_MESSAGES = [
-  { id: "m1", role: "assistant" as const, content: "Hai una direzione chiara: LLM per il rilevamento vulnerabilità. Ottimo punto di partenza. Ma dimmi: **cosa rende il tuo approccio diverso** da chi ha già fatto fine-tuning di modelli su dataset di vulnerabilità?" },
-  { id: "m2", role: "user" as const, content: "Voglio combinare l'analisi statica tradizionale con LLM, creando un sistema ibrido." },
-  { id: "m3", role: "assistant" as const, content: "Interessante. Un approccio ibrido SAST + LLM ha potenziale, ma devi essere preciso: **quale componente fa cosa?** Il rischio è che l'LLM sia solo un wrapper glorificato di regole statiche. Definisci chiaramente il confine." },
-  { id: "m4", role: "user" as const, content: "Il SAST farebbe lo screening iniziale, poi l'LLM analizzerebbe i risultati per ridurre i falsi positivi." },
-  { id: "m5", role: "assistant" as const, content: "Questo è un **contributo concreto**: ridurre i falsi positivi tramite post-processing con LLM. È misurabile, utile e pubblicabile. Ora la domanda critica: **hai accesso a un dataset con annotazioni di falsi positivi?** Senza quello, non puoi addestrare il modello a distinguerli." },
+  { id: "m1", role: "assistant" as const, content: "You have a clear direction: LLMs for vulnerability detection. Great starting point. But tell me: **what makes your approach different** from those who have already fine-tuned models on vulnerability datasets?" },
+  { id: "m2", role: "user" as const, content: "I want to combine traditional static analysis with LLMs, creating a hybrid system." },
+  { id: "m3", role: "assistant" as const, content: "Interesting. A hybrid SAST + LLM approach has potential, but you need to be precise: **which component does what?** The risk is that the LLM is just a glorified wrapper for static rules. Define the boundary clearly." },
+  { id: "m4", role: "user" as const, content: "SAST would do the initial screening, then the LLM would analyze the results to reduce false positives." },
+  { id: "m5", role: "assistant" as const, content: "This is a **concrete contribution**: reducing false positives through post-processing with LLMs. It's measurable, useful and publishable. Now the critical question: **do you have access to a dataset with false positive annotations?** Without that, you can't train the model to distinguish them." },
 ];
 
 const PHASES = [
-  { key: "orientation", label: "Orientamento", icon: "1" },
-  { key: "topic_supervisor", label: "Tema & Relatore", icon: "2" },
-  { key: "planning", label: "Pianificazione", icon: "3" },
-  { key: "execution", label: "Esecuzione", icon: "4" },
-  { key: "writing", label: "Scrittura", icon: "5" },
+  { key: "orientation", label: "Orientation", icon: "1" },
+  { key: "topic_supervisor", label: "Topic & Supervisor", icon: "2" },
+  { key: "planning", label: "Planning", icon: "3" },
+  { key: "execution", label: "Execution", icon: "4" },
+  { key: "writing", label: "Writing", icon: "5" },
 ] as const;
 
 const PHASE_COMPLETION: Record<string, number> = {
@@ -164,7 +164,7 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
             THESIS ALLY
           </motion.h1>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-white/40 text-sm mt-3">
-            {isSignUp ? "Crea il tuo account per iniziare" : "Bentornato"}
+            {isSignUp ? "Create your account to get started" : "Welcome back"}
           </motion.p>
         </div>
 
@@ -174,22 +174,22 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <input defaultValue="Marco" placeholder="Nome" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                  <input defaultValue="Marco" placeholder="First name" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
                 </div>
-                <input defaultValue="Demo" placeholder="Cognome" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                <input defaultValue="Demo" placeholder="Last name" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
               </div>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                <input defaultValue="ETH Zurich" placeholder="Università" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                <input defaultValue="ETH Zurich" placeholder="University" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
                   <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <input defaultValue="MSc Computer Science" placeholder="Corso di laurea" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                  <input defaultValue="MSc Computer Science" placeholder="Degree program" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
                 </div>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <input defaultValue="Set 2026" placeholder="Laurea prevista" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
+                  <input defaultValue="Sep 2026" placeholder="Expected graduation" className="w-full bg-white/[0.06] border border-white/[0.08] rounded-none px-4 pl-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/20 transition-colors" />
                 </div>
               </div>
             </motion.div>
@@ -206,14 +206,14 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
             </button>
           </div>
           <button type="submit" className="w-full bg-white text-black py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white/90 transition-colors flex items-center justify-center gap-2 mt-4">
-            {isSignUp ? "Registrati" : "Accedi"} <ArrowRight className="w-4 h-4" />
+            {isSignUp ? "Sign Up" : "Sign In"} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
         <p className="text-center text-sm text-white/30 mt-6">
-          {isSignUp ? "Hai già un account?" : "Non hai un account?"}{" "}
+          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button onClick={() => setIsSignUp(!isSignUp)} className="text-white/60 hover:text-white transition-colors underline underline-offset-4">
-            {isSignUp ? "Accedi" : "Registrati"}
+            {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
       </motion.div>
@@ -225,10 +225,10 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
 // STEP 2: DEMO ONBOARDING
 // ══════════════════════════════════════════════════════
 const JOURNEY_OPTIONS = [
-  { key: "lost", icon: Compass, title: "Sono perso", desc: "Non ho ancora idea di cosa scrivere." },
-  { key: "vague_idea", icon: Lightbulb, title: "Ho un'idea vaga", desc: "Ho un argomento approssimativo ma devo affinarlo." },
-  { key: "topic_chosen", icon: Target, title: "Ho scelto il tema", desc: "So di cosa voglio scrivere." },
-  { key: "writing", icon: PenTool, title: "Sto già scrivendo", desc: "Ho bisogno di supporto per scrittura e revisione." },
+  { key: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet." },
+  { key: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine it." },
+  { key: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write about." },
+  { key: "writing", icon: PenTool, title: "I'm already writing", desc: "I need support for writing and revision." },
 ];
 
 function DemoOnboarding({ onNext }: { onNext: () => void }) {
@@ -241,8 +241,8 @@ function DemoOnboarding({ onNext }: { onNext: () => void }) {
           <Sparkles className="w-8 h-8 text-accent" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground font-display">Benvenuto, Marco</h1>
-          <p className="text-muted-foreground mt-2">A che punto sei nel tuo percorso di tesi?</p>
+          <h1 className="text-2xl font-bold text-foreground font-display">Welcome, Marco</h1>
+          <p className="text-muted-foreground mt-2">Where are you in your thesis journey?</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
@@ -268,7 +268,7 @@ function DemoOnboarding({ onNext }: { onNext: () => void }) {
         {selected && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <button onClick={onNext} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors">
-              Continua <ArrowRight className="w-4 h-4 inline ml-2" />
+              Continue <ArrowRight className="w-4 h-4 inline ml-2" />
             </button>
           </motion.div>
         )}
@@ -285,9 +285,9 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
   const [subtitle, setSubtitle] = useState("");
 
   const subtitles = [
-    { text: "\"La vera saggezza sta nel sapere di non sapere nulla.\"", delay: 0 },
-    { text: "\"Una tesi non esaminata non vale la pena di essere scritta.\"", delay: 2800 },
-    { text: "Sono Socrate.", delay: 5600 },
+    { text: "\"True wisdom lies in knowing you know nothing.\"", delay: 0 },
+    { text: "\"An unexamined thesis is not worth writing.\"", delay: 2800 },
+    { text: "I am Socrates.", delay: 5600 },
   ];
 
   useEffect(() => {
@@ -331,7 +331,7 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
             </motion.div>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] text-center mb-10">
-              Marco, sono qui per mettere alla prova le tue idee, trovare punti deboli e spingerti verso una tesi che valga la pena difendere. Scegli come vuoi interagire.
+              Marco, I'm here to challenge your ideas, find weak points and push you toward a thesis worth defending. Choose how you want to interact.
             </motion.p>
 
             {phase === "choice" && (
@@ -340,13 +340,13 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
                   <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
                     <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
                   </div>
-                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voce</span>
+                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voice</span>
                 </button>
                 <button onClick={onNext} className="group flex flex-col items-center gap-3">
                   <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
                     <PenTool className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
                   </div>
-                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Testo</span>
+                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Text</span>
                 </button>
               </motion.div>
             )}
@@ -381,7 +381,7 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
         <SocrateCoin size={36} interactive={false} />
         <div className="flex-1">
           <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-          <p className="text-[10px] text-muted-foreground">Fase esplorativa — definizione della tesi</p>
+          <p className="text-[10px] text-muted-foreground">Exploration phase — thesis definition</p>
         </div>
       </div>
 
@@ -418,7 +418,7 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
 
       {/* Bottom bar with Skip button */}
       <div className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
-        <input placeholder="Rispondi a Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
+        <input placeholder="Reply to Socrates..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
         <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
         <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
       </div>
@@ -435,7 +435,7 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
           className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-foreground/90 transition-all shadow-lg"
         >
           <SkipForward className="w-3.5 h-3.5" />
-          Vai ai miei progressi
+          Skip to my progress
         </button>
       </motion.div>
     </div>
@@ -490,7 +490,7 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
                   onClick={() => setExpanded(true)}
                   className="w-full text-center text-[10px] font-medium text-accent hover:text-accent/80 transition-colors py-1"
                 >
-                  Mostra tutto
+                  Show all
                 </button>
               </div>
             </div>
@@ -537,10 +537,10 @@ function DemoTasks({ phase }: { phase: string }) {
   const tasks = MOCK_TASKS[phase] || MOCK_TASKS.orientation;
   const priorityLabel = (p: string) => {
     switch (p) {
-      case "critical": return { text: "Critico", cls: "bg-destructive/10 text-destructive" };
-      case "high": return { text: "Alto", cls: "bg-warning/10 text-warning" };
-      case "medium": return { text: "Medio", cls: "bg-accent/10 text-accent" };
-      default: return { text: "Basso", cls: "bg-muted text-muted-foreground" };
+      case "critical": return { text: "Critical", cls: "bg-destructive/10 text-destructive" };
+      case "high": return { text: "High", cls: "bg-warning/10 text-warning" };
+      case "medium": return { text: "Medium", cls: "bg-accent/10 text-accent" };
+      default: return { text: "Low", cls: "bg-muted text-muted-foreground" };
     }
   };
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -576,7 +576,7 @@ function DemoTasks({ phase }: { phase: string }) {
       })}
       <div className="flex items-center gap-2 pt-2">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-[10px] text-muted-foreground">{tasks.filter(t => t.status === "completed").length} completati</span>
+        <span className="text-[10px] text-muted-foreground">{tasks.filter(t => t.status === "completed").length} completed</span>
         <div className="h-px flex-1 bg-border" />
       </div>
     </div>
@@ -596,7 +596,7 @@ function DemoCareerTree() {
     <div className="space-y-1">
       <div className="flex items-center gap-2 pb-2">
         <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
-        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">La tua tesi</span>
+        <span className="text-[10px] font-bold text-foreground uppercase tracking-wider">Your thesis</span>
         <div className="flex-1 h-px bg-border" />
       </div>
       {MOCK_SECTORS.map((sector, i) => {
@@ -685,18 +685,18 @@ function DemoSupervisors() {
                     <p className="text-[11px] text-muted-foreground leading-relaxed">{sup.reasoning}</p>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-medium text-muted-foreground">Perché questo relatore?</label>
+                      <label className="text-[10px] font-medium text-muted-foreground">Why this supervisor?</label>
                       <textarea
                         value={motivation}
                         onChange={e => setMotivation(e.target.value)}
-                        placeholder="Spiega la tua motivazione..."
+                        placeholder="Explain your motivation..."
                         className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:border-accent/30 transition-colors"
                         rows={2}
                       />
                     </div>
 
                     <button className="px-4 py-2 bg-accent text-accent-foreground text-[10px] font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors">
-                      Conferma selezione
+                      Confirm selection
                     </button>
                   </div>
                 </motion.div>
@@ -722,7 +722,7 @@ function DemoExperts() {
             <p className="text-[10px] text-muted-foreground truncate">{exp.title}</p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            {exp.offerInterviews && <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Intervista</span>}
+            {exp.offerInterviews && <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 font-medium">Interview</span>}
             <span className="text-[10px] font-bold text-accent">{exp.score}%</span>
           </div>
         </div>
@@ -733,10 +733,10 @@ function DemoExperts() {
 
 function DemoReferences() {
   const categoryLabel: Record<string, { text: string; cls: string }> = {
-    foundational: { text: "Fondamentale", cls: "bg-accent/10 text-accent" },
-    methodology: { text: "Metodo", cls: "bg-warning/10 text-warning" },
-    recent: { text: "Recente", cls: "bg-green-500/10 text-green-600" },
-    contrarian: { text: "Critico", cls: "bg-destructive/10 text-destructive" },
+    foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
+    methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
+    recent: { text: "Recent", cls: "bg-green-500/10 text-green-600" },
+    contrarian: { text: "Critical", cls: "bg-destructive/10 text-destructive" },
   };
 
   return (
@@ -794,12 +794,12 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
       {!confirmed ? (
         <>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Una volta scelto il relatore, potrai invitarlo sulla piattaforma per condividere i tuoi progressi in tempo reale.
+            Once you've chosen your supervisor, you can invite them to the platform to share your progress in real time.
           </p>
           <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/5 border border-accent/10">
             <Share2 className="w-3.5 h-3.5 text-accent shrink-0" />
             <p className="text-[11px] text-foreground leading-snug">
-              Il relatore potrà <strong>visualizzare roadmap, task e avanzamenti</strong>, ma non avrà accesso a Socrate.
+              The supervisor can <strong>view roadmap, tasks and progress</strong>, but won't have access to Socrates.
             </p>
           </div>
         </>
@@ -811,35 +811,35 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground">Prof. Marco Rossi</p>
-              <p className="text-[10px] text-accent">Invito inviato · marco.rossi@ethz.ch</p>
+              <p className="text-[10px] text-accent">Invite sent · marco.rossi@ethz.ch</p>
             </div>
           </div>
           <div className="space-y-1.5 pl-1">
-            <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Cosa può vedere il relatore:</p>
+            <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider">What the supervisor can see:</p>
             <div className="flex items-center gap-2 py-1">
               <EyeIcon className="w-3 h-3 text-accent shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Roadmap e progressi generali</span>
+              <span className="text-[11px] text-muted-foreground">Roadmap and overall progress</span>
             </div>
             <div className="flex items-center gap-2 py-1">
               <BarChart className="w-3 h-3 text-accent shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Task completati e in corso</span>
+              <span className="text-[11px] text-muted-foreground">Completed and in-progress tasks</span>
             </div>
             <div className="flex items-center gap-2 py-1">
               <BookOpen className="w-3 h-3 text-accent shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Riferimenti e vulnerabilità</span>
+              <span className="text-[11px] text-muted-foreground">References and vulnerabilities</span>
             </div>
           </div>
           <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
             <ShieldAlert className="w-3 h-3 text-muted-foreground shrink-0" />
             <p className="text-[10px] text-muted-foreground leading-snug">
-              Le conversazioni con Socrate restano <strong className="text-foreground">private</strong> e non sono visibili al relatore.
+              Conversations with Socrates remain <strong className="text-foreground">private</strong> and are not visible to the supervisor.
             </p>
           </div>
         </div>
       ) : (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Invita il tuo relatore a seguire i tuoi progressi. Potrà visualizzare roadmap, task e avanzamenti, ma <strong className="text-foreground">non potrà accedere a Socrate</strong>.
+            Invite your supervisor to follow your progress. They can view roadmap, tasks and milestones, but <strong className="text-foreground">won't have access to Socrates</strong>.
           </p>
           <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/50 border border-border">
             <GraduationCap className="w-4 h-4 text-accent shrink-0" />
@@ -853,7 +853,7 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            Invita il relatore
+            Invite supervisor
           </button>
         </div>
       )}
@@ -893,7 +893,7 @@ function DemoRoadmap() {
                     {task.completed ? <CheckCircle2 className="w-3 h-3 text-accent" /> : <Circle className="w-3 h-3 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />}
                   </button>
                   <span className={`text-[11px] flex-1 ${task.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>{task.title}</span>
-                  {task.due_date && <span className="text-[9px] text-muted-foreground">{new Date(task.due_date).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>}
+                  {task.due_date && <span className="text-[9px] text-muted-foreground">{new Date(task.due_date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}</span>}
                 </div>
               ))}
             </div>
@@ -940,27 +940,27 @@ function DemoDashboard() {
     delay += 0.05;
   }
   if (showTopicSupervisor) {
-    cards.push({ key: "supervisors", delay, component: <DemoCard title="Relatori suggeriti" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
+    cards.push({ key: "supervisors", delay, component: <DemoCard title="Suggested Supervisors" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
     delay += 0.05;
-    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
+    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
   // Invite supervisor is now inline in the header, not a card
-  cards.push({ key: "tasks", delay, component: <DemoCard title="Task" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
+  cards.push({ key: "tasks", delay, component: <DemoCard title="Tasks" icon={Target}><DemoTasks phase={currentPhase} /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "rubrica", delay, component: <DemoCard title="Contatti" icon={Users}><DemoExperts /></DemoCard> });
+  cards.push({ key: "rubrica", delay, component: <DemoCard title="Contacts" icon={Users}><DemoExperts /></DemoCard> });
   delay += 0.05;
-  cards.push({ key: "references", delay, component: <DemoCard title="Riferimenti principali" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
+  cards.push({ key: "references", delay, component: <DemoCard title="Main References" icon={BookOpen} badge={MOCK_REFERENCES.length}><DemoReferences /></DemoCard> });
   delay += 0.05;
   if (showExecution || showWriting) {
-    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilità" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
+    cards.push({ key: "vulnerabilities", delay, component: <DemoCard title="Vulnerabilities" icon={ShieldAlert} badge={MOCK_VULNERABILITIES.length}><DemoVulnerabilities /></DemoCard> });
   }
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Demo banner */}
       <div className="bg-accent/10 border-b border-accent/20 px-4 py-2 text-center shrink-0">
-        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Modalità Demo — Dati simulati — Clicca sulle fasi per navigare</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Simulated data — Click phases to navigate</span>
       </div>
 
       {/* Top: Identity */}
@@ -970,11 +970,11 @@ function DemoDashboard() {
           {(showTopicSupervisor || showPlanning || showExecution || showWriting) && (
             <button
               className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary border border-border transition-colors"
-              title="Invita il tuo relatore a seguire i progressi"
+              title="Invite your supervisor to follow your progress"
               onClick={() => {}}
             >
               <UserPlus className="w-3 h-3" />
-              Invita relatore
+              Invite supervisor
             </button>
           )}
         </div>
@@ -1004,7 +1004,7 @@ function DemoDashboard() {
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Parla con Socrate
+          Talk to Socrates
         </motion.button>
       </div>
 
@@ -1068,7 +1068,7 @@ function DemoDashboard() {
                 <SocrateCoin size={32} interactive={false} />
                 <div className="flex-1">
                   <p className="text-sm font-bold text-foreground font-display">Socrate</p>
-                  <p className="text-[10px] text-muted-foreground">Demo — conversazione simulata</p>
+                  <p className="text-[10px] text-muted-foreground">Demo — simulated conversation</p>
                 </div>
                 <button onClick={() => setShowChat(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                   <span className="text-muted-foreground text-sm">✕</span>
@@ -1078,7 +1078,7 @@ function DemoDashboard() {
                 <DemoChat />
               </div>
               <div className="border-t border-border px-5 py-3 flex items-center gap-3">
-                <input placeholder="Rispondi a Socrate..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
+                <input placeholder="Reply to Socrates..." disabled className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground opacity-50" />
                 <button disabled className="p-2.5 rounded-full border border-border text-muted-foreground opacity-50"><Mic className="w-4 h-4" /></button>
                 <button disabled className="p-2.5 bg-accent text-accent-foreground rounded-full opacity-50"><ArrowRight className="w-4 h-4" /></button>
               </div>
