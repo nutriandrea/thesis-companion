@@ -1890,17 +1890,33 @@ export default function UnifiedDashboard() {
           });
           delay += 0.05;
 
-          // Vulnerabilities: always shown
-          cards.push({
-            key: "vulnerabilities",
-            delay: delay,
-            component: (
-              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
-              </DashboardCard>
-            ),
-          });
+          // References: pre-execution phases (orientation, topic_supervisor, planning)
+          if (!showExecution && !showWriting) {
+            cards.push({
+              key: "references",
+              delay: delay,
+              component: (
+                <DashboardCard title="Riferimenti principali" icon={BookOpen} badge={references.length || null}
+                  action={{ label: "Aggiorna", onClick: fetchReferences, loading: isLoadingRefs }}>
+                  <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} />
+                </DashboardCard>
+              ),
+            });
+          }
+
+          // Vulnerabilities: execution and writing only
+          if (showExecution || showWriting) {
+            cards.push({
+              key: "vulnerabilities",
+              delay: delay,
+              component: (
+                <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
+                  <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+                </DashboardCard>
+              ),
+            });
+          }
 
           return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
