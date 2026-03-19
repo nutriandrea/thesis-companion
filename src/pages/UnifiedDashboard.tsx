@@ -914,17 +914,47 @@ export default function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* ─── CHAT OVERLAY ─── */}
+      {/* ─── CHAT / VOICE OVERLAY ─── */}
       <AnimatePresence>
         {chatOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 bg-foreground/10 z-40"
-              onClick={() => setChatOpen(false)}
+              onClick={() => { setChatOpen(false); setInputMode("text"); }}
             />
-            <ChatOverlay messages={messages} input={input} setInput={setInput}
-              sendMessage={sendMessage} isStreaming={isStreaming} onClose={() => setChatOpen(false)} />
+            {inputMode === "voice" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+              >
+                <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
+                  <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
+                    <span className="text-xs font-bold text-background font-display">S</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-foreground">Socrate</p>
+                    <p className="text-[10px] text-muted-foreground">Modalità vocale</p>
+                  </div>
+                  <button onClick={() => { setChatOpen(false); setInputMode("text"); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <VoiceConversation
+                    onTranscript={(text) => sendMessage(text)}
+                    onSwitchToText={() => setInputMode("text")}
+                    isStreaming={isStreaming}
+                    lastAssistantMessage={lastMessage}
+                    severity={studentProfile?.severita ?? 0.5}
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              <ChatOverlay messages={messages} input={input} setInput={setInput}
+                sendMessage={sendMessage} isStreaming={isStreaming} onClose={() => setChatOpen(false)}
+                onSwitchToVoice={() => setInputMode("voice")} />
+            )}
           </>
         )}
       </AnimatePresence>
