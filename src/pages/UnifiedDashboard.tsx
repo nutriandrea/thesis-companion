@@ -1058,7 +1058,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
 function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">Nessuna vulnerabilità rilevata.</p>;
+  if (vulnerabilities.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">No vulnerabilities detected.</p>;
 
   // Rank: critical first, then high, medium, low
   const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
