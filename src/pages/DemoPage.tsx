@@ -815,18 +815,18 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
             </div>
           </div>
           <div className="space-y-1.5 pl-1">
-            <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Cosa può vedere il relatore:</p>
+            <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider">What the supervisor can see:</p>
             <div className="flex items-center gap-2 py-1">
               <EyeIcon className="w-3 h-3 text-accent shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Roadmap e progressi generali</span>
+              <span className="text-[11px] text-muted-foreground">Roadmap and overall progress</span>
             </div>
             <div className="flex items-center gap-2 py-1">
               <BarChart className="w-3 h-3 text-accent shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Task completati e in corso</span>
+              <span className="text-[11px] text-muted-foreground">Completed and in-progress tasks</span>
             </div>
             <div className="flex items-center gap-2 py-1">
               <BookOpen className="w-3 h-3 text-accent shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Riferimenti e vulnerabilità</span>
+              <span className="text-[11px] text-muted-foreground">References and vulnerabilities</span>
             </div>
           </div>
           <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
