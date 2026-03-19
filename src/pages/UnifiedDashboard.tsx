@@ -1533,6 +1533,39 @@ export default function UnifiedDashboard() {
           </div>
         </motion.div>
 
+        {/* Confirmed track summary — inline under title in planning+ */}
+        {(currentPhase === "planning" || currentPhase === "execution" || currentPhase === "writing") && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="flex items-center justify-center gap-4 flex-wrap mt-1"
+          >
+            {(() => {
+              const sup = selectedSupervisorId ? supervisors.find(s => s.id === selectedSupervisorId) : null;
+              const topSectors = careerSectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 2);
+              return (
+                <>
+                  {sup && (
+                    <div className="flex items-center gap-1.5">
+                      <GraduationCap className="w-3 h-3 text-accent" />
+                      <span className="text-[11px] text-muted-foreground">{sup.title} {sup.firstName} {sup.lastName}</span>
+                    </div>
+                  )}
+                  {topSectors.length > 0 && (
+                    <>
+                      <span className="text-muted-foreground/30 text-[10px]">·</span>
+                      {topSectors.map((s, i) => (
+                        <span key={s.name} className="text-[11px] text-muted-foreground">
+                          {s.name} {s.percentage}%{i < topSectors.length - 1 ? "," : ""}
+                        </span>
+                      ))}
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </motion.div>
+        )}
+
         <motion.button
           onClick={() => setChatOpen(true)}
           className="mt-3 flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-sm font-medium hover:bg-accent/20 transition-all"
@@ -1634,22 +1667,17 @@ export default function UnifiedDashboard() {
         {/* ═══ PLANNING: track confermato + roadmap dinamica + tasks + vulnerabilità ═══ */}
         {currentPhase === "planning" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <DashboardCard title="Track Confermato" icon={CheckCircle2}>
-                <ConfirmedTrackSummary supervisorId={selectedSupervisorId} sectors={careerSectors} thesisTopic={profile?.thesis_topic} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+            <motion.div className="md:col-span-2 lg:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <DashboardCard title="Roadmap (in costruzione)" icon={BarChart3}>
                 <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <DashboardCard title="Task" icon={Target}>
                 <TaskContent userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
                 action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
                 <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
