@@ -219,7 +219,14 @@ export default function VoiceConversation({
         }
       };
       if (unmountedRef.current) { URL.revokeObjectURL(audioUrl); return; }
+      setSpeechProgress(0);
       await audio.play();
+      // Start tracking progress
+      progressTimerRef.current = window.setInterval(() => {
+        if (audioRef.current && audioRef.current.duration) {
+          setSpeechProgress(audioRef.current.currentTime / audioRef.current.duration);
+        }
+      }, 200);
     } catch (e) {
       if ((e as any)?.name === "AbortError") return; // Expected on close
       console.error("TTS playback error:", e);
