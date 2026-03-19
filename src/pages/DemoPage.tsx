@@ -642,8 +642,8 @@ const DEMO_CONVERSATION_HISTORY: ChatMsg[] = [
   { id: "s5", role: "assistant", content: "Strong choice. CoT prompting as an **audit mechanism** for detection confidence. Here's your thesis taking shape:\n\n> **\"Explainable Vulnerability Detection: Using Chain-of-Thought Prompting to Audit LLM Security Analysis in Source Code\"**\n\nThis is focused, novel, and testable. You have a clear research question: *Does CoT prompting improve both detection accuracy and human trust in LLM-based vulnerability analysis?*\n\nI'd say you're ready to move forward. 🎯" },
 ];
 
-function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
-  const [mode, setMode] = useState<"text" | "voice">("text");
+function DemoSocrateChat({ onSkip, initialMode = "text" }: { onSkip: () => void; initialMode?: "text" | "voice" }) {
+  const [mode, setMode] = useState<"text" | "voice">(initialMode);
   const [visibleCount, setVisibleCount] = useState(0);
   const [autoPlaying, setAutoPlaying] = useState(true);
   const { messages, setMessages, input, setInput, isStreaming, sendMessage, bottomRef } = useDemoChat([]);
