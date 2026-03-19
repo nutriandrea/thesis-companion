@@ -1041,7 +1041,7 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
                   </span>
                   {task.due_date && (
                     <span className="text-[9px] text-muted-foreground">
-                      {new Date(task.due_date).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}
+                      {new Date(task.due_date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
                     </span>
                   )}
                 </div>
