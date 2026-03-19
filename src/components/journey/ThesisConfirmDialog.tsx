@@ -12,6 +12,12 @@ interface Props {
 export default function ThesisConfirmDialog({ open, onClose, onConfirm, initialTopic = "" }: Props) {
   const [topic, setTopic] = useState(initialTopic);
 
+  // Sync when initialTopic changes (e.g. Socrate proposes a title)
+  useState(() => {});
+  if (open && initialTopic && topic !== initialTopic && topic === "") {
+    setTopic(initialTopic);
+  }
+
   if (!open) return null;
 
   return (

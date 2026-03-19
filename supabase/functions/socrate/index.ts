@@ -1947,10 +1947,12 @@ La tua risposta deve essere UNA CONFERMA nel tuo stile diretto e caratteriale. E
 - "**Finalmente qualcosa di solido.** [osservazione tagliente]. Questa può essere la tua tesi — e non è poco."
 - "**Non male.** [riconoscimento secco del valore]. Hai una tesi. Adesso viene il bello."
 NON aggiungere domande dopo la conferma. Chiudi con sicurezza, come chi riconosce che lo studente ha fatto il lavoro.
-E AGGIUNGI alla fine della tua risposta, su una riga separata, ESATTAMENTE questo marker nascosto:
+E AGGIUNGI alla fine della tua risposta, su righe separate, ESATTAMENTE questi due marker nascosti:
+<!-- THESIS_TITLE: [titolo sintetico della tesi proposta dallo studente] -->
 <!-- THESIS_READY -->
-NON inserire il marker se il topic è ancora vago, generico, o lo studente sta ancora esplorando.
-Il marker deve apparire SOLO quando sei ragionevolmente sicuro che il topic sia maturo per essere confermato.`;
+Dove [titolo sintetico della tesi proposta dallo studente] è un titolo accademico conciso che riassume l'argomento confermato (es: "Impatto dell'AI generativa sulla supply chain automotive").
+NON inserire i marker se il topic è ancora vago, generico, o lo studente sta ancora esplorando.
+I marker devono apparire SOLO quando sei ragionevolmente sicuro che il topic sia maturo per essere confermato.`;
     }
 
     const response = await fetch(AI_URL, {

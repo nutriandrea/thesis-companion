@@ -498,7 +498,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       <ThesisConfirmDialog
         open={showThesisDialog}
         onClose={() => setShowThesisDialog(false)}
-        initialTopic={profile?.thesis_topic || ""}
+        initialTopic={proposedThesisTopic || profile?.thesis_topic || ""}
         onConfirm={async (topic) => {
           setShowThesisDialog(false);
           await updateProfile({ thesis_topic: topic, journey_state: "topic_chosen" });
