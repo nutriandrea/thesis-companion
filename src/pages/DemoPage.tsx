@@ -839,7 +839,7 @@ function DemoInviteSupervisor({ confirmed }: { confirmed: boolean }) {
       ) : (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Invita il tuo relatore a seguire i tuoi progressi. Potrà visualizzare roadmap, task e avanzamenti, ma <strong className="text-foreground">non potrà accedere a Socrate</strong>.
+            Invite your supervisor to follow your progress. They can view roadmap, tasks and milestones, but <strong className="text-foreground">won't have access to Socrates</strong>.
           </p>
           <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/50 border border-border">
             <GraduationCap className="w-4 h-4 text-accent shrink-0" />
