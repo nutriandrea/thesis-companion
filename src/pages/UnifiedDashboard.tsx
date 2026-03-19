@@ -473,6 +473,8 @@ export default function UnifiedDashboard() {
     if (profile?.google_doc_url && user && !thesisContent) fetchGoogleDoc();
   }, [profile?.google_doc_url, user]);
 
+  const studentContext = profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "";
+
   // Stream helper
   const streamResponse = useCallback(async (resp: Response, msgId: string): Promise<string> => {
     const reader = resp.body!.getReader();
