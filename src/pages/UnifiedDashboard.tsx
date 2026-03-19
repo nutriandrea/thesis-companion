@@ -33,13 +33,14 @@ const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`
 
 
 const PHASES = [
-  { key: "exploration", label: "Esplorazione", icon: "🔍" },
-  { key: "convergence", label: "Convergenza", icon: "🎯" },
-  { key: "thesis_defined", label: "Tesi Definita", icon: "📋" },
-  { key: "refinement", label: "Refinement", icon: "🔧" },
+  { key: "orientation", label: "Orientamento", icon: "🔍" },
+  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "🎯" },
+  { key: "planning", label: "Pianificazione", icon: "📋" },
+  { key: "execution", label: "Esecuzione", icon: "🔧" },
   { key: "writing", label: "Scrittura", icon: "✍️" },
-  { key: "revision", label: "Revisione", icon: "✅" },
 ];
+
+const POST_PLANNING_PHASES = ["planning", "execution", "writing"];
 
 // ─── GRADIENT ORB ───
 function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive?: boolean }) {
