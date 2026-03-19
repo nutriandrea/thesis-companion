@@ -481,7 +481,168 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       });
     }
 
-    // ─── VALIDATE TASK COMPLETION ───
+    // ─── MATCH PEOPLE (experts + supervisors) ───
+    if (currentMode === "match_people") {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "Not authenticated" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Gather context
+      const [profileRes, studentRes, msgRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("student_profiles").select("*").eq("user_id", userId).single(),
+        supabase.from("socrate_messages").select("role, content").eq("user_id", userId).order("created_at", { ascending: false }).limit(15),
+      ]);
+      const profile = profileRes.data;
+      const studentProfile = studentRes.data;
+      const recentMessages = (msgRes.data || []).reverse();
+
+      const resolvedCtx = studentContext || (profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "");
+      const thesisStage = studentProfile?.thesis_stage || "exploration";
+
+      // Experts and supervisors datasets (passed from frontend or hardcoded)
+      const { expertsData, supervisorsData, fieldsData } = reqBody;
+
+      const response = await fetch(AI_URL, {
+        method: "POST",
+        headers: aiHeaders,
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            {
+              role: "system",
+              content: `Sei il MOTORE DI MATCHING di Socrate. Il tuo compito è trovare corrispondenze REALI e SPECIFICHE tra il percorso di tesi dello studente e le persone nel database.
+
+CONTESTO STUDENTE:
+${resolvedCtx}
+
+PROFILO INTELLETTUALE:
+- Interessi profondi: ${JSON.stringify(studentProfile?.deep_interests || [])}
+- Punti di forza: ${JSON.stringify(studentProfile?.strengths || [])}
+- Interessi di carriera: ${JSON.stringify(studentProfile?.career_interests || [])}
+- Fase tesi: ${thesisStage}
+- Maturità ricerca: ${studentProfile?.research_maturity || "beginner"}
+
+${latexContent ? `CONTENUTO TESI:\n${latexContent.substring(0, 3000)}` : "Nessun contenuto tesi disponibile."}
+
+CONVERSAZIONE RECENTE:
+${recentMessages.slice(-10).map((m: any) => `${m.role}: ${m.content.substring(0, 150)}`).join("\n")}
+
+DATABASE ESPERTI (interview partners):
+${JSON.stringify((expertsData || []).map((e: any) => ({ id: e.id, name: \`\${e.firstName} \${e.lastName}\`, title: e.title, about: e.about, fieldIds: e.fieldIds, offerInterviews: e.offerInterviews })))}
+
+DATABASE SUPERVISORI:
+${JSON.stringify((supervisorsData || []).map((s: any) => ({ id: s.id, name: \`\${s.title} \${s.firstName} \${s.lastName}\`, researchInterests: s.researchInterests, about: s.about, fieldIds: s.fieldIds })))}
+
+CAMPI DI STUDIO:
+${JSON.stringify(fieldsData || [])}
+
+ISTRUZIONI:
+1. Analizza il contenuto della tesi, il profilo e la conversazione per estrarre: topic principali, keyword, area accademica, direzione (teorica vs applicativa).
+2. Per ogni persona nel database, calcola un RELEVANCE SCORE (0-100) basato su:
+   - Quanto i loro ambiti di ricerca/competenza si allineano ai topic della tesi
+   - Quanto il loro campo (fieldIds) corrisponde agli interessi dello studente
+   - Per gli esperti: se offrono interviste (priorità più alta)
+   - Per i supervisori: quanto i loro interessi di ricerca si sovrappongono
+3. FASE TESI: ${thesisStage === "exploration" || thesisStage === "topic_chosen" ? "Dai PIÙ PESO ai supervisori" : "Dai PIÙ PESO agli esperti/interview partners"}
+4. Restituisci SOLO match con score >= 40. Se nessuno supera la soglia, restituisci array vuoti.
+5. Per ogni match, scrivi una MOTIVAZIONE SPECIFICA (2-3 frasi) che colleghi chiaramente la persona alla tesi dello studente. NO motivazioni generiche.
+6. matched_traits deve contenere i tratti/keyword specifici che hanno generato il match.
+
+FILTRI DI QUALITÀ:
+- Se un match non ha un collegamento CHIARO e SPECIFICO alla tesi → SCARTALO
+- Se la motivazione potrebbe applicarsi a qualsiasi studente → SCARTALO
+- Ogni motivazione DEVE menzionare elementi specifici della tesi dello studente`,
+            },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "save_matches",
+              description: "Save matched experts and supervisors with scores and motivations",
+              parameters: {
+                type: "object",
+                properties: {
+                  experts: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        entity_id: { type: "string" },
+                        entity_name: { type: "string" },
+                        score: { type: "integer", description: "0-100 relevance score" },
+                        reasoning: { type: "string", description: "Specific motivation linking this person to the thesis" },
+                        matched_traits: { type: "array", items: { type: "string" } },
+                      },
+                      required: ["entity_id", "entity_name", "score", "reasoning", "matched_traits"],
+                      additionalProperties: false,
+                    },
+                  },
+                  supervisors: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        entity_id: { type: "string" },
+                        entity_name: { type: "string" },
+                        score: { type: "integer" },
+                        reasoning: { type: "string" },
+                        matched_traits: { type: "array", items: { type: "string" } },
+                      },
+                      required: ["entity_id", "entity_name", "score", "reasoning", "matched_traits"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["experts", "supervisors"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "save_matches" } },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("AI match error:", response.status, await response.text());
+        return new Response(JSON.stringify({ error: "Errore matching" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      let experts: any[] = [];
+      let matchedSupervisors: any[] = [];
+      if (toolCall?.function?.arguments) {
+        try {
+          const parsed = JSON.parse(toolCall.function.arguments);
+          experts = parsed.experts || [];
+          matchedSupervisors = parsed.supervisors || [];
+        } catch { /* ignore */ }
+      }
+
+      // Persist to affinity_scores (upsert by user_id + entity_id)
+      const allMatches = [
+        ...experts.map((e: any) => ({ user_id: userId, entity_type: "expert", entity_id: e.entity_id, entity_name: e.entity_name, score: e.score, reasoning: e.reasoning, matched_traits: e.matched_traits })),
+        ...matchedSupervisors.map((s: any) => ({ user_id: userId, entity_type: "supervisor", entity_id: s.entity_id, entity_name: s.entity_name, score: s.score, reasoning: s.reasoning, matched_traits: s.matched_traits })),
+      ];
+
+      if (allMatches.length > 0) {
+        // Delete old scores and insert fresh ones
+        await supabase.from("affinity_scores").delete().eq("user_id", userId).in("entity_type", ["expert", "supervisor"]);
+        await supabase.from("affinity_scores").insert(allMatches);
+        await logEvent("people_matching", { experts: experts.length, supervisors: matchedSupervisors.length });
+      }
+
+      return new Response(JSON.stringify({ experts, supervisors: matchedSupervisors }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     if (currentMode === "validate_task") {
       const { task } = reqBody;
       if (!task) {
