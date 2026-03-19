@@ -387,6 +387,19 @@ export default function UnifiedDashboard() {
       setThesisContent(data.content || "");
       setDocSynced(true);
       toast({ title: "📄 Documento sincronizzato", description: `${Math.round((data.length || 0) / 1000)}k caratteri letti.` });
+
+      // Embed thesis content in RAG engine (background)
+      if (data.content && data.content.length > 100) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
+        }).then(() => console.log("Thesis embedded in RAG"))
+          .catch((e) => console.error("RAG embed error:", e));
+      }
     } catch {
       toast({ variant: "destructive", title: "Errore", description: "Impossibile connettersi al documento." });
     } finally {
