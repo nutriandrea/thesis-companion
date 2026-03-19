@@ -108,7 +108,7 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
               transition={{ duration: 1.5, ease: "easeOut" }}
               className="mx-auto mb-6"
             >
-              <SocrateCoin size={96} interactive={false} />
+              <SocrateCoin size={180} interactive={false} />
             </motion.div>
             <motion.p
               initial={{ opacity: 0, y: 8 }}
