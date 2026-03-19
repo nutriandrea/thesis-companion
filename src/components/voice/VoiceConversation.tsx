@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MicOff, Mic, Volume2, VolumeX, Send, Loader2, FileText, X, Keyboard } from "lucide-react";
+import { MicOff, Mic, Volume2, VolumeX, Loader2, FileText, X, Keyboard } from "lucide-react";
 import { useScribe } from "@elevenlabs/react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
