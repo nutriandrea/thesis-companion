@@ -128,7 +128,12 @@ function DashboardCard({
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
+  // Expose close function via ref
   useEffect(() => {
+    if (closeRef) closeRef.current = () => setExpanded(false);
+  }, [closeRef]);
+
+
     const el = contentRef.current;
     if (!el) return;
     const check = () => setIsOverflowing(el.scrollHeight > maxContentHeight + 8);
