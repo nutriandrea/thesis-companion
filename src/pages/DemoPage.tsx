@@ -47,11 +47,15 @@ const MOCK_TASKS: Record<string, MockTask[]> = {
     { id: "t10", title: "Fine-tuning GPT-4 su dataset CWE", description: "Esegui il fine-tuning del modello sul dataset di vulnerabilità CWE.", priority: "critical", status: "pending", estimated_minutes: 240 },
     { id: "t11", title: "Benchmark contro SAST tools", description: "Confronta i risultati del modello con SonarQube, Semgrep, CodeQL.", priority: "high", status: "pending", estimated_minutes: 180 },
     { id: "t12", title: "Analisi qualitativa dei falsi positivi", description: "Classifica e analizza i pattern dei falsi positivi più comuni.", priority: "medium", status: "pending", estimated_minutes: 120 },
+    { id: "t10b", title: "Leggere paper: VulDeePecker (Li et al.)", description: "Leggi in dettaglio il paper VulDeePecker per confrontare il tuo approccio di detection con il baseline deep learning.", priority: "high", status: "completed", estimated_minutes: 90 },
+    { id: "t10c", title: "Leggere tesi: 'LLM-based SAST' (ETH 2025)", description: "Analizza la tesi di master di K. Meier (ETH Zurich) sul confronto LLM vs SAST tradizionali per code review.", priority: "medium", status: "pending", estimated_minutes: 120 },
   ],
   writing: [
     { id: "t13", title: "Scrivere capitolo Methodology", description: "Descrivi in dettaglio la pipeline sperimentale, i modelli usati, e i parametri di training.", priority: "critical", status: "pending", estimated_minutes: 300 },
     { id: "t14", title: "Creare grafici risultati", description: "Genera confusion matrix, ROC curves, e tabelle comparative.", priority: "high", status: "pending", estimated_minutes: 120 },
     { id: "t15", title: "Revisione finale con supervisore", description: "Invia la bozza completa al supervisore per la review finale.", priority: "critical", status: "pending", estimated_minutes: 60 },
+    { id: "t15b", title: "Leggere paper: Limits of LLMs in Security", description: "Rileggi il paper critico di Pearce et al. per rafforzare la sezione Discussion e anticipare obiezioni.", priority: "high", status: "pending", estimated_minutes: 60 },
+    { id: "t15c", title: "Leggere tesi: 'Automated Vuln Detection' (EPFL 2024)", description: "Consulta la tesi di dottorato di S. Dupont (EPFL) per approfondire related work sulla vulnerability detection automatizzata.", priority: "medium", status: "pending", estimated_minutes: 90 },
   ],
 };
 
