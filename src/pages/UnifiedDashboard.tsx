@@ -1345,7 +1345,7 @@ function ChatOverlay({
         {messages.map(msg => (
           <motion.div key={msg.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[80%] px-4 py-3 text-sm rounded-xl ${
+            <div className={`max-w-[80%] px-4 py-3 text-sm rounded-2xl ${
               msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"
             }`}>
               {msg.content === "" && isStreaming ? (
