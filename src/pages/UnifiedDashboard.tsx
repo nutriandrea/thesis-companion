@@ -387,6 +387,19 @@ export default function UnifiedDashboard() {
       setThesisContent(data.content || "");
       setDocSynced(true);
       toast({ title: "📄 Documento sincronizzato", description: `${Math.round((data.length || 0) / 1000)}k caratteri letti.` });
+
+      // Embed thesis content in RAG engine (background)
+      if (data.content && data.content.length > 100) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ mode: "embed_thesis", content: data.content }),
+        }).then(() => console.log("Thesis embedded in RAG"))
+          .catch((e) => console.error("RAG embed error:", e));
+      }
     } catch {
       toast({ variant: "destructive", title: "Errore", description: "Impossibile connettersi al documento." });
     } finally {
@@ -473,10 +486,18 @@ export default function UnifiedDashboard() {
   const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
     if (!user) return;
     const recentMsgs = msgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
+    const RAG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`;
+    const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
     try {
       await Promise.allSettled([
+        // Memory extraction
         fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-20), mode: "extract_memory" }) }),
+        // Profile + suggestions extraction
         fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "extract_suggestions" }) }),
+        // Embed conversation in RAG
+        fetch(RAG_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "embed_conversation", messages: recentMsgs.slice(-6) }) }),
+        // Auto-generate tasks from conversation
+        fetch(TASK_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "auto_generate", messages: recentMsgs.slice(-6), thesis_content: thesisContent?.substring(0, 2000) || "" }) }),
       ]);
     } catch {}
   }, [user, studentContext, thesisContent]);
