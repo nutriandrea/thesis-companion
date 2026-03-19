@@ -296,7 +296,8 @@ function DemoSupervisors() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-foreground truncate">{sup.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{sup.fields.join(", ")}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{sup.university} · {sup.fields.join(", ")}</p>
+            <a href={`mailto:${sup.email}`} className="text-[10px] text-accent hover:underline block">{sup.email}</a>
             <p className="text-[10px] text-foreground/60 line-clamp-1 mt-0.5">{sup.reasoning}</p>
           </div>
           <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>
