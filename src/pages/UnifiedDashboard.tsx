@@ -2029,58 +2029,57 @@ export default function UnifiedDashboard() {
       </div>
 
       {/* ─── BOTTOM PHASE STEPPER ─── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-2.5 px-6">
-        <div className="flex items-center justify-between max-w-3xl mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-3 px-6 z-30">
+        <div className="flex items-center max-w-3xl mx-auto">
           {PHASES.map((p, i) => {
             const isCompleted = i < currentPhaseIndex && !parsedPhase.isHybrid;
             const isPrimary = i === currentPhaseIndex;
             const isSecondary = parsedPhase.isHybrid && i === secondaryPhaseIndex;
             const isCurrent = isPrimary || isSecondary;
-            // For hybrid: connector between the two active phases should pulse
             const isHybridConnector = parsedPhase.isHybrid && i >= Math.min(currentPhaseIndex, secondaryPhaseIndex) && i < Math.max(currentPhaseIndex, secondaryPhaseIndex);
             const isBeforeActive = i < Math.min(currentPhaseIndex, parsedPhase.isHybrid ? secondaryPhaseIndex : currentPhaseIndex);
             return (
-              <div key={p.key} className="flex flex-col items-center gap-1 flex-1 relative">
-                {/* Connector line */}
+              <div key={p.key} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all duration-300 ${
+                    isBeforeActive ? "bg-foreground text-background"
+                      : isCurrent ? "bg-foreground/15 text-foreground border-2 border-foreground/30"
+                      : "bg-secondary text-muted-foreground"
+                  }`}>
+                    {isBeforeActive ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
+                  </div>
+                  <span className={`text-[8px] font-medium whitespace-nowrap ${isCurrent ? "text-foreground" : isBeforeActive ? "text-foreground" : "text-muted-foreground"}`}>
+                    {p.label}
+                  </span>
+                  {isPrimary && phaseConfidence > 0 && (
+                    <div className="flex items-center gap-1">
+                      <div className="w-10 h-1 rounded-full bg-secondary overflow-hidden">
+                        <motion.div className="h-full bg-foreground rounded-full" initial={{ width: 0 }}
+                          animate={{ width: `${phaseConfidence}%` }} transition={{ duration: 0.8, ease: "easeOut" }} />
+                      </div>
+                      <span className="text-[7px] text-muted-foreground">{Math.round(phaseConfidence)}%</span>
+                    </div>
+                  )}
+                </div>
+                {/* Connector */}
                 {i < PHASES.length - 1 && (
-                  <div className={`absolute top-3 left-[55%] right-[-45%] h-px transition-all ${
-                    isHybridConnector ? "bg-accent/60" 
-                    : isBeforeActive ? "bg-accent" 
+                  <div className={`flex-1 h-px mx-1.5 transition-colors duration-300 ${
+                    isHybridConnector ? "bg-foreground/40"
+                    : isBeforeActive ? "bg-foreground/60"
                     : "bg-border"
                   }`}>
                     {isHybridConnector && (
-                      <motion.div className="absolute inset-0 bg-accent rounded-full" 
+                      <motion.div className="h-full bg-foreground/60 rounded-full"
                         animate={{ opacity: [0.3, 0.8, 0.3] }}
                         transition={{ duration: 2, repeat: Infinity }} />
                     )}
                   </div>
                 )}
-                <div className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                  isBeforeActive ? "bg-accent text-accent-foreground"
-                    : isCurrent ? "bg-accent/20 text-accent border border-accent/40"
-                    : "bg-secondary text-muted-foreground"
-                }`}>
-                  {isBeforeActive ? <CheckCircle2 className="w-3.5 h-3.5" /> : p.icon}
-                </div>
-                <span className={`text-[8px] font-medium ${isCurrent ? "text-accent" : isBeforeActive ? "text-foreground" : "text-muted-foreground"}`}>
-                  {p.label}
-                </span>
-                {/* Confidence on primary */}
-                {isPrimary && phaseConfidence > 0 && (
-                  <div className="flex items-center gap-0.5">
-                    <div className="w-10 h-1 rounded-full bg-secondary overflow-hidden">
-                      <motion.div className="h-full bg-accent rounded-full" initial={{ width: 0 }}
-                        animate={{ width: `${phaseConfidence}%` }} transition={{ duration: 0.5 }} />
-                    </div>
-                    <span className="text-[7px] text-accent">{Math.round(phaseConfidence)}%</span>
-                  </div>
-                )}
               </div>
             );
           })}
-          {/* Evaluate button */}
           <button onClick={evaluatePhase} disabled={phaseEvalLoading}
-            className="ml-3 p-2 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 shrink-0"
+            className="ml-4 p-2 rounded-full bg-foreground/10 text-foreground hover:bg-foreground/20 transition-colors disabled:opacity-40 shrink-0"
             title="Valuta avanzamento fase">
             {phaseEvalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
           </button>
