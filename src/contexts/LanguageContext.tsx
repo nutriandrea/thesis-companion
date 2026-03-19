@@ -429,6 +429,7 @@ I would prefer to carry out this exchange through voice rather than writing; I b
     "dashboard.blockers": "There are blockers to resolve.",
     "dashboard.all_completed": "🎉 All tasks completed!",
     "dashboard.auto_eval": "Automatic phase advancement evaluation in progress...",
+    "dashboard.invite_supervisor": "Invite supervisor",
 
     // Roadmap
     "roadmap.none": "No roadmap yet. Socrate can generate one based on your thesis.",
