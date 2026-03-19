@@ -78,12 +78,14 @@ export default function SocrateCoin({
         alt="Socrate"
         className="w-full h-full rounded-full object-cover"
         style={{ filter: "contrast(1.1) grayscale(100%)" }}
+        initial={{ opacity: 0 }}
         animate={{
+          opacity: loaded ? 1 : 0,
           rotate: isActive ? [0, 2, -2, 0] : 0,
         }}
         transition={
           isActive
-            ? { duration: 3, repeat: Infinity, ease: "easeInOut" }
+            ? { duration: 3, repeat: Infinity, ease: "easeInOut", opacity: { duration: 0.3 } }
             : { duration: 0.3 }
         }
       />
