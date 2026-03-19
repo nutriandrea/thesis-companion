@@ -281,7 +281,7 @@ export default function EditorPage() {
                   {sec.suggestions.length > 0 && (
                     <div className="mt-1 space-y-0.5">
                       {sec.suggestions.slice(0, 2).map((sug, j) => (
-                        <p key={j} className="text-[10px] text-ai/80">💡 {sug}</p>
+                        <p key={j} className="text-[10px] text-ai/80">{sug}</p>
                       ))}
                     </div>
                   )}
