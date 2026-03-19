@@ -1106,7 +1106,7 @@ function DemoExperts() {
   return (
   return (
     <div className="space-y-1.5">
-      {MOCK_EXPERTS.map(exp => (
+      {exps.map(exp => (
         <div key={exp.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
           <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${exp.offerInterviews ? "bg-green-500/10" : "bg-accent/10"}`}>
             <Users className={`w-3.5 h-3.5 ${exp.offerInterviews ? "text-green-500" : "text-accent"}`} />
