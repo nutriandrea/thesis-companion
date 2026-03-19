@@ -465,7 +465,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         <div className="border-t border-border pt-3 pb-1 flex justify-center">
           <button
             onClick={() => setShowThesisDialog(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-accent/10 border border-accent/20 text-xs font-semibold text-accent hover:bg-accent/20 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/10 border border-accent/20 text-xs font-semibold text-accent hover:bg-accent/20 transition-colors"
           >
             <Target className="w-4 h-4" />
             Ho scelto la mia tesi
