@@ -1776,13 +1776,14 @@ export default function UnifiedDashboard() {
   const resolveVulnerability = useCallback((vulnId: string) => {
     const vuln = vulnerabilities.find(v => v.id === vulnId);
     if (!vuln) return;
-    const msg = `I resolved the vulnerability "${vuln.title}". Here's why it's no longer an issue: `;
-    setInput(msg);
+    // Close any expanded card, open chat and auto-send the resolution message
     setChatOpen(true);
-    supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId).then(() => {
-      setVulnerabilities(prev => prev.filter(v => v.id !== vulnId));
-    });
-  }, [vulnerabilities]);
+    const resolveMsg = `Ho risolto questa vulnerabilità: "${vuln.title}" — ${vuln.description}`;
+    // Small delay to let chat mount, then auto-send
+    setTimeout(() => {
+      sendMessage(resolveMsg);
+    }, 300);
+  }, [vulnerabilities, sendMessage]);
 
   // Compute career on demand
   const computeCareer = useCallback(async () => {
