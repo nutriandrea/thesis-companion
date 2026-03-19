@@ -118,7 +118,7 @@ export default function SocrateIntro({ onComplete }: Props) {
               </motion.div>
             </motion.div>
 
-            <div className="flex flex-col items-center max-w-xl px-8 mt-8">
+            <div className="flex flex-col items-center max-w-xl px-8 mt-32">
               {(phase === "text-appear" || phase === "mode-choice") && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
