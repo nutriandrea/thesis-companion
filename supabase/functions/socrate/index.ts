@@ -1680,35 +1680,52 @@ PROFILO INTELLETTUALE (dal database):
       }
     }
 
-    // Build severity instructions block
+    const phaseConfig = THESIS_PHASES[currentPhase];
+
+    // Build severity + phase-specific instructions
     const severityInstructions = severita >= 0.8
-      ? `LIVELLO SEVERITÀ: ${severita} (ALTO — Fase iniziale/esplorazione)
+      ? `LIVELLO SEVERITÀ: ${severita} (ALTO — ${phaseConfig.name}, Settimane ${phaseConfig.weeks})
+OBIETTIVO FASE: ${phaseConfig.goal}
+GUIDA: ${phaseConfig.guidance}
 - Sii diretto e provocatorio. Non accettare risposte vaghe.
 - Trova i punti deboli nel ragionamento e falli notare chiaramente.
-- Usa un tono schietto e sfidante, MAI criptico o antiquato.
 - "Non mi hai convinto. Spiegami meglio perché dovrei crederti."
 - "Questo ragionamento è superficiale. Vai più a fondo."
 - Ogni risposta deve contenere almeno una domanda che costringe a ripensare.`
       : severita >= 0.6
-      ? `LIVELLO SEVERITÀ: ${severita} (MODERATO — Fase strutturazione)
+      ? `LIVELLO SEVERITÀ: ${severita} (MODERATO — ${phaseConfig.name}, Settimane ${phaseConfig.weeks})
+OBIETTIVO FASE: ${phaseConfig.goal}
+GUIDA: ${phaseConfig.guidance}
 - Tono critico ma costruttivo. Linguaggio chiaro e accessibile.
 - Sfida la struttura e la logica, ma offri anche direzioni concrete.
 - "Ok, capisco il tuo punto, ma hai pensato a...?"
-- Alterna provocazione a suggerimenti pratici.
-- Chiedi di giustificare le scelte con parole semplici.`
+- Alterna provocazione a suggerimenti pratici.`
       : severita >= 0.4
-      ? `LIVELLO SEVERITÀ: ${severita} (COLLABORATIVO — Fase scrittura)
+      ? `LIVELLO SEVERITÀ: ${severita} (COLLABORATIVO — ${phaseConfig.name}, Settimane ${phaseConfig.weeks})
+OBIETTIVO FASE: ${phaseConfig.goal}
+GUIDA: ${phaseConfig.guidance}
 - Sii un compagno di lavoro, non un avversario.
 - Feedback costruttivo focalizzato su miglioramenti concreti.
 - "Buon inizio. Come possiamo rendere questa parte più forte?"
-- Suggerisci alternative, connessioni tra sezioni.
-- Domande stimolanti ma di supporto.`
-      : `LIVELLO SEVERITÀ: ${severita} (SUPPORTIVO — Fase revisione)
+- Suggerisci alternative, connessioni tra sezioni.`
+      : `LIVELLO SEVERITÀ: ${severita} (SUPPORTIVO — ${phaseConfig.name}, Settimane ${phaseConfig.weeks})
+OBIETTIVO FASE: ${phaseConfig.goal}
+GUIDA: ${phaseConfig.guidance}
 - Guida pratica verso il perfezionamento.
 - Focus su coerenza, completezza, qualità finale.
 - "Ci siamo quasi. L'unico punto che migliorerei è..."
-- Aiuta a rifinire, non a demolire.
 - Riconosci i progressi, poi suggerisci piccoli miglioramenti.`;
+
+    // Phase transition detection
+    const phaseTransitionCtx = `
+TRANSIZIONI TRA FASI (le fasi si sovrappongono):
+- Orientation → Topic/Supervisor Search: quando ha 2-3 aree di interesse concrete e sa articolare perché lo interessano.
+- Topic/Supervisor → Planning: quando ha scelto topic, supervisore, e formula una research question.
+- Planning → Execution: quando ha struttura chiara, milestone definite, metodologia scelta.
+- Execution → Writing: quando ha dati sufficienti, risultati preliminari, può iniziare a scrivere capitoli.
+Se rilevi che lo studente è pronto per la fase successiva, DILLO CHIARAMENTE:
+"Dai tuoi progressi, sei pronto per passare alla fase [nome]. Ecco cosa cambia..."
+NON far avanzare se non ha completato i requisiti della fase attuale.`;
 
     if (currentMode === "report") {
       systemPrompt = `Sei Socrate. Genera un REPORT DI SESSIONE completo.
