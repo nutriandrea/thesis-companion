@@ -76,7 +76,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     Promise.all([
       supabase.from("memory_entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
       supabase.from("socrate_suggestions" as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
-      supabase.from("student_profiles" as any).select("severita, thesis_stage").eq("user_id", user.id).single(),
+      supabase.from("student_profiles" as any).select("severita, thesis_stage").eq("user_id", user.id).maybeSingle(),
     ]).then(([memRes, sugRes, spRes]) => {
       if (memRes.data) memoryRef.current = memRes.data;
       if ((sugRes as any).data) suggestionsRef.current = (sugRes as any).data;
@@ -227,7 +227,13 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Errore" }));
-        toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
+        if (resp.status === 402) {
+          toast({ variant: "destructive", title: "Crediti AI esauriti", description: "I crediti AI del workspace sono terminati. Vai su Settings → Workspace → Usage per ricaricarli." });
+        } else if (resp.status === 429) {
+          toast({ variant: "destructive", title: "Troppo veloci", description: "Troppe richieste. Attendi qualche secondo e riprova." });
+        } else {
+          toast({ variant: "destructive", title: "Errore", description: err.error || `Errore ${resp.status}` });
+        }
         setIsStreaming(false);
         return;
       }
