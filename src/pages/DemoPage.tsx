@@ -576,7 +576,7 @@ function DemoTasks({ phase }: { phase: string }) {
       })}
       <div className="flex items-center gap-2 pt-2">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-[10px] text-muted-foreground">{tasks.filter(t => t.status === "completed").length} completati</span>
+        <span className="text-[10px] text-muted-foreground">{tasks.filter(t => t.status === "completed").length} completed</span>
         <div className="h-px flex-1 bg-border" />
       </div>
     </div>
