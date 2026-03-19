@@ -189,7 +189,8 @@ export default function UnifiedDashboard() {
   const studentContext = profile
     ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nCompetenze: ${profile.skills?.join(", ") || "N/A"}\nStato: ${profile.journey_state}\nArgomento: ${profile.thesis_topic || "Non definito"}`
     : "";
-  const latexContent = (() => { try { return localStorage.getItem("thesis-latex-content") || ""; } catch { return ""; } })();
+  // Google Docs will be the source of thesis content — no local LaTeX
+  const thesisContent = "";
 
   // Load initial data
   useEffect(() => {
@@ -264,7 +265,7 @@ export default function UnifiedDashboard() {
     try {
       const resp = await fetch(SOCRATE_URL, {
         method: "POST", headers: AUTH_HEADERS,
-        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent, memoryEntries: memoryRef.current.slice(-15), mode: "chat" }),
+        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-15), mode: "chat" }),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Errore" }));
@@ -289,7 +290,7 @@ export default function UnifiedDashboard() {
     } finally {
       setIsStreaming(false);
     }
-  }, [isStreaming, user, messages, studentContext, latexContent, profile, updateProfile, toast, streamResponse]);
+  }, [isStreaming, user, messages, studentContext, thesisContent, profile, updateProfile, toast, streamResponse]);
 
   // Background extraction
   const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
@@ -297,11 +298,11 @@ export default function UnifiedDashboard() {
     const recentMsgs = msgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
     try {
       await Promise.allSettled([
-        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent, memoryEntries: memoryRef.current.slice(-20), mode: "extract_memory" }) }),
-        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent, mode: "extract_suggestions" }) }),
+        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-20), mode: "extract_memory" }) }),
+        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "extract_suggestions" }) }),
       ]);
     } catch {}
-  }, [user, studentContext, latexContent]);
+  }, [user, studentContext, thesisContent]);
 
   // Vulnerability scan
   const scanVulnerabilities = useCallback(async () => {
@@ -310,7 +311,7 @@ export default function UnifiedDashboard() {
     try {
       const resp = await fetch(SOCRATE_URL, {
         method: "POST", headers: AUTH_HEADERS,
-        body: JSON.stringify({ messages: messages.slice(-20).map(m => ({ role: m.role, content: m.content })), studentContext, latexContent, mode: "extract_vulnerabilities" }),
+        body: JSON.stringify({ messages: messages.slice(-20).map(m => ({ role: m.role, content: m.content })), studentContext, latexContent: thesisContent, mode: "extract_vulnerabilities" }),
       });
       if (resp.ok) {
         const data = await resp.json();
@@ -320,7 +321,7 @@ export default function UnifiedDashboard() {
       }
     } catch { toast({ variant: "destructive", title: "Errore" }); }
     finally { setIsScanning(false); }
-  }, [user, isScanning, messages, studentContext, latexContent, toast]);
+  }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
   // Progress metrics
   const completion = studentProfile?.overall_completion || 0;
