@@ -733,10 +733,10 @@ function DemoExperts() {
 
 function DemoReferences() {
   const categoryLabel: Record<string, { text: string; cls: string }> = {
-    foundational: { text: "Fondamentale", cls: "bg-accent/10 text-accent" },
-    methodology: { text: "Metodo", cls: "bg-warning/10 text-warning" },
-    recent: { text: "Recente", cls: "bg-green-500/10 text-green-600" },
-    contrarian: { text: "Critico", cls: "bg-destructive/10 text-destructive" },
+    foundational: { text: "Foundational", cls: "bg-accent/10 text-accent" },
+    methodology: { text: "Method", cls: "bg-warning/10 text-warning" },
+    recent: { text: "Recent", cls: "bg-green-500/10 text-green-600" },
+    contrarian: { text: "Critical", cls: "bg-destructive/10 text-destructive" },
   };
 
   return (
