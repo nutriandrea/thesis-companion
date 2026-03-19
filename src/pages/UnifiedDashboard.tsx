@@ -1548,6 +1548,7 @@ export default function UnifiedDashboard() {
     };
   }, [currentPhase, user?.id, phaseEvalLoading, evaluatePhase, toast]);
 
+  return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* ─── TOP: Orb + Identity ─── */}
       <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
