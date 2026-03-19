@@ -1744,17 +1744,39 @@ Italiano, diretto, specifico, provocatorio.`;
     } else {
       // ─── CHAT MODE ───
 
-      // Load vulnerabilities + dataset patterns for post-thesis attack mode
+      // Load vulnerabilities + dataset patterns + RAG context for post-thesis attack mode
       let vulnerabilitiesCtx = "";
       let datasetPatternsCtx = "";
+      let ragContext = "";
       const hasThesisTopic = studentContext?.includes("Argomento:") && !studentContext.includes("Non definito");
 
       if (userId && hasThesisTopic) {
-        // Load unresolved vulnerabilities
-        const { data: vulns } = await supabase.from("vulnerabilities")
-          .select("type, title, description, severity")
-          .eq("user_id", userId).eq("resolved", false)
-          .order("created_at", { ascending: false }).limit(8);
+        // Load RAG context, vulnerabilities, and affinities in parallel
+        const lastUserMsg = (messages as any[]).filter((m: any) => m.role === "user").slice(-1)[0]?.content || "";
+
+        const [vulnsResult, affinitiesResult, ragResult] = await Promise.allSettled([
+          supabase.from("vulnerabilities")
+            .select("type, title, description, severity")
+            .eq("user_id", userId).eq("resolved", false)
+            .order("created_at", { ascending: false }).limit(8),
+          supabase.from("affinity_scores")
+            .select("entity_type, entity_name, score, reasoning")
+            .eq("user_id", userId).order("score", { ascending: false }).limit(10),
+          // Call RAG engine for semantic context
+          lastUserMsg ? fetch(`${supabaseUrl}/functions/v1/rag-engine`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` },
+            body: JSON.stringify({ mode: "get_context", query: lastUserMsg, include_thesis: true, include_conversations: true }),
+          }).then(r => r.ok ? r.json() : null).catch(() => null) : Promise.resolve(null),
+        ]);
+
+        // Process RAG context
+        if (ragResult.status === "fulfilled" && ragResult.value?.context) {
+          ragContext = `\nCONTESTO SEMANTICO (dalla tesi e conversazioni precedenti):\n${ragResult.value.context}`;
+        }
+
+        // Process vulnerabilities
+        const vulns = vulnsResult.status === "fulfilled" ? (vulnsResult.value as any).data : null;
 
         if (vulns && vulns.length > 0) {
           vulnerabilitiesCtx = `
