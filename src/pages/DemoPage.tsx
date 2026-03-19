@@ -994,19 +994,7 @@ function DemoRoadmap() {
   );
 }
 
-function DemoChat() {
-  return (
-    <div className="space-y-3">
-      {MOCK_SOCRATE_MESSAGES.map(msg => (
-        <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-          <div className={`max-w-[80%] px-4 py-3 text-xs rounded-2xl ${msg.role === "assistant" ? "bg-secondary/50 border border-border" : "bg-accent/10 border border-accent/20"}`}>
-            <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+// DemoChat is now replaced by interactive DemoChatOverlay below
 
 // ══════════════════════════════════════════════════════
 // DASHBOARD VIEW
