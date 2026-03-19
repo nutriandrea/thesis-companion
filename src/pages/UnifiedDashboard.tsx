@@ -33,11 +33,11 @@ const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`
 
 
 const PHASES = [
-  { key: "orientation", label: "Orientamento", icon: "🔍" },
-  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "🎯" },
-  { key: "planning", label: "Pianificazione", icon: "📋" },
-  { key: "execution", label: "Esecuzione", icon: "🔧" },
-  { key: "writing", label: "Scrittura", icon: "✍️" },
+  { key: "orientation", label: "Orientamento", icon: "1" },
+  { key: "topic_supervisor", label: "Topic & Supervisore", icon: "2" },
+  { key: "planning", label: "Pianificazione", icon: "3" },
+  { key: "execution", label: "Esecuzione", icon: "4" },
+  { key: "writing", label: "Scrittura", icon: "5" },
 ] as const;
 
 type PhaseKey = (typeof PHASES)[number]["key"];
@@ -135,7 +135,7 @@ function TaskContent({ userId }: { userId: string }) {
           </div>
         </button>
       ))}
-      {completedCount > 0 && <p className="text-[10px] text-success text-center pt-1">✓ {completedCount} completati</p>}
+      {completedCount > 0 && <p className="text-[10px] text-success text-center pt-1">{completedCount} completati</p>}
     </div>
   );
 }
@@ -398,7 +398,7 @@ function GoogleDocWidget({ profile, updateProfile, user }: { profile: any; updat
       if (resp.ok) {
         const data = await resp.json();
         setSynced(true);
-        toast({ title: "📄 Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri. Sync automatico attivo.` });
+        toast({ title: "Documento collegato", description: `${Math.round((data.length || 0) / 1000)}k caratteri. Sync automatico attivo.` });
         if (data.content?.length > 100) {
           fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`, {
             method: "POST", headers: AUTH_HEADERS,
@@ -693,7 +693,7 @@ export default function UnifiedDashboard() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        toast({ title: "🔥 Scansione completata", description: `${data.vulnerabilities?.length || 0} vulnerabilità rilevate.` });
+        toast({ title: "Scansione completata", description: `${data.vulnerabilities?.length || 0} vulnerabilità rilevate.` });
         const { data: fresh } = await supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(8);
         if (fresh) setVulnerabilities(fresh as any);
       }
@@ -713,7 +713,7 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         if (data.sectors) setCareerSectors(data.sectors);
-        toast({ title: "📊 Orientamento aggiornato" });
+        toast({ title: "Orientamento aggiornato" });
       }
     } catch { toast({ variant: "destructive", title: "Errore" }); }
     finally { setCareerLoading(false); }
@@ -731,9 +731,9 @@ export default function UnifiedDashboard() {
       if (resp.ok) {
         const data = await resp.json();
         if (data.can_advance) {
-          toast({ title: "🚀 Fase avanzata!", description: data.socrate_comment?.substring(0, 100) || "Sei passato alla fase successiva." });
+          toast({ title: "Fase avanzata", description: data.socrate_comment?.substring(0, 100) || "Sei passato alla fase successiva." });
         } else {
-          toast({ title: "⏸ Non ancora", description: data.socrate_comment?.substring(0, 100) || "Ci sono blocchi da risolvere." });
+          toast({ title: "Non ancora", description: data.socrate_comment?.substring(0, 100) || "Ci sono blocchi da risolvere." });
         }
         // Refresh student profile
         const { data: sp } = await supabase.from("student_profiles" as any).select("*").eq("user_id", user.id).single();
@@ -753,7 +753,7 @@ export default function UnifiedDashboard() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        toast({ title: "✅ Supervisore selezionato", description: supName });
+        toast({ title: "Supervisore selezionato", description: supName });
         if (data.socrate_response) {
           setSupervisorResponse(data.socrate_response);
           // Also inject into chat

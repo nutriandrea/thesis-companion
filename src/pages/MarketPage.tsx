@@ -129,7 +129,7 @@ export default function MarketPage() {
           { id: "topics" as TabType, label: "Topic", icon: GraduationCap, count: filteredTopics.length },
           { id: "companies" as TabType, label: "Aziende", icon: Building2, count: companiesWithTopics.length },
           { id: "careers" as TabType, label: "Carriere", icon: Briefcase, count: mockCareers.length },
-          { id: "socrate" as TabType, label: "🧠 Socrate", icon: Sparkles, count: marketSuggestions.length },
+          { id: "socrate" as TabType, label: "Socrate", icon: Sparkles, count: marketSuggestions.length },
         ]).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === t.id ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
@@ -161,7 +161,7 @@ export default function MarketPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">{sug.detail}</p>
-                  <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">💡 {sug.reason}</p>
+                  <p className="text-xs text-ai/80 mt-2 italic border-l-2 border-ai/20 pl-2">{sug.reason}</p>
                 </div>
               </div>
             </motion.div>

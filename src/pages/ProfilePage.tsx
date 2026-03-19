@@ -212,7 +212,7 @@ export default function ProfilePage() {
                 <div className="flex-1">
                   <Progress value={(studentProfile.severita ?? 1) * 100} className="h-1.5" />
                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {(studentProfile.severita ?? 1) >= 0.8 ? "🔥 Spietato" : (studentProfile.severita ?? 1) >= 0.6 ? "⚡ Critico" : (studentProfile.severita ?? 1) >= 0.4 ? "🤝 Collaborativo" : "💡 Supportivo"}
+                    {(studentProfile.severita ?? 1) >= 0.8 ? "Spietato" : (studentProfile.severita ?? 1) >= 0.6 ? "Critico" : (studentProfile.severita ?? 1) >= 0.4 ? "Collaborativo" : "Supportivo"}
                   </p>
                 </div>
               </div>
@@ -322,7 +322,7 @@ export default function ProfilePage() {
                 <span className="text-xs text-muted-foreground">{new Date(task.dueDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>
               </div>
             ))}
-            {pendingTasks.length === 0 && <p className="text-sm text-muted-foreground">Tutto completato! 🎉</p>}
+            {pendingTasks.length === 0 && <p className="text-sm text-muted-foreground">Tutto completato.</p>}
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-card border rounded-xl p-5 shadow-sm">

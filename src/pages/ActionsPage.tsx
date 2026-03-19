@@ -411,24 +411,24 @@ export default function ActionsPage() {
           <div className="bg-card border rounded-lg p-4">
             <h4 className="text-sm font-semibold mb-2">Cosa viene analizzato:</h4>
             <ul className="space-y-1.5 text-xs text-muted-foreground">
-              <li>💬 Tutte le conversazioni con Socrate</li>
-              <li>📝 Contenuto del LaTeX Editor</li>
-              <li>🧠 Memoria e suggerimenti generati</li>
-              <li>✅ Compiti assegnati e completati</li>
-              <li>📊 Attività e pattern d'uso</li>
-              <li>🔗 Affinità calcolate con professori e aziende</li>
+              <li>Tutte le conversazioni con Socrate</li>
+              <li>Contenuto del LaTeX Editor</li>
+              <li>Memoria e suggerimenti generati</li>
+              <li>Compiti assegnati e completati</li>
+              <li>Attività e pattern d'uso</li>
+              <li>Affinità calcolate con professori e aziende</li>
             </ul>
           </div>
 
           <div className="bg-card border rounded-lg p-4">
             <h4 className="text-sm font-semibold mb-2">Output:</h4>
             <ul className="space-y-1.5 text-xs text-muted-foreground">
-              <li>🎯 Stile di ragionamento e pensiero critico</li>
-              <li>💪 Punti di forza e debolezze</li>
-              <li>📚 Interessi profondi e maturità di ricerca</li>
-              <li>✍️ Qualità della scrittura</li>
-              <li>🏢 Affinità professionali e accademiche</li>
-              <li>📋 Summary narrativo e aree di focus</li>
+              <li>Stile di ragionamento e pensiero critico</li>
+              <li>Punti di forza e debolezze</li>
+              <li>Interessi profondi e maturità di ricerca</li>
+              <li>Qualità della scrittura</li>
+              <li>Affinità professionali e accademiche</li>
+              <li>Summary narrativo e aree di focus</li>
             </ul>
           </div>
         </TabsContent>

@@ -206,7 +206,7 @@ export default function EditorPage() {
       setShowPanel(true);
 
       toast({
-        title: "📝 Analisi LaTeX completata",
+        title: "Analisi LaTeX completata",
         description: `${result.summary.sectionsAnalyzed} sezioni · Punteggio: ${result.summary.overallScore}/10 · ${result.summary.tasksGenerated} task generati`,
       });
     } catch (e) {
@@ -281,7 +281,7 @@ export default function EditorPage() {
                   {sec.suggestions.length > 0 && (
                     <div className="mt-1 space-y-0.5">
                       {sec.suggestions.slice(0, 2).map((sug, j) => (
-                        <p key={j} className="text-[10px] text-ai/80">💡 {sug}</p>
+                        <p key={j} className="text-[10px] text-ai/80">{sug}</p>
                       ))}
                     </div>
                   )}
@@ -323,7 +323,7 @@ export default function EditorPage() {
               <div key={fb.id} className="bg-ai/5 border border-ai/10 rounded-lg p-3">
                 <p className="text-xs font-medium text-foreground">{fb.title}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">{fb.detail}</p>
-                {fb.reason && <p className="text-[10px] text-ai/70 mt-1 italic">💡 {fb.reason}</p>}
+                {fb.reason && <p className="text-[10px] text-ai/70 mt-1 italic">{fb.reason}</p>}
               </div>
             ))}
           </div>

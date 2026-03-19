@@ -169,7 +169,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
     if (!silent && (newMemories > 0 || newSuggestions > 0)) {
       toast({
-        title: "🧠 Analisi completata",
+        title: "Analisi completata",
         description: `${newMemories} memorie + ${newSuggestions} suggerimenti estratti e distribuiti nelle sezioni.`,
       });
     }
@@ -310,19 +310,19 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       const reportId = `report-${Date.now()}`;
       setMessages((prev) => [
         ...prev,
-        { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## 📋 Report di Sessione\n" },
+        { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## Report di Sessione\n" },
         { id: reportId, role: "assistant", content: "" },
       ]);
 
       const reportContent = await streamResponse(resp, reportId);
 
       if (reportContent) {
-        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `📋 REPORT:\n${reportContent}` });
+        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `REPORT:\n${reportContent}` });
       }
 
       // Always run full extraction on report
       await runBackgroundExtraction(messages);
-      toast({ title: "📋 Report generato", description: "I contenuti sono stati distribuiti nelle sezioni del sito." });
+      toast({ title: "Report generato", description: "I contenuti sono stati distribuiti nelle sezioni del sito." });
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Errore", description: "Errore nella generazione del report." });
@@ -362,7 +362,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
 
       const result = await resp.json();
       toast({
-        title: "🧬 Fusione completata",
+        title: "Fusione completata",
         description: `Profilo aggiornato · ${result.summary?.affinitiesComputed || 0} affinità calcolate · ${result.summary?.newSuggestionsGenerated || 0} nuovi suggerimenti`,
       });
     } catch (e) {
@@ -408,8 +408,8 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
                 <div key={i} className={`w-1.5 h-3 rounded-sm ${severita >= threshold ? (severita >= 0.8 ? "bg-destructive" : severita >= 0.6 ? "bg-warning" : "bg-accent") : "bg-border"}`} />
               ))}
             </div>
-            <span className="text-[9px] text-muted-foreground">
-              {severita >= 0.8 ? "🔥" : severita >= 0.6 ? "⚡" : severita >= 0.4 ? "🤝" : "💡"}
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
+              {severita >= 0.8 ? "max" : severita >= 0.6 ? "alto" : severita >= 0.4 ? "medio" : "basso"}
             </span>
           </div>
         )}
