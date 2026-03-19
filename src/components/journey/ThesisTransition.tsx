@@ -98,12 +98,10 @@ export default function ThesisTransition({ thesisTopic, onComplete }: Props) {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: [0.5, 1.2, 1], opacity: 1 }}
               transition={{ duration: 1.5, ease: "easeOut" }}
-              className="w-24 h-24 rounded-full mx-auto mb-6"
-              style={{
-                background: "radial-gradient(circle at 30% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)",
-                boxShadow: "0 0 60px rgba(123, 97, 255, 0.4), 0 0 120px rgba(233, 78, 119, 0.2)",
-              }}
-            />
+              className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-6 ring-2 ring-accent/30"
+            >
+              <img src={socrateCoinImg} alt="Socrate" className="w-full h-full object-cover" style={{ filter: "contrast(1.1) grayscale(100%)" }} />
+            </motion.div>
             <motion.p
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
