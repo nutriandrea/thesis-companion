@@ -38,9 +38,35 @@ const PHASES = [
   { key: "planning", label: "Pianificazione", icon: "📋" },
   { key: "execution", label: "Esecuzione", icon: "🔧" },
   { key: "writing", label: "Scrittura", icon: "✍️" },
-];
+] as const;
 
-const POST_PLANNING_PHASES = ["planning", "execution", "writing"];
+type PhaseKey = (typeof PHASES)[number]["key"];
+
+const POST_PLANNING_PHASES: PhaseKey[] = ["planning", "execution", "writing"];
+
+const normalizePhase = (phase?: string | null): PhaseKey => {
+  switch (phase) {
+    case "orientation":
+    case "topic_supervisor":
+    case "planning":
+    case "execution":
+    case "writing":
+      return phase;
+    case "lost":
+    case "vague_idea":
+    case "exploration":
+      return "orientation";
+    case "topic_chosen":
+    case "finding_contacts":
+      return "topic_supervisor";
+    case "structuring":
+      return "planning";
+    case "revision":
+      return "writing";
+    default:
+      return "orientation";
+  }
+};
 
 // ─── GRADIENT ORB ───
 function GradientOrb({ size = 160, isActive = false }: { size?: number; isActive?: boolean }) {
