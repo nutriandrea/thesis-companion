@@ -970,11 +970,11 @@ function DemoDashboard() {
           {(showTopicSupervisor || showPlanning || showExecution || showWriting) && (
             <button
               className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary border border-border transition-colors"
-              title="Invita il tuo relatore a seguire i progressi"
+              title="Invite your supervisor to follow your progress"
               onClick={() => {}}
             >
               <UserPlus className="w-3 h-3" />
-              Invita relatore
+              Invite supervisor
             </button>
           )}
         </div>
