@@ -2172,8 +2172,8 @@ export default function UnifiedDashboard() {
               delay: delay,
               component: (
                 <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-                  <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+                  action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }} closeRef={vulnCardCloseRef}>
+                  <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} onCloseExpanded={() => vulnCardCloseRef.current?.()} />
                 </DashboardCard>
               ),
             });
