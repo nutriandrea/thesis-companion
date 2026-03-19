@@ -1667,22 +1667,17 @@ export default function UnifiedDashboard() {
         {/* ═══ PLANNING: track confermato + roadmap dinamica + tasks + vulnerabilità ═══ */}
         {currentPhase === "planning" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <DashboardCard title="Track Confermato" icon={CheckCircle2}>
-                <ConfirmedTrackSummary supervisorId={selectedSupervisorId} sectors={careerSectors} thesisTopic={profile?.thesis_topic} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+            <motion.div className="md:col-span-2 lg:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <DashboardCard title="Roadmap (in costruzione)" icon={BarChart3}>
                 <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <DashboardCard title="Task" icon={Target}>
                 <TaskContent userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
                 action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
                 <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
