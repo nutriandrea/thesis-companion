@@ -13,12 +13,13 @@ function AppContent() {
 
   // Check if URL has ?demo param
   const isDemo = new URLSearchParams(window.location.search).has("demo");
-  if (isDemo) return <DemoPage />;
 
   const handleTransitionComplete = useCallback(() => {
     setShowTransition(false);
     setActiveSection("dashboard");
   }, [setActiveSection]);
+
+  if (isDemo) return <DemoPage />;
 
   if (loading) {
     return (
