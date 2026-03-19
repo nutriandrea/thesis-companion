@@ -942,7 +942,7 @@ function DemoDashboard() {
   if (showTopicSupervisor) {
     cards.push({ key: "supervisors", delay, component: <DemoCard title="Suggested Supervisors" icon={GraduationCap}><DemoSupervisors /></DemoCard> });
     delay += 0.05;
-    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Direzioni possibili" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
+    cards.push({ key: "career-tree", colSpan: "md:col-span-2", delay, component: <DemoCard title="Possible Directions" icon={TrendingUp}><DemoCareerTree /></DemoCard> });
     delay += 0.05;
   }
   // Invite supervisor is now inline in the header, not a card
