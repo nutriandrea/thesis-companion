@@ -371,6 +371,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vulnerabilities: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          resolved: boolean
+          resolved_at: string | null
+          severity: string
+          source: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
