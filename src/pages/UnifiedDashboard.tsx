@@ -1943,7 +1943,7 @@ export default function UnifiedDashboard() {
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         >
           <MessageCircle className="w-4 h-4" />
-          Talk to Socrate
+          Parla con Socrate
         </motion.button>
         {lastMessage && !chatOpen && (
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
