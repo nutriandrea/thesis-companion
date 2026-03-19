@@ -35,7 +35,6 @@ const RAG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rag-engine`;
 const TASK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/task-engine`;
 
 
-
 const PHASES = [
   { key: "orientation", label: "Orientamento", icon: "1" },
   { key: "topic_supervisor", label: "Topic & Supervisore", icon: "2" },
@@ -719,6 +718,7 @@ export default function UnifiedDashboard() {
   const [showDocModal, setShowDocModal] = useState(false);
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [studentProfile, setStudentProfile] = useState<any>(null);
   const exchangeCountRef = useRef(0);
   const memoryRef = useRef<any[]>([]);
@@ -858,6 +858,29 @@ export default function UnifiedDashboard() {
       toast({ variant: "destructive", title: "Errore", description: "Impossibile contattare Socrate." });
     } finally { setIsStreaming(false); }
   }, [isStreaming, user, messages, studentContext, thesisContent, profile, updateProfile, toast, streamResponse]);
+
+  // Generate report
+  const generateReport = useCallback(async () => {
+    if (isStreaming || isGeneratingReport || !user || messages.length < 3) return;
+    setIsGeneratingReport(true);
+    const apiMessages = messages.slice(-20).map(m => ({ role: m.role, content: m.content }));
+    try {
+      const resp = await fetch(SOCRATE_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ messages: apiMessages, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-15), mode: "report" }),
+      });
+      if (!resp.ok) { toast({ variant: "destructive", title: "Errore" }); setIsGeneratingReport(false); return; }
+      const reportId = `report-${Date.now()}`;
+      setMessages(prev => [...prev,
+        { id: `sep-${Date.now()}`, role: "assistant", content: "---\n\n## Report di Sessione\n" },
+        { id: reportId, role: "assistant", content: "" },
+      ]);
+      const reportContent = await streamResponse(resp, reportId);
+      if (reportContent) await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: `REPORT:\n${reportContent}` });
+      toast({ title: "Report generato" });
+    } catch (e) { console.error(e); toast({ variant: "destructive", title: "Errore" }); }
+    finally { setIsGeneratingReport(false); }
+  }, [isStreaming, isGeneratingReport, user, messages, studentContext, thesisContent, toast, streamResponse]);
 
   const runBackgroundExtraction = useCallback(async (msgs: ChatMsg[]) => {
     if (!user) return;
@@ -1170,7 +1193,7 @@ export default function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* ─── CHAT / VOICE OVERLAY ─── */}
+      {/* ─── SOCRATE OVERLAY ─── */}
       <AnimatePresence>
         {chatOpen && (
           <>
@@ -1179,36 +1202,21 @@ export default function UnifiedDashboard() {
               className="fixed inset-0 bg-foreground/10 z-40"
               onClick={closeChat}
             />
-            {inputMode === "voice" ? (
-              <motion.div
-                initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-                className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
-              >
-                <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-                  <SocrateCoin size={32} interactive={false} isActive />
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-foreground">Socrate</p>
-                    <p className="text-[10px] text-muted-foreground">Modalità vocale</p>
-                  </div>
-                  <button onClick={closeChat} className="p-2 rounded-lg hover:bg-secondary transition-colors">
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-                <div className="flex-1">
-                  <VoiceConversation
-                    onTranscript={(text) => sendMessage(text)}
-                    onSwitchToText={() => setInputMode("text")}
-                    isStreaming={isStreaming}
-                    lastAssistantMessage={lastMessage}
-                    severity={studentProfile?.severita ?? 0.5}
-                  />
-                </div>
-              </motion.div>
-            ) : (
-              <ChatOverlay messages={messages} input={input} setInput={setInput}
-                sendMessage={sendMessage} isStreaming={isStreaming} onClose={closeChat}
-                onSwitchToVoice={() => setInputMode("voice")} />
-            )}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+              className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-background border border-border rounded-lg shadow-lg overflow-hidden"
+            >
+              <VoiceConversation
+                onTranscript={(text) => sendMessage(text)}
+                onClose={closeChat}
+                isStreaming={isStreaming}
+                lastAssistantMessage={lastMessage}
+                severity={studentProfile?.severita ?? 0.5}
+                messages={messages}
+                onGenerateReport={generateReport}
+                isGeneratingReport={isGeneratingReport}
+              />
+            </motion.div>
           </>
         )}
       </AnimatePresence>

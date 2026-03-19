@@ -378,10 +378,13 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       <div className="h-[calc(100vh-3rem)]">
         <VoiceConversation
           onTranscript={(text) => sendMessage(text)}
-          onSwitchToText={() => setInputMode("text")}
+          onClose={() => setInputMode("text")}
           isStreaming={isStreaming}
           lastAssistantMessage={lastAssistantMsg}
           severity={severita ?? 0.5}
+          messages={messages}
+          onGenerateReport={generateReport}
+          isGeneratingReport={isGeneratingReport}
         />
       </div>
     );
