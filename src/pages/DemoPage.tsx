@@ -331,7 +331,7 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
             </motion.div>
 
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] text-center mb-10">
-              Marco, sono qui per mettere alla prova le tue idee, trovare punti deboli e spingerti verso una tesi che valga la pena difendere. Scegli come vuoi interagire.
+              Marco, I'm here to challenge your ideas, find weak points and push you toward a thesis worth defending. Choose how you want to interact.
             </motion.p>
 
             {phase === "choice" && (
