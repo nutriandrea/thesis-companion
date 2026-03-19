@@ -81,7 +81,7 @@ export default function DashboardPage() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        toast({ title: "🔥 Scansione completata", description: `${data.vulnerabilities?.length || 0} vulnerabilità rilevate.` });
+        toast({ title: "Scansione completata", description: `${data.vulnerabilities?.length || 0} vulnerabilità rilevate.` });
         const { data: fresh } = await supabase.from("vulnerabilities" as any).select("*").eq("user_id", user.id).eq("resolved", false).order("created_at", { ascending: false }).limit(10);
         if (fresh) setVulnerabilities(fresh as any);
       }
