@@ -1221,8 +1221,14 @@ export default function UnifiedDashboard() {
             </DashboardCard>
           </motion.div>
 
+          {/* Interview Partners / Experts */}
+          <motion.div data-tutor-id="experts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <DashboardCard title="Interview Partners" icon={Users}>
+              <ExpertSuggestions userId={user?.id || ""} />
+            </DashboardCard>
+          </motion.div>
 
-          {/* Companies (spans remaining cols) */}
+
           <motion.div data-tutor-id="companies" className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
             <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
               action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
