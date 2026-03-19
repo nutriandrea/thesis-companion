@@ -52,13 +52,17 @@ const normalizePhase = (phase?: string | null): PhaseKey => {
     case "execution":
     case "writing":
       return phase;
+    // Legacy career-engine phases
+    case "convergence":
     case "lost":
     case "vague_idea":
     case "exploration":
       return "orientation";
+    case "thesis_defined":
     case "topic_chosen":
     case "finding_contacts":
       return "topic_supervisor";
+    case "refinement":
     case "structuring":
       return "planning";
     case "revision":

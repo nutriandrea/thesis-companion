@@ -57,14 +57,26 @@ export default function ProgressBar() {
   const stageMarkers = [
     { label: "O", week: 4, id: "orientation" },
     { label: "T", week: 8, id: "topic_supervisor" },
-    { label: "P", week: 10, id: "planning" },
+    { label: "P", week: 12, id: "planning" },
     { label: "E", week: 20, id: "execution" },
     { label: "W", week: 24, id: "writing" },
   ];
 
+  // Normalize phase names to canonical ones
+  const normalizePhase = (p: string): string => {
+    switch (p) {
+      case "orientation": case "topic_supervisor": case "planning": case "execution": case "writing": return p;
+      case "lost": case "vague_idea": case "exploration": case "convergence": return "orientation";
+      case "topic_chosen": case "finding_contacts": case "thesis_defined": return "topic_supervisor";
+      case "structuring": case "refinement": return "planning";
+      case "revision": return "writing";
+      default: return "orientation";
+    }
+  };
+
   // Determine which phases are done/current based on current_phase
   const phaseOrder = ["orientation", "topic_supervisor", "planning", "execution", "writing"];
-  const currentPhaseIdx = phaseOrder.indexOf(currentPhase);
+  const currentPhaseIdx = phaseOrder.indexOf(normalizePhase(currentPhase));
 
   return (
     <div className="fixed right-0 top-0 z-30 h-screen w-12 flex flex-col items-center bg-background border-l border-border">
