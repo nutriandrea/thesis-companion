@@ -2015,7 +2015,7 @@ export default function UnifiedDashboard() {
               key: "supervisors",
               delay: delay,
               component: (
-                <DashboardCard title="Suggested Supervisors" icon={GraduationCap}>
+                <DashboardCard title="Relatori suggeriti" icon={GraduationCap}>
                   <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
                 </DashboardCard>
               ),
