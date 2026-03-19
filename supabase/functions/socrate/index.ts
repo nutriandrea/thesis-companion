@@ -2067,6 +2067,8 @@ NON far avanzare se non ha completato i requisiti della fase attuale.`;
     if (currentMode === "report") {
       systemPrompt = `Sei Socrate. Genera un REPORT DI SESSIONE completo.
 
+LINGUA: Scrivi il report nella stessa lingua usata dallo studente nella conversazione. Rileva automaticamente la lingua dai messaggi.
+
 ${severityInstructions}
 
 CONTESTO STUDENTE:
