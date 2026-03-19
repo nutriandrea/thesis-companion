@@ -8,6 +8,7 @@ import {
   BookOpen, ExternalLink, Mail, UserPlus
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { useT } from "@/contexts/LanguageContext";
 import VoiceConversation from "@/components/voice/VoiceConversation";
 import SocrateCoin from "@/components/shared/SocrateCoin";
 import SocrateTutor from "@/components/shared/SocrateTutor";
