@@ -298,8 +298,8 @@ export default function UnifiedDashboard() {
     const recentMsgs = msgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
     try {
       await Promise.allSettled([
-        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent, memoryEntries: memoryRef.current.slice(-20), mode: "extract_memory" }) }),
-        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent, mode: "extract_suggestions" }) }),
+        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, memoryEntries: memoryRef.current.slice(-20), mode: "extract_memory" }) }),
+        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "extract_suggestions" }) }),
       ]);
     } catch {}
   }, [user, studentContext, latexContent]);
