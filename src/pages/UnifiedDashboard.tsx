@@ -896,6 +896,18 @@ export default function UnifiedDashboard() {
     finally { setIsScanning(false); }
   }, [user, isScanning, messages, studentContext, thesisContent, toast]);
 
+  // Resolve vulnerability: open chat with pre-filled context, mark resolved
+  const resolveVulnerability = useCallback((vulnId: string) => {
+    const vuln = vulnerabilities.find(v => v.id === vulnId);
+    if (!vuln) return;
+    const msg = `Ho risolto la vulnerabilità "${vuln.title}". Ecco perché non è più un problema: `;
+    setInput(msg);
+    setChatOpen(true);
+    supabase.from("vulnerabilities" as any).update({ resolved: true, resolved_at: new Date().toISOString() } as any).eq("id", vulnId).then(() => {
+      setVulnerabilities(prev => prev.filter(v => v.id !== vulnId));
+    });
+  }, [vulnerabilities]);
+
   // Compute career on demand
   const computeCareer = useCallback(async () => {
     if (!user || careerLoading) return;
