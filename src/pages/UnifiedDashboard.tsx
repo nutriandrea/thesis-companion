@@ -20,8 +20,7 @@ import supervisorsData from "@/data/supervisors.json";
 import companiesData from "@/data/companies.json";
 import expertsData from "@/data/experts.json";
 import fieldsData from "@/data/fields.json";
-import type { Supervisor, Company, Expert, Field, RoadmapPhase, RoadmapTask } from "@/types/data";
-import { mockRoadmap } from "@/data/mock-roadmap";
+import type { Supervisor, Company, Expert, Field } from "@/types/data";
 
 const supervisors = supervisorsData as Supervisor[];
 const companies = companiesData as Company[];
@@ -770,53 +769,161 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
   );
 }
 
-// ─── ROADMAP CARD ───
-function RoadmapCard({ currentPhase }: { currentPhase: PhaseKey }) {
+// ─── ROADMAP CARD (real data from DB) ───
+function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId: string }) {
   const isEditable = currentPhase === "planning";
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const { toast } = useToast();
 
-  const roadmapPhases = mockRoadmap;
+  // Fetch roadmap items
+  const fetchRoadmap = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("roadmap_items" as any)
+      .select("*")
+      .eq("user_id", userId)
+      .order("sort_order");
+    if (data) setItems(data as any[]);
+    setLoading(false);
+  }, [userId]);
 
-  // Filter: in planning show from planning onward; in execution/writing show all with progress
-  const visiblePhases = roadmapPhases.filter((_: RoadmapPhase, i: number) => i >= 2); // planning, execution, writing
+  useEffect(() => {
+    fetchRoadmap();
+    if (!userId) return;
+    const channel = supabase
+      .channel(`roadmap-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "roadmap_items", filter: `user_id=eq.${userId}` }, () => fetchRoadmap())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, fetchRoadmap]);
+
+  // Generate roadmap via AI
+  const generateRoadmap = useCallback(async () => {
+    if (generating) return;
+    setGenerating(true);
+    try {
+      const resp = await fetch(TASK_URL, {
+        method: "POST", headers: AUTH_HEADERS,
+        body: JSON.stringify({ mode: "generate_roadmap" }),
+      });
+      if (resp.ok) {
+        toast({ title: "Roadmap generata", description: "La roadmap è stata creata in base alla tua tesi." });
+        await fetchRoadmap();
+      } else {
+        toast({ variant: "destructive", title: "Errore", description: "Impossibile generare la roadmap." });
+      }
+    } catch { toast({ variant: "destructive", title: "Errore" }); }
+    finally { setGenerating(false); }
+  }, [generating, toast, fetchRoadmap]);
+
+  // Toggle task completion
+  const toggleTask = useCallback(async (taskId: string, completed: boolean) => {
+    // Optimistic update
+    setItems(prev => prev.map(i => i.id === taskId ? { ...i, completed } : i));
+    await fetch(TASK_URL, {
+      method: "POST", headers: AUTH_HEADERS,
+      body: JSON.stringify({ mode: "toggle_roadmap_task", task_id: taskId, completed }),
+    });
+  }, []);
+
+  // Group by phase
+  const phases = useMemo(() => {
+    const grouped: Record<string, { title: string; key: string; tasks: any[] }> = {};
+    const order = ["planning", "execution", "writing"];
+    items.forEach(item => {
+      if (!grouped[item.phase_key]) {
+        grouped[item.phase_key] = { title: item.phase_title, key: item.phase_key, tasks: [] };
+      }
+      grouped[item.phase_key].tasks.push(item);
+    });
+    return order.map(k => grouped[k]).filter(Boolean);
+  }, [items]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  // Empty state: offer to generate
+  if (phases.length === 0) return (
+    <div className="text-center py-8 space-y-3">
+      <p className="text-xs text-muted-foreground">Nessuna roadmap ancora. Socrate può generarne una basata sulla tua tesi.</p>
+      <button
+        onClick={generateRoadmap}
+        disabled={generating}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground text-xs font-medium rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-40"
+      >
+        {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <BarChart3 className="w-3 h-3" />}
+        {generating ? "Generando..." : "Genera Roadmap"}
+      </button>
+    </div>
+  );
 
   return (
-    <div className="space-y-3">
-      {visiblePhases.map((phase: RoadmapPhase) => (
-        <div key={phase.id} className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{phase.title}</span>
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-[10px] font-bold text-foreground">{phase.progress}%</span>
-          </div>
-          {/* Progress bar */}
-          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-accent rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${phase.progress}%` }}
-              transition={{ duration: 0.8 }}
-            />
-          </div>
-          {/* Tasks */}
-          <div className="space-y-1 pl-2">
-            {phase.tasks.map((task: RoadmapTask) => (
-              <div key={task.id} className="flex items-center gap-2 py-0.5">
-                {task.completed ? (
-                  <CheckCircle2 className="w-3 h-3 text-accent shrink-0" />
-                ) : (
-                  <Circle className="w-3 h-3 text-muted-foreground/40 shrink-0" />
-                )}
-                <span className={`text-[11px] flex-1 ${task.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>
-                  {task.title}
-                </span>
-                {isEditable && !task.completed && (
-                  <span className="text-[9px] text-muted-foreground">{new Date(task.dueDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span>
-                )}
-              </div>
-            ))}
-          </div>
+    <div className="space-y-4">
+      {/* Regenerate button */}
+      {isEditable && (
+        <div className="flex justify-end">
+          <button
+            onClick={generateRoadmap}
+            disabled={generating}
+            className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+          >
+            {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+            Rigenera
+          </button>
         </div>
-      ))}
+      )}
+
+      {phases.map(phase => {
+        const completedCount = phase.tasks.filter((t: any) => t.completed).length;
+        const progress = phase.tasks.length > 0 ? Math.round((completedCount / phase.tasks.length) * 100) : 0;
+
+        return (
+          <div key={phase.key} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{phase.title}</span>
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] font-bold text-foreground">{progress}%</span>
+            </div>
+            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-accent rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.8 }}
+              />
+            </div>
+            <div className="space-y-1 pl-2">
+              {phase.tasks.map((task: any) => (
+                <div key={task.id} className="flex items-center gap-2 py-0.5">
+                  <button
+                    onClick={() => toggleTask(task.id, !task.completed)}
+                    className="shrink-0"
+                  >
+                    {task.completed ? (
+                      <CheckCircle2 className="w-3 h-3 text-accent" />
+                    ) : (
+                      <Circle className="w-3 h-3 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />
+                    )}
+                  </button>
+                  <span className={`text-[11px] flex-1 ${task.completed ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                    {task.task_title}
+                  </span>
+                  {task.due_date && (
+                    <span className="text-[9px] text-muted-foreground">
+                      {new Date(task.due_date).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1264,6 +1371,8 @@ export default function UnifiedDashboard() {
         fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "evaluate_phase" }) }),
         // Match experts and supervisors
         fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "match_people", expertsData, supervisorsData: supervisors, fieldsData: fields }) }),
+        // Update roadmap if in planning+ phase
+        fetch(TASK_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "generate_roadmap", thesis_content: thesisContent?.substring(0, 3000) || "" }) }),
       ]);
     } catch {}
   }, [user, studentContext, thesisContent]);
@@ -1532,7 +1641,7 @@ export default function UnifiedDashboard() {
             </motion.div>
             <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <DashboardCard title="Roadmap (in costruzione)" icon={BarChart3}>
-                <RoadmapCard currentPhase={currentPhase} />
+                <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
@@ -1554,7 +1663,7 @@ export default function UnifiedDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-6xl mx-auto">
             <motion.div className="md:col-span-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <DashboardCard title="Roadmap" icon={BarChart3}>
-                <RoadmapCard currentPhase={currentPhase} />
+                <RoadmapCard currentPhase={currentPhase} userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
             <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
