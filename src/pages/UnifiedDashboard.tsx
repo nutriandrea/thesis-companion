@@ -1974,7 +1974,7 @@ export default function UnifiedDashboard() {
               component: (
                 <DashboardCard title="Riferimenti principali" icon={BookOpen} badge={references.length || null}
                   action={{ label: "Aggiorna", onClick: fetchReferences, loading: isLoadingRefs }}>
-                  <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} />
+                  <ReferencesContent references={references} loading={isLoadingRefs} onRefresh={fetchReferences} userId={user?.id} />
                 </DashboardCard>
               ),
             });
