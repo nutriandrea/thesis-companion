@@ -28,6 +28,7 @@ function AppContent() {
 
   if (!user) return <AuthPage />;
 
+  // After signup: if onboarding not done, show SocrateIntro (coin animation → text → voice/text choice)
   if (profile && !profile.onboarding_done) {
     return (
       <SocrateIntro

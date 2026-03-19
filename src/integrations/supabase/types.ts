@@ -148,6 +148,7 @@ export type Database = {
           created_at: string
           degree: string | null
           email: string
+          expected_graduation: string | null
           field_ids: string[] | null
           first_name: string
           google_doc_url: string | null
@@ -166,6 +167,7 @@ export type Database = {
           created_at?: string
           degree?: string | null
           email?: string
+          expected_graduation?: string | null
           field_ids?: string[] | null
           first_name?: string
           google_doc_url?: string | null
@@ -184,6 +186,7 @@ export type Database = {
           created_at?: string
           degree?: string | null
           email?: string
+          expected_graduation?: string | null
           field_ids?: string[] | null
           first_name?: string
           google_doc_url?: string | null
