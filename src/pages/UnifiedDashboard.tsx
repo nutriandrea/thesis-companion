@@ -623,7 +623,7 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                   <Mail className="w-2.5 h-2.5" />{sup.email}
                 </a>
               )}
-              {sup.reasoning && <p className="text-[10px] text-foreground/60 line-clamp-1 mt-0.5">{sup.reasoning}</p>}
+              {sup.reasoning && <p className="text-[10px] text-foreground/60 mt-0.5">{sup.reasoning}</p>}
             </div>
             {sup.score !== null && <span className="text-[10px] font-bold text-accent shrink-0">{sup.score}%</span>}
           </div>
@@ -636,6 +636,12 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
                 className="overflow-hidden"
               >
                 <div className="px-2 py-2 space-y-2">
+                  {sup.reasoning && (
+                    <div className="rounded-lg border border-border bg-secondary/40 px-3 py-2">
+                      <p className="text-[10px] text-muted-foreground mb-1">Motivazione suggerita</p>
+                      <p className="text-[11px] text-foreground/80 leading-relaxed break-words whitespace-pre-wrap">{sup.reasoning}</p>
+                    </div>
+                  )}
                   <p className="text-[10px] text-muted-foreground">Perché questo relatore?</p>
                   <textarea
                     value={motivation}
