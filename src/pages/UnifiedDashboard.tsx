@@ -464,9 +464,9 @@ function ChatOverlay({
       className="fixed inset-4 lg:inset-x-[15%] lg:inset-y-8 z-50 flex flex-col bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden"
     >
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-        <div className="w-8 h-8 rounded-full" style={{
-          background: "radial-gradient(circle at 35% 40%, #f5a623, #e94e77 35%, #7b61ff 65%, #4a90d9 100%)"
-        }} />
+        <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
+          <span className="text-xs font-bold text-background font-display">S</span>
+        </div>
         <div className="flex-1">
           <p className="text-sm font-bold text-foreground">Socrate</p>
           <p className="text-[10px] text-muted-foreground">Il tuo mentore critico</p>
