@@ -928,7 +928,6 @@ function RoadmapCard({ currentPhase, userId }: { currentPhase: PhaseKey; userId:
     </div>
   );
 }
-}
 
 
 function VulnerabilitiesContent({ vulnerabilities, onResolve }: { vulnerabilities: Vulnerability[]; onResolve?: (id: string) => void }) {
