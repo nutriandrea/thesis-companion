@@ -241,7 +241,17 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
       const assistantContent = await streamResponse(resp, assistantId);
 
       if (assistantContent) {
-        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: assistantContent });
+        // Strip hidden marker before saving
+        const cleanContent = assistantContent.replace(/<!--\s*THESIS_READY\s*-->/g, "").trim();
+        await supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: cleanContent });
+
+        // Check if Socrate proposed thesis confirmation
+        if (assistantContent.includes("<!-- THESIS_READY -->")) {
+          // Update displayed message to remove marker
+          setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: cleanContent } : m));
+          // Show thesis confirmation dialog after a brief delay
+          setTimeout(() => setShowThesisDialog(true), 1500);
+        }
       }
       if (!profile?.socrate_done) await updateProfile({ socrate_done: true });
 
