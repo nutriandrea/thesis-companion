@@ -29,6 +29,11 @@ export default function SocrateCoin({
 }: SocrateCoinProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [ripple, setRipple] = useState(false);
+  const [loaded, setLoaded] = useState(imgReady);
+
+  useEffect(() => {
+    if (!loaded) { imgPromise.then(() => setLoaded(true)); }
+  }, [loaded]);
 
   const handleClick = useCallback(() => {
     setRipple(true);
