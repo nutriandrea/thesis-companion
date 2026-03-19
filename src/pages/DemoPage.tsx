@@ -535,8 +535,8 @@ export default function DemoPage() {
       </div>
 
       {/* Top: Identity */}
-      <div className="flex flex-col items-center pt-4 pb-2 shrink-0 relative">
-        <div className="absolute top-3 left-4 flex items-center gap-2">
+      <div className="flex flex-col items-center pt-6 pb-3 shrink-0 relative">
+        <div className="absolute top-4 left-4 flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Marco Demo</span>
         </div>
 
