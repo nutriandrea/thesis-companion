@@ -293,6 +293,8 @@ export default function VoiceConversation({
             </button>
           )}
           <button onClick={() => {
+            unmountedRef.current = true;
+            abortRef.current?.abort();
             try { scribe.disconnect(); } catch(e) {}
             stopAudio();
             setVoiceState("idle");
