@@ -5,7 +5,7 @@ import {
   MessageCircle, ChevronRight, ShieldAlert, BarChart3, BookOpen,
   ExternalLink, ArrowRight, TrendingUp, Link2, Loader2, Mic,
   Mail, Lock, User, Eye, EyeOff, MapPin, Calendar,
-  Compass, Lightbulb, PenTool, Sparkles, SkipForward,
+  Compass, Lightbulb, PenTool, Sparkles, SkipForward, X,
 } from "lucide-react";
 import SocrateCoin from "@/components/shared/SocrateCoin";
 
