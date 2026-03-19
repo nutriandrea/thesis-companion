@@ -689,7 +689,7 @@ function DemoSupervisors() {
                       <textarea
                         value={motivation}
                         onChange={e => setMotivation(e.target.value)}
-                        placeholder="Spiega la tua motivazione..."
+                        placeholder="Explain your motivation..."
                         className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:border-accent/30 transition-colors"
                         rows={2}
                       />
