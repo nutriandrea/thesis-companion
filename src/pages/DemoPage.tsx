@@ -490,7 +490,7 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
                   onClick={() => setExpanded(true)}
                   className="w-full text-center text-[10px] font-medium text-accent hover:text-accent/80 transition-colors py-1"
                 >
-                  Mostra tutto
+                  Show all
                 </button>
               </div>
             </div>
