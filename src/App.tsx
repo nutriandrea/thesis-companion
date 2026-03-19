@@ -20,6 +20,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<AuthPage />} />
             <Route path="/demo" element={<DemoPage />} />
+            <Route path="/demo2" element={<Demo2Page />} />
             <Route
               path="/*"
               element={
