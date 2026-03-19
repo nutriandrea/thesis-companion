@@ -60,7 +60,7 @@ export default function SocrateIntro({ onComplete }: Props) {
         {phase === "coin-reveal" && (
           <motion.div key="coin-reveal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="relative flex flex-col items-center justify-center">
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 2, ease: "easeOut" }}>
-              <SocrateCoin size={280} interactive={false} />
+              <SocrateCoin size={336} interactive={false} />
             </motion.div>
             <div className="mt-12 h-20 flex items-center justify-center">
               <AnimatePresence mode="wait">
