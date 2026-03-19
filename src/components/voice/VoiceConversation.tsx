@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, Square, Volume2, VolumeX, Keyboard, Loader2 } from "lucide-react";
 import { useScribe } from "@elevenlabs/react";
+import VoiceWaveform from "./VoiceWaveform";
 import { supabase } from "@/integrations/supabase/client";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
 
@@ -264,7 +265,7 @@ export default function VoiceConversation({
           {voiceState === "processing" ? (
             <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
           ) : voiceState === "listening" ? (
-            <Mic className="w-6 h-6 text-foreground" />
+            <VoiceWaveform active />
           ) : voiceState === "speaking" ? (
             <Volume2 className="w-6 h-6 text-foreground/80" />
           ) : (
