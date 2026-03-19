@@ -751,18 +751,26 @@ function DemoSocrateChat({ onSkip }: { onSkip: () => void }) {
       </div>
 
       {/* Input bar */}
-      <form onSubmit={handleSubmit} className="border-t border-border px-5 py-3 flex items-center gap-3 shrink-0">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Reply to Socrates..."
-          disabled={isStreaming}
-          className="flex-1 bg-secondary/50 border border-border rounded-full px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent/30 transition-colors disabled:opacity-50"
-        />
-        <button type="submit" disabled={isStreaming || !input.trim()} className="p-2.5 bg-accent text-accent-foreground rounded-full disabled:opacity-50 hover:bg-accent/90 transition-colors">
-          {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        </button>
-      </form>
+      <div className="border-t border-border pt-4 pb-4 px-5 flex items-center gap-3 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-bold text-foreground">M</span>
+        </div>
+        <div className="flex-1 flex gap-2">
+          <input value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e as any); } }}
+            placeholder="Reply to Socrates..." disabled={isStreaming}
+            className="flex-1 bg-card border border-border rounded-full px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+          <button onClick={() => setMode("voice")}
+            className="px-3 py-3 rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            title="Switch to voice mode">
+            <Mic className="w-4 h-4" />
+          </button>
+          <button onClick={() => handleSubmit({ preventDefault: () => {} } as any)} disabled={!input.trim() || isStreaming}
+            className="px-4 py-3 bg-accent text-accent-foreground rounded-full hover:bg-accent/90 transition-colors disabled:opacity-30">
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
       {/* Skip button */}
       <motion.div
