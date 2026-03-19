@@ -21,7 +21,7 @@ interface SocrateCoinProps {
 }
 
 export default function SocrateCoin({
-  size = 64,
+  size = 77,
   interactive = true,
   isActive = false,
   onClick,
