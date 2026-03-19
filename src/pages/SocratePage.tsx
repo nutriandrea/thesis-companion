@@ -52,7 +52,7 @@ const SOCRATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/socrate`;
 
 
 export default function SocratePage({ explorationMode = false, onThesisConfirmed }: SocratePageProps = {}) {
-  const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
+  const { profile, user, updateProfile, setActiveSection, inputMode, setInputMode } = useApp();
   const { toast } = useToast();
   const [showThesisDialog, setShowThesisDialog] = useState(false);
   const [proposedThesisTopic, setProposedThesisTopic] = useState("");
