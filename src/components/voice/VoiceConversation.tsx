@@ -191,7 +191,7 @@ export default function VoiceConversation({
   }, [lastAssistantMessage, isStreaming, audioEnabled, speakText]);
 
   useEffect(() => { if (isStreaming && voiceState !== "speaking") setVoiceState("processing"); }, [isStreaming]);
-  useEffect(() => { return () => { scribe.disconnect(); stopAudio(); }; }, []);
+  useEffect(() => { return () => { try { scribe.disconnect(); } catch(e) {} stopAudio(); }; }, [scribe, stopAudio]);
 
   const toggleMute = useCallback(() => {
     if (muted) { setMuted(false); if (!isSpeakingRef.current) setTimeout(() => startListening(), 100); }
@@ -259,7 +259,12 @@ export default function VoiceConversation({
               {isGeneratingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             </button>
           )}
-          <button onClick={onClose} className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+          <button onClick={() => {
+            try { scribe.disconnect(); } catch(e) {}
+            stopAudio();
+            setVoiceState("idle");
+            onClose();
+          }} className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
