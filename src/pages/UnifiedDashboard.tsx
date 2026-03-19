@@ -92,7 +92,7 @@ function DashboardCard({
   badge?: number | null; action?: { label: string; onClick: () => void; loading?: boolean }; className?: string;
 }) {
   return (
-    <div className={`bg-card/60 backdrop-blur-sm border border-border rounded-xl flex flex-col h-full ${className}`}>
+    <div className={`bg-card border border-border rounded-lg flex flex-col h-full ds-card-hover ${className}`}>
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <Icon className="w-4 h-4 text-accent" />
         <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1">{title}</span>
