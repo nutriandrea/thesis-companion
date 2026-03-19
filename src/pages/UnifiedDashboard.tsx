@@ -1294,81 +1294,118 @@ export default function UnifiedDashboard() {
 
       {/* Google Doc auto-syncs from profile settings */}
 
-      {/* ─── CARDS GRID (phase-gated) ─── */}
+      {/* ─── CARDS GRID — strict phase-gated ─── */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-8 xl:px-16 pb-28">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
 
-          {/* ── ALWAYS VISIBLE: Tasks ── */}
-          <motion.div data-tutor-id="tasks" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-            <DashboardCard title="Task" icon={Target}>
-              <TaskContent userId={user?.id || ""} />
-            </DashboardCard>
-          </motion.div>
+        {/* ═══ ORIENTATION: minimal — Tasks, Rubrica, Vulnerabilità ═══ */}
+        {currentPhase === "orientation" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-5xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <DashboardCard title="Task" icon={Target}>
+                <TaskContent userId={user?.id || ""} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <DashboardCard title="Rubrica" icon={Users}>
+                <ExpertSuggestions userId={user?.id || ""} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
+                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+              </DashboardCard>
+            </motion.div>
+          </div>
+        )}
 
-          {/* ── ALWAYS VISIBLE: Vulnerabilità ── */}
-          <motion.div data-tutor-id="vulnerabilities" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-            <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
-              action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
-              <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
-            </DashboardCard>
-          </motion.div>
-
-          {/* ── ALWAYS VISIBLE: Interview Partners / Rubrica ── */}
-          <motion.div data-tutor-id="experts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            <DashboardCard title="Interview Partners" icon={Users}>
-              <ExpertSuggestions userId={user?.id || ""} />
-            </DashboardCard>
-          </motion.div>
-
-          {/* ── TOPIC & SUPERVISOR: Supervisors ── */}
-          {currentPhase === "topic_supervisor" && (
-            <motion.div data-tutor-id="supervisor" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-              <DashboardCard title="Supervisore" icon={GraduationCap}>
+        {/* ═══ TOPIC & SUPERVISOR: expanded — base + Supervisors + Career + Companies ═══ */}
+        {currentPhase === "topic_supervisor" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <DashboardCard title="Supervisori suggeriti" icon={GraduationCap}>
                 <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
               </DashboardCard>
             </motion.div>
-          )}
-
-          {/* ── TOPIC & SUPERVISOR: Orientamento Lavorativo + Aziende ── */}
-          {currentPhase === "topic_supervisor" && (
-            <>
-              <motion.div data-tutor-id="career" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}>
-                  <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
-                </DashboardCard>
-              </motion.div>
-              <motion.div data-tutor-id="companies" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
-                <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
-                  action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
-                  <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
-                </DashboardCard>
-              </motion.div>
-            </>
-          )}
-
-          {/* ── PLANNING: Confirmed track + supervisor summary ── */}
-          {currentPhase === "planning" && (
-            <motion.div data-tutor-id="confirmed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-              <DashboardCard title="Track Confermato" icon={CheckCircle2}>
-                <ConfirmedTrackSummary
-                  supervisorId={selectedSupervisorId}
-                  sectors={careerSectors}
-                  thesisTopic={profile?.thesis_topic}
-                />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}>
+                <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
               </DashboardCard>
             </motion.div>
-          )}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
+                action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
+                <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+              <DashboardCard title="Task" icon={Target}>
+                <TaskContent userId={user?.id || ""} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+              <DashboardCard title="Interview Partners" icon={Users}>
+                <ExpertSuggestions userId={user?.id || ""} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
+                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+              </DashboardCard>
+            </motion.div>
+          </div>
+        )}
 
-          {/* ── PLANNING + EXECUTION + WRITING: Roadmap ── */}
-          {(currentPhase === "planning" || currentPhase === "execution" || currentPhase === "writing") && (
-            <motion.div data-tutor-id="roadmap" className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              <DashboardCard title={currentPhase === "planning" ? "Roadmap (in costruzione)" : "Roadmap"} icon={BarChart3}>
+        {/* ═══ PLANNING: track confermato + roadmap dinamica + tasks + vulnerabilità ═══ */}
+        {currentPhase === "planning" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <DashboardCard title="Track Confermato" icon={CheckCircle2}>
+                <ConfirmedTrackSummary supervisorId={selectedSupervisorId} sectors={careerSectors} thesisTopic={profile?.thesis_topic} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <DashboardCard title="Roadmap (in costruzione)" icon={BarChart3}>
                 <RoadmapCard currentPhase={currentPhase} />
               </DashboardCard>
             </motion.div>
-          )}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <DashboardCard title="Task" icon={Target}>
+                <TaskContent userId={user?.id || ""} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
+                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+              </DashboardCard>
+            </motion.div>
+          </div>
+        )}
 
-        </div>
+        {/* ═══ EXECUTION / WRITING: roadmap principale + tasks + vulnerabilità ═══ */}
+        {(currentPhase === "execution" || currentPhase === "writing") && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-6xl mx-auto">
+            <motion.div className="md:col-span-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <DashboardCard title="Roadmap" icon={BarChart3}>
+                <RoadmapCard currentPhase={currentPhase} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <DashboardCard title="Task" icon={Target}>
+                <TaskContent userId={user?.id || ""} />
+              </DashboardCard>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
+                action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
+                <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
+              </DashboardCard>
+            </motion.div>
+          </div>
+        )}
+
       </div>
 
       {/* ─── BOTTOM PHASE STEPPER ─── */}
