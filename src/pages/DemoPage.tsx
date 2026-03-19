@@ -331,101 +331,201 @@ function DemoLogin({ onNext }: { onNext: () => void }) {
 }
 
 // ══════════════════════════════════════════════════════
-// STEP 2: DEMO ONBOARDING
+// STEP 2: DEMO ONBOARDING (matches real OnboardingFlow)
 // ══════════════════════════════════════════════════════
 const JOURNEY_OPTIONS = [
-  { key: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet." },
-  { key: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine it." },
-  { key: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write about." },
-  { key: "writing", icon: PenTool, title: "I'm already writing", desc: "I need support for writing and revision." },
+  { key: "lost", icon: Compass, title: "I'm lost", desc: "I have no idea what to write yet. I need inspiration." },
+  { key: "vague_idea", icon: Lightbulb, title: "I have a vague idea", desc: "I have a rough topic but need to refine and structure it." },
+  { key: "topic_chosen", icon: Target, title: "I've chosen the topic", desc: "I know what I want to write about. I need a roadmap, timeline and supervisor." },
+  { key: "writing", icon: PenTool, title: "I'm already writing", desc: "I've started. I need support for writing, revision and defense." },
 ];
 
 function DemoOnboarding({ onNext }: { onNext: () => void }) {
+  const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  const [degree, setDegree] = useState("MSc Computer Science");
+  const [university, setUniversity] = useState("ETH Zurich");
+  const [skills, setSkills] = useState("Python, machine learning, NLP, data analysis");
+  const [topicInput, setTopicInput] = useState("");
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl text-center space-y-8">
-        <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
-          <Sparkles className="w-8 h-8 text-accent" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground font-display">Welcome, Marco</h1>
-          <p className="text-muted-foreground mt-2">Where are you in your thesis journey?</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
-          {JOURNEY_OPTIONS.map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => setSelected(opt.key)}
-              className={`flex items-start gap-3 p-4 rounded-lg border text-left transition-all ${
-                selected === opt.key
-                  ? "border-accent bg-accent/5"
-                  : "border-border hover:border-foreground/20 hover:bg-secondary/30"
-              }`}
-            >
-              <opt.icon className={`w-5 h-5 mt-0.5 shrink-0 ${selected === opt.key ? "text-accent" : "text-muted-foreground"}`} />
-              <div>
-                <p className="text-sm font-semibold text-foreground">{opt.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl">
+        <AnimatePresence mode="wait">
+          {step === 0 && (
+            <motion.div key="welcome" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="text-center space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto">
+                <Sparkles className="w-8 h-8 text-accent" />
               </div>
-            </button>
-          ))}
-        </div>
+              <div>
+                <h1 className="text-3xl font-bold font-display">Hi, Marco!</h1>
+                <p className="text-muted-foreground mt-2 text-lg">Before we begin, Socrates wants to get to know you. Answer a few questions.</p>
+              </div>
+              <button onClick={() => setStep(1)} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors inline-flex items-center gap-2">
+                Let's begin <ArrowRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
 
-        {selected && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <button onClick={onNext} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors">
-              Continue <ArrowRight className="w-4 h-4 inline ml-2" />
-            </button>
-          </motion.div>
-        )}
+          {step === 1 && (
+            <motion.div key="about" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold font-display">Tell us about yourself</h2>
+                <p className="text-muted-foreground mt-1">This info will help Socrates challenge you better</p>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Degree program</label>
+                    <input value={degree} onChange={e => setDegree(e.target.value)} placeholder="e.g. MSc Computer Science"
+                      className="w-full bg-card border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">University</label>
+                    <input value={university} onChange={e => setUniversity(e.target.value)} placeholder="e.g. ETH Zurich"
+                      className="w-full bg-card border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Skills (comma separated)</label>
+                  <input value={skills} onChange={e => setSkills(e.target.value)} placeholder="e.g. Python, machine learning, NLP, data analysis"
+                    className="w-full bg-card border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => setStep(2)} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors inline-flex items-center gap-2">
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div key="state" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold font-display">Where are you?</h2>
+                <p className="text-muted-foreground mt-1">Select the state that best describes you</p>
+              </div>
+              <div className="space-y-3">
+                {JOURNEY_OPTIONS.map(opt => (
+                  <button key={opt.key} onClick={() => setSelected(opt.key)}
+                    className={`w-full flex items-start gap-4 p-4 rounded-xl border transition-all text-left
+                      ${selected === opt.key
+                        ? "border-accent bg-accent/5 shadow-md ring-2 ring-accent/20"
+                        : "border-border bg-card hover:border-accent/40 hover:shadow-sm"}`}>
+                    <div className={`p-2.5 rounded-lg shrink-0 ${selected === opt.key ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+                      <opt.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{opt.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => setStep(3)} disabled={!selected} className="px-8 py-3 bg-foreground text-background text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-foreground/90 transition-colors inline-flex items-center gap-2 disabled:opacity-30">
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div key="topic" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold font-display">Do you have a topic in mind?</h2>
+                <p className="text-muted-foreground mt-1">Even a vague idea. Socrates will help you develop it.</p>
+              </div>
+              <textarea value={topicInput} onChange={e => setTopicInput(e.target.value)}
+                placeholder="e.g. 'Applying NLP to automate knowledge discovery' or 'something related to AI and medicine'..."
+                className="w-full h-32 bg-card border rounded-xl p-4 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent" />
+              <div className="flex justify-between">
+                <button onClick={() => setStep(2)} className="px-6 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                <button onClick={onNext} className="px-8 py-3 bg-accent text-accent-foreground text-sm font-semibold uppercase tracking-wider rounded-lg hover:bg-accent/90 transition-colors inline-flex items-center gap-2">
+                  Meet Socrates <Sparkles className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
 }
 
 // ══════════════════════════════════════════════════════
-// STEP 3: DEMO SOCRATE INTRO (abbreviated)
+// STEP 3: DEMO SOCRATE INTRO (1:1 with SocrateIntro)
 // ══════════════════════════════════════════════════════
 function DemoIntro({ onNext }: { onNext: () => void }) {
-  const [phase, setPhase] = useState<"coin" | "text" | "choice">("coin");
-  const [subtitle, setSubtitle] = useState("");
+  const [phase, setPhase] = useState<"coin-reveal" | "coin-translate" | "text-appear" | "mode-choice">("coin-reveal");
+  const [currentSubtitle, setCurrentSubtitle] = useState("");
 
   const subtitles = [
-    { text: "\"True wisdom lies in knowing you know nothing.\"", delay: 0 },
-    { text: "\"An unexamined thesis is not worth writing.\"", delay: 2800 },
-    { text: "I am Socrates.", delay: 5600 },
+    { text: "\"True wisdom lies in knowing you know nothing.\"", delay: 0, duration: 2500 },
+    { text: "\"An unexamined thesis is not worth writing.\"", delay: 2800, duration: 2500 },
+    { text: "I am Socrates.", delay: 5600, duration: 2000 },
   ];
 
+  const introText = "Marco, I am here for one reason only: to challenge every idea you have, find the weak points, and push you to build a thesis worth defending.\n\nI will not give you easy answers. Instead, I will ask you the questions no one else dares to ask.";
+
   useEffect(() => {
-    if (phase !== "coin") return;
+    if (phase !== "coin-reveal") return;
     const timers: ReturnType<typeof setTimeout>[] = [];
-    subtitles.forEach(s => timers.push(setTimeout(() => setSubtitle(s.text), s.delay)));
-    timers.push(setTimeout(() => setPhase("text"), 7500));
+    subtitles.forEach((sub) => {
+      timers.push(setTimeout(() => setCurrentSubtitle(sub.text), sub.delay));
+    });
+    timers.push(setTimeout(() => setPhase("coin-translate"), 8500));
     return () => timers.forEach(clearTimeout);
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== "text") return;
-    const t = setTimeout(() => setPhase("choice"), 2000);
-    return () => clearTimeout(t);
+    if (phase !== "coin-translate") return;
+    const timer = setTimeout(() => setPhase("text-appear"), 1500);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "text-appear") return;
+    const timer = setTimeout(() => setPhase("mode-choice"), 2000);
+    return () => clearTimeout(timer);
   }, [phase]);
 
   return (
     <div className="fixed inset-0 z-50 bg-foreground overflow-hidden flex items-center justify-center">
       <AnimatePresence mode="wait">
-        {phase === "coin" && (
-          <motion.div key="coin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
-            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 2, ease: "easeOut" }}>
+        {phase === "coin-reveal" && (
+          <motion.div
+            key="coin-reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            className="relative flex flex-col items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 2, ease: "easeOut" }}
+            >
               <SocrateCoin size={280} interactive={false} />
             </motion.div>
             <div className="mt-12 h-20 flex items-center justify-center">
               <AnimatePresence mode="wait">
-                {subtitle && (
-                  <motion.p key={subtitle} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight">
-                    {subtitle}
+                {currentSubtitle && (
+                  <motion.p
+                    key={currentSubtitle}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.6 }}
+                    className="font-display text-background/90 text-2xl md:text-3xl font-medium text-center px-8 italic leading-snug tracking-tight"
+                  >
+                    {currentSubtitle}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -433,32 +533,93 @@ function DemoIntro({ onNext }: { onNext: () => void }) {
           </motion.div>
         )}
 
-        {(phase === "text" || phase === "choice") && (
-          <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center max-w-xl px-8">
-            <motion.div initial={{ scale: 1 }} animate={{ scale: 0.35 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} className="mb-8">
-              <SocrateCoin size={200} interactive={false} />
+        {(phase === "coin-translate" || phase === "text-appear" || phase === "mode-choice") && (
+          <motion.div
+            key="main-layout"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            className="fixed inset-0 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ x: 0, y: 0 }}
+              animate={{
+                x: typeof window !== "undefined" ? window.innerWidth / 2 - 160 : 300,
+                y: typeof window !== "undefined" ? window.innerHeight / 2 - 370 : 0,
+              }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute z-10"
+            >
+              <motion.div
+                initial={{ scale: 1 }}
+                animate={{ scale: 0.45 }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <SocrateCoin size={400} interactive={false} />
+              </motion.div>
             </motion.div>
 
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="font-display text-background/60 text-base md:text-lg leading-[1.8] text-center mb-10">
-              Marco, I'm here to challenge your ideas, find weak points and push you toward a thesis worth defending. Choose how you want to interact.
-            </motion.p>
+            <LayoutGroup>
+              <motion.div
+                layout
+                transition={{ layout: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
+                className="flex flex-col items-center max-w-xl px-8 mt-32"
+              >
+                {(phase === "text-appear" || phase === "mode-choice") && (
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, ease: "easeOut", layout: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
+                    className="text-center mb-6"
+                  >
+                    {introText.split("\n\n").map((paragraph, i) => (
+                      <motion.p
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.4, duration: 0.8 }}
+                        className="font-display text-background/60 text-base md:text-lg leading-[1.8] mb-5 last:mb-0"
+                      >
+                        {paragraph}
+                      </motion.p>
+                    ))}
+                  </motion.div>
+                )}
 
-            {phase === "choice" && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex gap-14">
-                <button onClick={onNext} className="group flex flex-col items-center gap-3">
-                  <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
-                    <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
-                  </div>
-                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Voice</span>
-                </button>
-                <button onClick={onNext} className="group flex flex-col items-center gap-3">
-                  <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
-                    <PenTool className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
-                  </div>
-                  <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">Text</span>
-                </button>
+                {phase === "mode-choice" && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.3 }}
+                    className="flex gap-14 mt-4"
+                  >
+                    <button
+                      onClick={onNext}
+                      className="group flex flex-col items-center gap-3 transition-all"
+                    >
+                      <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
+                        <Mic className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
+                      </div>
+                      <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">
+                        Voice
+                      </span>
+                    </button>
+                    <button
+                      onClick={onNext}
+                      className="group flex flex-col items-center gap-3 transition-all"
+                    >
+                      <div className="w-20 h-20 rounded-full border border-background/10 flex items-center justify-center group-hover:border-background/30 group-hover:bg-background/[0.03] transition-all duration-300">
+                        <PenTool className="w-6 h-6 text-background/40 group-hover:text-background/70 transition-colors duration-300" />
+                      </div>
+                      <span className="font-display text-background/30 text-[10px] tracking-[0.2em] uppercase group-hover:text-background/60 transition-colors duration-300">
+                        Text
+                      </span>
+                    </button>
+                  </motion.div>
+                )}
               </motion.div>
-            )}
+            </LayoutGroup>
           </motion.div>
         )}
       </AnimatePresence>
