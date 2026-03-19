@@ -76,7 +76,7 @@ export default function SocrateIntro({ onComplete }: Props) {
 
         {(phase === "coin-translate" || phase === "text-appear" || phase === "mode-choice") && (
           <motion.div key="main-layout" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="fixed inset-0 flex items-center justify-center">
-            <motion.div initial={{ x: 0, y: 0 }} animate={{ x: typeof window !== "undefined" ? (window.innerWidth / 2) - 160 : 300, y: 0 }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }} className="absolute z-10">
+            <motion.div initial={{ x: 0, y: 0 }} animate={{ x: typeof window !== "undefined" ? (window.innerWidth / 2) - 160 : 300, y: 80 }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }} className="absolute z-10">
               <motion.div initial={{ scale: 1 }} animate={{ scale: 0.45 }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}>
                 <SocrateCoin size={280} interactive={false} />
               </motion.div>
