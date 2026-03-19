@@ -2030,7 +2030,7 @@ export default function UnifiedDashboard() {
               colSpan: !showPlanning ? "md:col-span-2" : undefined,
               delay: delay,
               component: (
-                <DashboardCard title="Possible Directions" icon={TrendingUp}>
+                <DashboardCard title="Direzioni possibili" icon={TrendingUp}>
                   <CareerTree sectors={careerSectors} userId={user?.id || ""} loading={careerLoading} />
                 </DashboardCard>
               ),
