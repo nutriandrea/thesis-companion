@@ -1999,7 +1999,7 @@ export default function UnifiedDashboard() {
 
           // Roadmap: planning, execution, writing
           if (showPlanning || showExecution || showWriting) {
-            const roadmapTitle = showPlanning && !showExecution ? "Roadmap (in costruzione)" : "Roadmap";
+            const roadmapTitle = showPlanning && !showExecution ? "Roadmap (building)" : "Roadmap";
             cards.push({
               key: "roadmap",
               colSpan: !showTopicSupervisor ? "md:col-span-2 lg:col-span-2" : undefined,
