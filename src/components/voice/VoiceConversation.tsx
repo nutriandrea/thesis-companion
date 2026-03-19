@@ -79,7 +79,7 @@ export default function VoiceConversation({
   const [liveTranscript, setLiveTranscript] = useState("");
   const [muted, setMuted] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [textInput, setTextInput] = useState("");
+  
   const [error, setError] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
