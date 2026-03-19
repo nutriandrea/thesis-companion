@@ -1,17 +1,37 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import Index from "./pages/Index.tsx";
+import { AppProvider } from "@/contexts/AppContext";
+import AuthPage from "@/pages/AuthPage";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import AppShell from "@/components/layout/AppShell";
+import DemoPage from "@/pages/DemoPage";
 
 const App = () => (
-  <LanguageProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Index />
-    </TooltipProvider>
-  </LanguageProvider>
+  <BrowserRouter>
+    <LanguageProvider>
+      <AppProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/demo" element={<DemoPage />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <AppShell />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </TooltipProvider>
+      </AppProvider>
+    </LanguageProvider>
+  </BrowserRouter>
 );
 
 export default App;
