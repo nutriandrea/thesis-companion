@@ -228,6 +228,68 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* ─── VULNERABILITIES ─── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+        className="bg-card border border-destructive/20 rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-destructive/10 bg-destructive/5">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-destructive" />
+            <h2 className="text-sm font-bold text-foreground tracking-wide uppercase">Vulnerabilità</h2>
+            {vulnerabilities.length > 0 && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-destructive/20 text-destructive">{vulnerabilities.length}</span>
+            )}
+          </div>
+          <button onClick={scanVulnerabilities} disabled={isScanning}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-destructive/10 border border-destructive/20 text-xs font-medium text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40">
+            {isScanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Flame className="w-3.5 h-3.5" />}
+            {isScanning ? "Analisi..." : "Scansiona"}
+          </button>
+        </div>
+        {vulnerabilities.length === 0 ? (
+          <div className="p-6 text-center">
+            <ShieldAlert className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">Nessuna vulnerabilità rilevata.</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1">Clicca "Scansiona" per far analizzare la tua tesi a Socrate.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {vulnerabilities.map((v, i) => {
+              const typeConfig: Record<string, { icon: any; label: string; color: string }> = {
+                cliche: { icon: Copy, label: "CLICHÉ", color: "text-warning" },
+                logic_gap: { icon: CircleX, label: "BUCO LOGICO", color: "text-destructive" },
+                methodology_flaw: { icon: AlertTriangle, label: "METODO", color: "text-destructive" },
+                superficiality: { icon: Eye, label: "SUPERFICIALE", color: "text-warning" },
+                originality_deficit: { icon: Copy, label: "ZERO ORIGINALITÀ", color: "text-destructive" },
+              };
+              const config = typeConfig[v.type] || typeConfig.cliche;
+              const sevColors: Record<string, string> = { critical: "bg-destructive/20 text-destructive border-destructive/30", high: "bg-warning/20 text-warning border-warning/30", medium: "bg-muted text-muted-foreground border-border" };
+              return (
+                <motion.div key={v.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.05 }}
+                  className="p-4 hover:bg-destructive/[0.02] transition-colors group">
+                  <div className="flex items-start gap-3">
+                    <config.icon className={`w-4 h-4 mt-0.5 shrink-0 ${config.color}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[9px] font-bold tracking-wider ${config.color}`}>{config.label}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded border font-medium ${sevColors[v.severity]}`}>
+                          {v.severity === "critical" ? "CRITICO" : v.severity === "high" ? "SERIO" : "MEDIO"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-foreground">{v.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{v.description}</p>
+                    </div>
+                    <button onClick={() => resolveVulnerability(v.id)} title="Segna come risolta"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-success/10 text-muted-foreground hover:text-success">
+                      <CircleX className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+
       {/* Socrate Hub Banner */}
       {(memoryCount > 0 || suggestionCount > 0) && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
