@@ -200,6 +200,45 @@ export type Database = {
         }
         Relationships: []
       }
+      roadmap_items: {
+        Row: {
+          completed: boolean
+          created_at: string
+          due_date: string | null
+          id: string
+          phase_key: string
+          phase_title: string
+          sort_order: number
+          task_title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          phase_key: string
+          phase_title: string
+          sort_order?: number
+          task_title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          phase_key?: string
+          phase_title?: string
+          sort_order?: number
+          task_title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       session_events: {
         Row: {
           created_at: string | null
