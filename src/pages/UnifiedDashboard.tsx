@@ -111,6 +111,7 @@ function TaskContent({ userId }: { userId: string }) {
   const { tasks, updateTaskStatus, validateTask } = useSocrateTasks(userId);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [rejectedIds, setRejectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const activeTasks = tasks.filter(t => t.status !== "completed").slice(0, 8);
@@ -124,17 +125,24 @@ function TaskContent({ userId }: { userId: string }) {
       const result = await validateTask(taskId);
       if (result.approved) {
         await updateTaskStatus(taskId, "completed");
+        setRejectedIds(prev => { const n = new Set(prev); n.delete(taskId); return n; });
         toast({ title: "Task completato", description: result.feedback || "Ben fatto." });
       } else {
+        setRejectedIds(prev => new Set(prev).add(taskId));
         toast({ variant: "destructive", title: "Non ancora", description: result.feedback || "Socrate non è convinto. Riprova." });
       }
     } catch {
-      // Fallback: complete anyway if validation fails
       await updateTaskStatus(taskId, "completed");
       toast({ title: "Task completato" });
     } finally {
       setValidatingId(null);
     }
+  };
+
+  const forceComplete = async (taskId: string) => {
+    await updateTaskStatus(taskId, "completed");
+    setRejectedIds(prev => { const n = new Set(prev); n.delete(taskId); return n; });
+    toast({ title: "Task forzato come completato" });
   };
 
   const priorityLabel = (p: string) => {
