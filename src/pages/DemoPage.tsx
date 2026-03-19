@@ -914,8 +914,25 @@ function DemoCard({ title, icon: Icon, children, badge, className = "", maxConte
   );
 }
 
+function DemoLoadingSkeleton({ lines = 3 }: { lines?: number }) {
+  return (
+    <div className="space-y-2.5 animate-pulse">
+      {Array.from({ length: lines }).map((_, i) => (
+        <div key={i} className="flex items-center gap-2.5 p-2">
+          <div className="w-3 h-3 rounded-full bg-secondary" />
+          <div className="flex-1 space-y-1">
+            <div className="h-3 bg-secondary rounded w-3/4" />
+            <div className="h-2 bg-secondary/60 rounded w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DemoTasks({ phase }: { phase: string }) {
-  const tasks = MOCK_TASKS[phase] || MOCK_TASKS.orientation;
+  const { data, loading } = useDemoEngine<{ tasks: MockTask[] }>("generate_tasks", { phase });
+  const tasks = data?.tasks?.length ? data.tasks : (MOCK_TASKS[phase] || MOCK_TASKS.orientation);
   const priorityLabel = (p: string) => {
     switch (p) {
       case "critical": return { text: "Critical", cls: "bg-destructive/10 text-destructive" };
