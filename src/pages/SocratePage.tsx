@@ -54,6 +54,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
   const { profile, user, updateProfile, setActiveSection, inputMode } = useApp();
   const { toast } = useToast();
   const [showThesisDialog, setShowThesisDialog] = useState(false);
+  const [proposedThesisTopic, setProposedThesisTopic] = useState("");
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
