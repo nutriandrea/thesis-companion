@@ -19,6 +19,18 @@ async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
   return data.data[0].embedding;
 }
 
+async function getBatchEmbeddings(texts: string[], apiKey: string): Promise<number[][]> {
+  const inputs = texts.map(t => t.slice(0, 8000));
+  const resp = await fetch(OPENAI_EMBED_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: EMBED_MODEL, input: inputs }),
+  });
+  if (!resp.ok) throw new Error(`Embedding API error: ${resp.status}`);
+  const data = await resp.json();
+  return data.data.sort((a: any, b: any) => a.index - b.index).map((d: any) => d.embedding);
+}
+
 function chunkText(text: string, maxChars = 1500, overlap = 200): string[] {
   const chunks: string[] = [];
   let start = 0;
@@ -69,19 +81,15 @@ Deno.serve(async (req) => {
       if (!content) throw new Error("content required");
 
       const chunks = chunkText(content);
-      const embeddings: any[] = [];
-
-      for (const chunk of chunks) {
-        const vector = await getEmbedding(chunk, OPENAI_API_KEY);
-        embeddings.push({
-          user_id: userId,
-          source_type: source_type || "thesis_chunk",
-          source_id: source_id || null,
-          content: chunk,
-          metadata: metadata || {},
-          embedding: `[${vector.join(",")}]`,
-        });
-      }
+      const vectors = await getBatchEmbeddings(chunks, OPENAI_API_KEY);
+      const embeddings = chunks.map((chunk, i) => ({
+        user_id: userId,
+        source_type: source_type || "thesis_chunk",
+        source_id: source_id || null,
+        content: chunk,
+        metadata: metadata || {},
+        embedding: `[${vectors[i].join(",")}]`,
+      }));
 
       // Delete old embeddings of same source
       if (source_id) {
@@ -133,19 +141,15 @@ Deno.serve(async (req) => {
       await supabase.from("embeddings").delete().eq("user_id", userId).eq("source_type", "thesis_chunk");
 
       const chunks = chunkText(content, 2000, 300);
-      const embeddings: any[] = [];
-
-      for (let i = 0; i < chunks.length; i++) {
-        const vector = await getEmbedding(chunks[i], OPENAI_API_KEY);
-        embeddings.push({
-          user_id: userId,
-          source_type: "thesis_chunk",
-          source_id: `thesis-chunk-${i}`,
-          content: chunks[i],
-          metadata: { chunk_index: i, total_chunks: chunks.length },
-          embedding: `[${vector.join(",")}]`,
-        });
-      }
+      const vectors = await getBatchEmbeddings(chunks, OPENAI_API_KEY);
+      const embeddings = chunks.map((chunk, i) => ({
+        user_id: userId,
+        source_type: "thesis_chunk",
+        source_id: `thesis-chunk-${i}`,
+        content: chunk,
+        metadata: { chunk_index: i, total_chunks: chunks.length },
+        embedding: `[${vectors[i].join(",")}]`,
+      }));
 
       const { error } = await supabase.from("embeddings").insert(embeddings);
       if (error) throw new Error(`DB insert error: ${error.message}`);
