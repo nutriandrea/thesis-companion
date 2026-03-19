@@ -1490,7 +1490,7 @@ export default function UnifiedDashboard() {
           </div>
         )}
 
-        {/* ═══ TOPIC & SUPERVISOR: expanded — base + Supervisors + Career + Companies ═══ */}
+        {/* ═══ TOPIC & SUPERVISOR: Supervisors + Career Tree + base ═══ */}
         {currentPhase === "topic_supervisor" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
@@ -1498,28 +1498,22 @@ export default function UnifiedDashboard() {
                 <SupervisorSelection userId={user?.id || ""} selectedId={selectedSupervisorId} onSelect={handleSelectSupervisor} />
               </DashboardCard>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-              <DashboardCard title="Orientamento Lavorativo" icon={Briefcase}>
-                <CareerBar sectors={careerSectors} onSectorClick={s => setActiveSector(activeSector === s ? null : s)} loading={careerLoading} />
+            <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <DashboardCard title="Direzioni possibili" icon={TrendingUp}>
+                <CareerTree sectors={careerSectors} userId={user?.id || ""} loading={careerLoading} />
               </DashboardCard>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
-                action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
-                <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
-              </DashboardCard>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
               <DashboardCard title="Task" icon={Target}>
                 <TaskContent userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
               <DashboardCard title="Interview Partners" icon={Users}>
                 <ExpertSuggestions userId={user?.id || ""} />
               </DashboardCard>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <DashboardCard title="Vulnerabilità" icon={ShieldAlert} badge={vulnerabilities.length}
                 action={{ label: "Scansiona", onClick: scanVulnerabilities, loading: isScanning }}>
                 <VulnerabilitiesContent vulnerabilities={vulnerabilities} onResolve={resolveVulnerability} />
