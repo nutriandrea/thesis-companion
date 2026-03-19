@@ -505,6 +505,16 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       // Experts and supervisors datasets (passed from frontend or hardcoded)
       const { expertsData, supervisorsData, fieldsData } = reqBody;
 
+      // Pre-compute datasets for the prompt
+      const expertsForPrompt = JSON.stringify((expertsData || []).map((e: any) => ({
+        id: e.id, name: e.firstName + " " + e.lastName, title: e.title, about: e.about, fieldIds: e.fieldIds, offerInterviews: e.offerInterviews,
+      })));
+      const supervisorsForPrompt = JSON.stringify((supervisorsData || []).map((s: any) => ({
+        id: s.id, name: s.title + " " + s.firstName + " " + s.lastName, researchInterests: s.researchInterests, about: s.about, fieldIds: s.fieldIds,
+      })));
+      const conversationCtx = recentMessages.slice(-10).map((m: any) => m.role + ": " + m.content.substring(0, 150)).join("\n");
+      const thesisCtx = latexContent ? "CONTENUTO TESI:\n" + latexContent.substring(0, 3000) : "Nessun contenuto tesi disponibile.";
+
       const response = await fetch(AI_URL, {
         method: "POST",
         headers: aiHeaders,
@@ -525,16 +535,16 @@ PROFILO INTELLETTUALE:
 - Fase tesi: ${thesisStage}
 - Maturità ricerca: ${studentProfile?.research_maturity || "beginner"}
 
-${latexContent ? `CONTENUTO TESI:\n${latexContent.substring(0, 3000)}` : "Nessun contenuto tesi disponibile."}
+${thesisCtx}
 
 CONVERSAZIONE RECENTE:
-${recentMessages.slice(-10).map((m: any) => `${m.role}: ${m.content.substring(0, 150)}`).join("\n")}
+${conversationCtx}
 
 DATABASE ESPERTI (interview partners):
-${JSON.stringify((expertsData || []).map((e: any) => ({ id: e.id, name: \`\${e.firstName} \${e.lastName}\`, title: e.title, about: e.about, fieldIds: e.fieldIds, offerInterviews: e.offerInterviews })))}
+${expertsForPrompt}
 
 DATABASE SUPERVISORI:
-${JSON.stringify((supervisorsData || []).map((s: any) => ({ id: s.id, name: \`\${s.title} \${s.firstName} \${s.lastName}\`, researchInterests: s.researchInterests, about: s.about, fieldIds: s.fieldIds })))}
+${supervisorsForPrompt}
 
 CAMPI DI STUDIO:
 ${JSON.stringify(fieldsData || [])}
