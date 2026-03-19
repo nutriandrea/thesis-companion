@@ -784,8 +784,17 @@ export default function UnifiedDashboard() {
             </DashboardCard>
           </motion.div>
 
-          {/* Companies (spans 2 cols) */}
-          <motion.div className="md:col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          {/* Google Doc - visible only after planning */}
+          {POST_PLANNING_PHASES.includes(currentPhase) && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+              <DashboardCard title="Documento Tesi" icon={FileText}>
+                <GoogleDocWidget profile={profile} updateProfile={updateProfile} user={user} />
+              </DashboardCard>
+            </motion.div>
+          )}
+
+          {/* Companies (spans remaining cols) */}
+          <motion.div className={POST_PLANNING_PHASES.includes(currentPhase) ? "" : "md:col-span-2"} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
             <DashboardCard title={activeSector ? `Aziende — ${activeSector}` : "Aziende"} icon={Building2}
               action={activeSector ? { label: "Tutti", onClick: () => setActiveSector(null) } : undefined}>
               <DynamicCompanies userId={user?.id || ""} sectors={careerSectors} activeSector={activeSector} />
