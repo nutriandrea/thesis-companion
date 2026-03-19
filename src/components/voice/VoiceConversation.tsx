@@ -416,7 +416,7 @@ export default function VoiceConversation({
           )}
         </AnimatePresence>
 
-        {/* Last assistant message - shown below the coin, subtle */}
+        {/* Last assistant message - progressive reveal during speech */}
         <AnimatePresence>
           {lastAssistant && !showTranscript && (
             <motion.div
@@ -425,9 +425,7 @@ export default function VoiceConversation({
               exit={{ opacity: 0 }}
               className="mt-8 max-w-lg px-8 text-center"
             >
-              <div className="text-sm text-foreground/40 leading-relaxed line-clamp-4">
-                <ReactMarkdown>{lastAssistant}</ReactMarkdown>
-              </div>
+              <ProgressiveText text={lastAssistant} progress={speechProgress} isSpeaking={voiceState === "speaking"} />
             </motion.div>
           )}
         </AnimatePresence>
