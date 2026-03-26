@@ -255,7 +255,7 @@ export default function VoiceConversation({
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ text: cleanText, severity }),
+        body: JSON.stringify({ text: cleanText, severity, language: detectLanguage(cleanText) }),
         signal: controller.signal,
       });
       if (unmountedRef.current) return;
