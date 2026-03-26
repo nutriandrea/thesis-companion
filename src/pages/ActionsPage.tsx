@@ -10,12 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks, type SocrateTask } from "@/hooks/useSocrateTasks";
-import supervisorsData from "@/data/supervisors.json";
-import companiesData from "@/data/companies.json";
-import type { Supervisor, Company } from "@/types/data";
-
-const supervisors = supervisorsData as Supervisor[];
-const companies = companiesData as Company[];
+import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
 
 interface Action { id: string; type: string; title: string; content: string; }
 
