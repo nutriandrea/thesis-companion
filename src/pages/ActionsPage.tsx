@@ -40,11 +40,14 @@ export default function ActionsPage() {
   const [profilingLoading, setProfilingLoading] = useState(false);
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
-  const studentFields = profile?.field_ids || [];
+  const { affinities: supAffinities } = useAffinityScores(user?.id, "supervisor");
+  const { affinities: compAffinities } = useAffinityScores(user?.id, "company");
   const matchedSup = useMemo(() =>
-    supervisors.filter(s => s.fieldIds.some(f => studentFields.includes(f))).slice(0, 4),
-    [studentFields]);
-  const matchedCompanies = useMemo(() => companies.slice(0, 3), []);
+    supAffinities.slice(0, 4).map(a => ({ id: a.entity_id, name: a.entity_name, researchInterests: a.matched_traits || [], email: "" })),
+    [supAffinities]);
+  const matchedCompanies = useMemo(() =>
+    compAffinities.slice(0, 3).map(a => ({ id: a.entity_id, name: a.entity_name, domains: a.matched_traits || [] })),
+    [compAffinities]);
 
   // Task stats
   const pendingTasks = tasks.filter(t => t.status === "pending" || t.status === "in_progress");
