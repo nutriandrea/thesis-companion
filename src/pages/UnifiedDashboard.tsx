@@ -948,7 +948,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
           </div>
         </div>
       )}
-      {!sup && topSectors.length === 0 && (
+      {!supervisorId && topSectors.length === 0 && (
         <p className="text-xs text-muted-foreground text-center py-4 italic">{t("supervisor.confirm_to_proceed")}</p>
       )}
     </div>
