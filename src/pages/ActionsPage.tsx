@@ -320,12 +320,12 @@ export default function ActionsPage() {
               <div className="flex items-center gap-2 mb-1"><Mail className="w-5 h-5 text-accent" /><h3 className="font-semibold font-display">Email Supervisori</h3></div>
               <p className="text-xs text-muted-foreground mb-4">Bozze personalizzate per contattare professori</p>
               <div className="space-y-2">
-                {matchedSup.map(sup => (
+                {matchedSup.length > 0 ? matchedSup.map(sup => (
                   <Button key={sup.id} variant="outline" size="sm" className="w-full justify-start text-xs gap-2" onClick={() => generateEmail(sup)} disabled={!!generating}>
                     {generating === `email-${sup.id}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                    {sup.title} {sup.firstName} {sup.lastName}
+                    {sup.name}
                   </Button>
-                ))}
+                )) : <p className="text-xs text-muted-foreground text-center py-4">Parla con Socrate per generare contatti</p>}
               </div>
             </motion.div>
 

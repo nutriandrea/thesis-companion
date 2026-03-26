@@ -327,14 +327,6 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     }
   };
 
-  // Build dataset summary for fusion engine
-  const buildDatasetSummary = useCallback(() => {
-    const companies = (companiesData as Company[]).map(c => `${c.id}: ${c.name} (${c.domains.join(", ")})`).join("\n");
-    const sups = (supervisorsData as Supervisor[]).map(s => `${s.id}: ${s.title} ${s.firstName} ${s.lastName} — ${s.researchInterests.slice(0, 3).join(", ")}`).join("\n");
-    const tops = (topicsData as Topic[]).slice(0, 30).map(t => `${t.id}: ${t.title} (${t.type}, fields: ${t.fieldIds.join(",")})`).join("\n");
-    return `AZIENDE:\n${companies}\n\nPROFESSORI:\n${sups}\n\nTOPIC (primi 30):\n${tops}`;
-  }, []);
-
   // Full fusion analysis
   const runFusionAnalysis = async () => {
     if (isStreaming || isExtracting || !user) return;
@@ -345,7 +337,6 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         body: JSON.stringify({
           studentContext,
           latexContent,
-          datasetSummary: buildDatasetSummary(),
           mode: "analyze_full",
         }),
       });
