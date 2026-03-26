@@ -2035,14 +2035,13 @@ export default function UnifiedDashboard() {
             className="flex items-center justify-center gap-4 flex-wrap"
           >
             {(() => {
-              const sup = selectedSupervisorId ? supervisors.find(s => s.id === selectedSupervisorId) : null;
               const topSectors = careerSectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 2);
               return (
                 <>
-                  {sup && (
+                  {selectedSupervisorId && (
                     <div className="flex items-center gap-1.5">
                       <GraduationCap className="w-3 h-3 text-accent" />
-                      <span className="text-[11px] text-muted-foreground">{sup.title} {sup.firstName} {sup.lastName}</span>
+                      <span className="text-[11px] text-muted-foreground">Supervisore selezionato</span>
                     </div>
                   )}
                   {topSectors.length > 0 && (
