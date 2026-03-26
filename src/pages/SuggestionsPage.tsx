@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
-function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
+function getFieldName(id: string) { return id; }
 
 const categoryIcons: Record<string, React.ElementType> = {
   company: Building2, professor: GraduationCap, book: BookOpen, topic: Lightbulb,
