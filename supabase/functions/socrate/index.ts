@@ -858,6 +858,7 @@ Rispondi SOLO con JSON: {"approved": true/false, "feedback": "breve commento"}
             {
               role: "system",
               content: `Sei il TASK MANAGER di Socrate. Genera compiti concreti, personalizzati e azionabili per lo studente.
+ADATTA i compiti al TIPO di tesi dello studente (scientifica, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica).
 
 CONTESTO STUDENTE:
 - Nome: ${profile?.first_name} ${profile?.last_name}
@@ -888,8 +889,8 @@ ${JSON.stringify(memories.slice(0, 15).map((m: any) => ({ type: m.type, title: m
 CONVERSAZIONE RECENTE:
 ${JSON.stringify(recentMessages.slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 200) })))}
 
-CONTENUTO LATEX:
-${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto LaTeX."}
+CONTENUTO DOCUMENTO TESI:
+${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto documento."}
 
 COMPITI GIÀ ASSEGNATI (evita duplicati):
 ${JSON.stringify(existingTasks.map((t: any) => ({ title: t.title, status: t.status, section: t.section })))}
@@ -900,6 +901,7 @@ ISTRUZIONI:
 - Assegna priorità realistiche basate sullo stato attuale
 - Stima il tempo in minuti (15, 30, 45, 60, 90, 120, 180)
 - Indica la sezione della tesi o l'area tematica
+- SEZIONI POSSIBILI (adatta al tipo di tesi): Introduzione, Capitoli argomentativi, Analisi critica, Casi studio, Metodologia, Literature Review, Ricerca, Progetto, Framework teorico, Analisi dati, Risultati, Discussione, Conclusioni, Bibliografia, Abstract
 - I compiti devono essere NUOVI (non ripetere quelli già assegnati)
 - Adatta i compiti al livello di maturità dello studente`,
             },
