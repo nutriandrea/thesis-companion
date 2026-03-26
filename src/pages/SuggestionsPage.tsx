@@ -57,19 +57,13 @@ export default function SuggestionsPage() {
     return items;
   }, [search, aiSuggestions, tab]);
 
-  // Sort matched topics by affinity score
+  // Topic affinities from DB (LLM-generated)
   const matchedTopics = useMemo(() => {
-    const affinityMap = new Map(affinities.map(a => [a.entity_id, a]));
-    return topics
-      .filter(t => t.fieldIds.some(f => studentFields.includes(f)))
-      .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => {
-        const aScore = affinityMap.get(a.id)?.score || 0;
-        const bScore = affinityMap.get(b.id)?.score || 0;
-        return bScore - aScore;
-      })
+    return affinities
+      .filter(a => !search || a.entity_name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => b.score - a.score)
       .slice(0, 12);
-  }, [search, studentFields, affinities]);
+  }, [search, affinities]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
