@@ -604,16 +604,6 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       const resolvedCtx = studentContext || (profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "");
       const thesisStage = studentProfile?.thesis_stage || "exploration";
 
-      // Experts and supervisors datasets (passed from frontend or hardcoded)
-      const { expertsData, supervisorsData, fieldsData } = reqBody;
-
-      // Pre-compute datasets for the prompt
-      const expertsForPrompt = JSON.stringify((expertsData || []).map((e: any) => ({
-        id: e.id, name: e.firstName + " " + e.lastName, title: e.title, about: e.about, fieldIds: e.fieldIds, offerInterviews: e.offerInterviews,
-      })));
-      const supervisorsForPrompt = JSON.stringify((supervisorsData || []).map((s: any) => ({
-        id: s.id, name: s.title + " " + s.firstName + " " + s.lastName, researchInterests: s.researchInterests, about: s.about, fieldIds: s.fieldIds,
-      })));
       const conversationCtx = recentMessages.slice(-10).map((m: any) => m.role + ": " + m.content.substring(0, 150)).join("\n");
       const thesisCtx = latexContent ? "CONTENUTO TESI:\n" + latexContent.substring(0, 3000) : "Nessun contenuto tesi disponibile.";
 
