@@ -19,16 +19,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks } from "@/hooks/useSocrateTasks";
 import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import ReactMarkdown from "react-markdown";
-import supervisorsData from "@/data/supervisors.json";
-import companiesData from "@/data/companies.json";
-import expertsData from "@/data/experts.json";
-import fieldsData from "@/data/fields.json";
-import type { Supervisor, Company, Expert, Field } from "@/types/data";
-
-const supervisors = supervisorsData as Supervisor[];
-const companies = companiesData as Company[];
-const experts = expertsData as Expert[];
-const fields = fieldsData as Field[];
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; }
