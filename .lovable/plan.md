@@ -1,75 +1,61 @@
 
 
-# Piano: Supporto tesi non-scientifiche + Fix Speech
+# Piano: Filter Database basato su LLM Knowledge (senza JSON locali)
 
-## Problema 1: Bias verso tesi scientifiche
+## Problema attuale
 
-Il sistema prompt di Socrate e i moduli di analisi sono fortemente orientati verso tesi STEM (LaTeX, metodologia di ricerca, paper accademici, literature review). Studenti di giurisprudenza, economia, design, filosofia, lettere, arte, architettura ecc. ricevono feedback inadeguato.
+Il sistema `filter_database` richiede che il frontend invii 3 grossi JSON (`supervisors.json`, `topics.json`, `companies.json`) al backend. Senza questi dati, il filtraggio non funziona. Questo è limitante: i dati sono statici, incompleti, e occupano banda inutile.
 
-### Punti da modificare
+## Soluzione
 
-**A) System prompt principale** (`supabase/functions/socrate/index.ts`, linee 2240-2346)
-- Rimuovere riferimenti a "LaTeX" come unico formato (sostituire con "documento di tesi" generico)
-- Ampliare le fasi del percorso per includere tesi non-sperimentali (es. tesi argomentative, progettuali, compilative)
-- Aggiungere istruzione: "Adatta il tuo approccio al TIPO di tesi: scientifica/sperimentale, argomentativa, progettuale, compilativa, creativa"
+Eliminare la dipendenza dai JSON locali. L'LLM genererà direttamente professori, topic, aziende e libri rilevanti dalla sua knowledge base, basandosi esclusivamente sul profilo studente, la tesi, le memorie e le conversazioni.
 
-**B) Vulnerability categories** (linee 150-235)
-- Aggiungere categorie per tesi umanistiche: "weak_argument" (argomentazione debole), "source_bias" (fonti sbilanciate), "structural_incoherence" (incoerenza strutturale)
-- Rendere le descrizioni delle categorie esistenti più generiche (es. "methodology_flaw" → vale anche per tesi senza esperimenti)
+## Modifiche
 
-**C) Task generator** (linee 822-970)
-- Espandere le sezioni da "Abstract, Metodologia, Literature Review, Ricerca, Bibliografia" a includere: Introduzione, Capitoli argomentativi, Analisi critica, Casi studio, Progetto, Conclusioni
-- Aggiungere istruzione al prompt: "Adatta le sezioni al tipo di tesi dello studente"
+### 1. Edge function `socrate/index.ts` — Modo `filter_database`
 
-**D) LaTeX analyzer** (linee 1696-1958)
-- Rinominare da "analyze_latex" a supportare qualsiasi formato documento
-- Le sezioni attese (abstract, introduzione, metodologia, risultati, bibliografia) vanno rese dinamiche: "Identifica le sezioni presenti e valutale in base al tipo di tesi"
+- Rimuovere la lettura di `supervisorsData`, `topicsData`, `companiesData` dal body della request
+- Riscrivere il prompt: invece di "filtra questo database", chiedere "genera raccomandazioni personalizzate"
+- Il prompt diventa: "Basandoti sulla tua conoscenza, suggerisci professori reali, argomenti di ricerca, aziende e libri rilevanti per questo studente"
+- Mantenere lo stesso tool calling schema (professors, topics, companies, books) — la struttura output resta identica
+- Mantenere il salvataggio in `affinity_scores` e `socrate_suggestions`
 
-**E) Report generator** (linee 2067-2103)
-- Sezione "📝 Compiti per il LaTeX Editor" → "📝 Prossimi passi per il documento"
-- Adattare la struttura del report al tipo di tesi
+### 2. Hook `useDatabaseFilter.ts`
 
-**F) Reference suggestions** (linee 239-318)
-- Espandere da "paper accademici" a includere: libri, sentenze giuridiche, casi aziendali, opere d'arte, progetti di design, codice legislativo, ecc.
+- Rimuovere import di `supervisorsData`, `topicsData`, `companiesData`
+- Rimuovere l'invio di questi 3 payload nel body della fetch
+- Il body diventa semplicemente `{ mode: "filter_database", latexContent }`
 
-**G) Demo engine** (`supabase/functions/demo-engine/index.ts`)
-- Il profilo demo è hardcoded come "MSc Computer Science, ETH Zurich, ML/NLP". Va reso più generico o parametrizzabile.
+### 3. Pagine consumer (`ContactsPage`, `SuggestionsPage`, `MarketPage`)
 
----
+- Rimuovere import dei JSON (`supervisors.json`, `topics.json`, `companies.json`) dove usati solo come "database locale"
+- Le pagine continueranno a leggere da `affinity_scores` e `socrate_suggestions` (già funzionante via realtime hooks)
+- Se le pagine mostrano anche la lista completa dal JSON, sostituire con i risultati generati dall'LLM salvati in DB
 
-## Problema 2: Speech non funzionante
+### 4. Prompt aggiornato (concetto)
 
-L'infrastruttura TTS/STT è implementata correttamente (ElevenLabs multilingual_v2, Scribe auto-detect). I potenziali problemi:
+```
+Sei SOCRATE. Genera raccomandazioni personalizzate per questo studente 
+basandoti sulla TUA CONOSCENZA del mondo accademico e professionale.
 
-**A) Welcome message hardcoded in inglese** (`SocratePage.tsx`, linee 92-95)
-- Il messaggio di benvenuto è in inglese fisso. In voice mode, il TTS lo legge in inglese anche se l'utente parla italiano.
+PROFILO: [profilo studente dal DB]
+TESI: [contenuto documento]  
+MEMORIE: [memory entries]
 
-**B) VoiceConversation `onSwitchToText` non passato** (`SocratePage.tsx`, linee 383-393)
-- Manca la prop `onSwitchToText`. Il fallback funziona ma è meglio passarla esplicitamente per chiarezza.
-
-**C) Edge function TTS - voce fissa "Daniel"** (`elevenlabs-tts/index.ts`, linea 29)
-- La voce "Daniel" è inglese nativa. Per lingue diverse dall'inglese la qualità potrebbe degradare.
-- Soluzione: usare una voce multilingual più neutra o selezionare dinamicamente in base alla lingua rilevata.
-
-**D) Verifica deployment edge functions**
-- Verificare che `elevenlabs-tts` e `elevenlabs-scribe-token` siano deployed e funzionanti tramite test diretto.
-
----
+GENERA:
+- 5-10 professori REALI del campo rilevante (con università e specializzazione)
+- 5-10 argomenti di ricerca correlati
+- 5-8 aziende rilevanti per stage/carriera
+- 5-8 libri/fonti fondamentali
+```
 
 ## File da modificare
 
-| File | Modifiche |
-|------|-----------|
-| `supabase/functions/socrate/index.ts` | Prompt generalizzati per tutti i tipi di tesi, categorie vulnerabilità ampliate, sezioni dinamiche |
-| `supabase/functions/elevenlabs-tts/index.ts` | Voce multilingual adattiva (opzionale) |
-| `supabase/functions/demo-engine/index.ts` | Profilo demo meno STEM-specifico |
-| `src/pages/SocratePage.tsx` | Welcome message multilingua, prop onSwitchToText |
-
-## Ordine di implementazione
-
-1. **Socrate edge function** — Generalizzare tutti i prompt per supportare qualsiasi tipo di tesi
-2. **TTS edge function** — Verificare/migliorare supporto multilingua voce
-3. **SocratePage** — Fix welcome message e prop mancante
-4. **Demo engine** — Aggiornare profilo demo
-5. **Test end-to-end** — Deploy e verifica voce funzionante
+| File | Cosa |
+|------|------|
+| `supabase/functions/socrate/index.ts` | Prompt LLM-based, rimuovere dipendenza da dataset esterni |
+| `src/hooks/useDatabaseFilter.ts` | Rimuovere import JSON, semplificare body request |
+| `src/pages/ContactsPage.tsx` | Adattare a dati generati da LLM |
+| `src/pages/SuggestionsPage.tsx` | Adattare a dati generati da LLM |
+| `src/pages/MarketPage.tsx` | Adattare a dati generati da LLM |
 
