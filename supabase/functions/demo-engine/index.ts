@@ -18,6 +18,7 @@ const DEMO_PROFILE = {
   deep_interests: ["interpretability", "code security", "LLM reasoning"],
   strengths: ["strong ML foundations", "good at systematic analysis", "fast learner"],
   weaknesses: ["limited industry experience", "tendency to over-scope"],
+  thesis_type: "scientific/experimental",
 };
 
 serve(async (req) => {
