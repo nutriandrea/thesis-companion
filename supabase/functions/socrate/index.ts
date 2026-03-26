@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     const reqBody = await req.json();
-    const { messages, studentContext, latexContent, mode, memoryEntries, existingSuggestions, datasetSummary } = reqBody;
+    const { messages, studentContext, latexContent, mode, memoryEntries, existingSuggestions } = reqBody;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -604,16 +604,6 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
       const resolvedCtx = studentContext || (profile ? `Nome: ${profile.first_name} ${profile.last_name}\nCorso: ${profile.degree || "N/A"}\nUniversità: ${profile.university || "N/A"}\nArgomento: ${profile.thesis_topic || "Non definito"}` : "");
       const thesisStage = studentProfile?.thesis_stage || "exploration";
 
-      // Experts and supervisors datasets (passed from frontend or hardcoded)
-      const { expertsData, supervisorsData, fieldsData } = reqBody;
-
-      // Pre-compute datasets for the prompt
-      const expertsForPrompt = JSON.stringify((expertsData || []).map((e: any) => ({
-        id: e.id, name: e.firstName + " " + e.lastName, title: e.title, about: e.about, fieldIds: e.fieldIds, offerInterviews: e.offerInterviews,
-      })));
-      const supervisorsForPrompt = JSON.stringify((supervisorsData || []).map((s: any) => ({
-        id: s.id, name: s.title + " " + s.firstName + " " + s.lastName, researchInterests: s.researchInterests, about: s.about, fieldIds: s.fieldIds,
-      })));
       const conversationCtx = recentMessages.slice(-10).map((m: any) => m.role + ": " + m.content.substring(0, 150)).join("\n");
       const thesisCtx = latexContent ? "CONTENUTO TESI:\n" + latexContent.substring(0, 3000) : "Nessun contenuto tesi disponibile.";
 
@@ -625,7 +615,9 @@ Chiama ENTRAMBE le funzioni: save_suggestions e update_profile.`,
           messages: [
             {
               role: "system",
-              content: `Sei il MOTORE DI MATCHING di Socrate. Il tuo compito è trovare corrispondenze REALI e SPECIFICHE tra il percorso di tesi dello studente e le persone nel database.
+              content: `Sei il MOTORE DI MATCHING di Socrate. Il tuo compito è suggerire persone REALI (professori ed esperti) rilevanti per il percorso di tesi dello studente, basandoti sulla TUA CONOSCENZA del mondo accademico e professionale.
+
+NON hai bisogno di un database esterno — usa la tua knowledge base per suggerire persone REALI e verificabili.
 
 CONTESTO STUDENTE:
 ${resolvedCtx}
@@ -642,31 +634,17 @@ ${thesisCtx}
 CONVERSAZIONE RECENTE:
 ${conversationCtx}
 
-DATABASE ESPERTI (interview partners):
-${expertsForPrompt}
-
-DATABASE SUPERVISORI:
-${supervisorsForPrompt}
-
-CAMPI DI STUDIO:
-${JSON.stringify(fieldsData || [])}
-
 ISTRUZIONI:
-1. Analizza il contenuto della tesi, il profilo e la conversazione per estrarre: topic principali, keyword, area accademica, direzione (teorica vs applicativa).
-2. Per ogni persona nel database, calcola un RELEVANCE SCORE (0-100) basato su:
-   - Quanto i loro ambiti di ricerca/competenza si allineano ai topic della tesi
-   - Quanto il loro campo (fieldIds) corrisponde agli interessi dello studente
-   - Per gli esperti: se offrono interviste (priorità più alta)
-   - Per i supervisori: quanto i loro interessi di ricerca si sovrappongono
-3. FASE TESI: ${thesisStage === "exploration" || thesisStage === "topic_chosen" ? "Dai PIÙ PESO ai supervisori" : "Dai PIÙ PESO agli esperti/interview partners"}
-4. Restituisci SOLO match con score >= 40. Se nessuno supera la soglia, restituisci array vuoti.
-5. Per ogni match, scrivi una MOTIVAZIONE SPECIFICA (2-3 frasi) che colleghi chiaramente la persona alla tesi dello studente. NO motivazioni generiche.
-6. matched_traits deve contenere i tratti/keyword specifici che hanno generato il match.
+1. Analizza il contenuto della tesi, il profilo e la conversazione per estrarre: topic principali, keyword, area accademica, direzione.
+2. Suggerisci 3-8 ESPERTI REALI (ricercatori, professionisti, accademici) che potrebbero essere rilevanti come interview partner o mentor.
+3. Suggerisci 3-8 SUPERVISORI/PROFESSORI REALI nelle università pertinenti che hanno competenze nel campo della tesi.
+4. Per ogni persona, genera un ID univoco (es. "prof-cognome-uni"), il nome completo, uno score di rilevanza (0-100), una motivazione SPECIFICA e i tratti che hanno generato il match.
+5. Includi l'università o l'organizzazione di appartenenza nel nome.
 
 FILTRI DI QUALITÀ:
-- Se un match non ha un collegamento CHIARO e SPECIFICO alla tesi → SCARTALO
-- Se la motivazione potrebbe applicarsi a qualsiasi studente → SCARTALO
-- Ogni motivazione DEVE menzionare elementi specifici della tesi dello studente`,
+- Ogni persona suggerita deve essere REALE e verificabile
+- La motivazione deve essere SPECIFICA per questa tesi, non generica
+- Prioritizza persone nell'area geografica/linguistica dello studente quando possibile`,
             },
           ],
           tools: [{
@@ -1518,8 +1496,7 @@ ${JSON.stringify(recentMessages.slice(-15).map((m: any) => ({ role: m.role, cont
 F) CONTENUTO LATEX:
 ${latexContent ? latexContent.substring(0, 4000) : "Nessun contenuto LaTeX presente."}
 
-G) DATASET DISPONIBILE (aziende, professori, topic):
-${datasetSummary || "Non fornito"}
+G) GENERA dalla tua KNOWLEDGE BASE professori, aziende, topic e libri REALI e rilevanti per questo studente.
 
 ISTRUZIONI:
 1. Analizza TUTTE le fonti per creare un profilo unificato

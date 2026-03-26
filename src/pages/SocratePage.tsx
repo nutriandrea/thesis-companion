@@ -9,10 +9,6 @@ import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import ThesisConfirmDialog from "@/components/journey/ThesisConfirmDialog";
-import companiesData from "@/data/companies.json";
-import supervisorsData from "@/data/supervisors.json";
-import topicsData from "@/data/topics.json";
-import type { Company, Supervisor, Topic } from "@/types/data";
 
 interface SocratePageProps {
   explorationMode?: boolean;
@@ -331,14 +327,6 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
     }
   };
 
-  // Build dataset summary for fusion engine
-  const buildDatasetSummary = useCallback(() => {
-    const companies = (companiesData as Company[]).map(c => `${c.id}: ${c.name} (${c.domains.join(", ")})`).join("\n");
-    const sups = (supervisorsData as Supervisor[]).map(s => `${s.id}: ${s.title} ${s.firstName} ${s.lastName} — ${s.researchInterests.slice(0, 3).join(", ")}`).join("\n");
-    const tops = (topicsData as Topic[]).slice(0, 30).map(t => `${t.id}: ${t.title} (${t.type}, fields: ${t.fieldIds.join(",")})`).join("\n");
-    return `AZIENDE:\n${companies}\n\nPROFESSORI:\n${sups}\n\nTOPIC (primi 30):\n${tops}`;
-  }, []);
-
   // Full fusion analysis
   const runFusionAnalysis = async () => {
     if (isStreaming || isExtracting || !user) return;
@@ -349,7 +337,6 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         body: JSON.stringify({
           studentContext,
           latexContent,
-          datasetSummary: buildDatasetSummary(),
           mode: "analyze_full",
         }),
       });

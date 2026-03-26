@@ -19,16 +19,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks } from "@/hooks/useSocrateTasks";
 import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import ReactMarkdown from "react-markdown";
-import supervisorsData from "@/data/supervisors.json";
-import companiesData from "@/data/companies.json";
-import expertsData from "@/data/experts.json";
-import fieldsData from "@/data/fields.json";
-import type { Supervisor, Company, Expert, Field } from "@/types/data";
-
-const supervisors = supervisorsData as Supervisor[];
-const companies = companiesData as Company[];
-const experts = expertsData as Expert[];
-const fields = fieldsData as Field[];
 
 interface ChatMsg { id: string; role: "user" | "assistant"; content: string; }
 interface Vulnerability { id: string; type: string; title: string; description: string; severity: string; }
@@ -454,14 +444,9 @@ function CareerTree({ sectors, userId, loading }: {
       }
     } catch { /* silent */ }
 
-    // Fallback: match from local data by domain keywords
+    // No local fallback — data comes from LLM
     if (!sectorCompanies[sectorName]) {
-      const kw = sectorName.toLowerCase();
-      const matched = companies.filter(c =>
-        c.domains.some(d => d.toLowerCase().includes(kw)) ||
-        c.description.toLowerCase().includes(kw)
-      ).slice(0, 5);
-      setSectorCompanies(prev => ({ ...prev, [sectorName]: matched.map(c => ({ name: c.name, description: c.description, domains: c.domains })) }));
+      setSectorCompanies(prev => ({ ...prev, [sectorName]: [] }));
     }
     setLoadingSector(null);
   }, [expandedSector, sectorCompanies]);
@@ -606,13 +591,11 @@ function SupervisorSelection({ userId, selectedId, onSelect }: {
   const items = useMemo(() => {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
-        const sup = supervisors.find(s => s.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: sup?.researchInterests?.slice(0, 2) || [], reasoning: a.reasoning, email: sup?.email || "", university: sup?.universityId || "" };
+        const traits = a.matched_traits || [];
+        return { id: a.entity_id, name: a.entity_name, score: a.score, fields: traits.slice(0, 2), reasoning: a.reasoning, email: "", university: "" };
       });
     }
-    return supervisors.slice(0, 5).map(s => ({
-      id: s.id, name: `${s.title} ${s.firstName} ${s.lastName}`, score: null, fields: s.researchInterests.slice(0, 2), reasoning: "", email: s.email, university: s.universityId,
-    }));
+    return [];
   }, [affinities]);
 
   const handleConfirm = useCallback((sup: typeof items[0]) => {
@@ -753,18 +736,15 @@ function ExpertSuggestions({ userId }: { userId: string }) {
 
   const items = useMemo(() => {
     if (affinities.length > 0) {
-      return affinities.slice(0, 6).map(a => {
-        const exp = experts.find(e => e.id === a.entity_id);
-        return {
-          id: a.entity_id, name: a.entity_name, score: a.score,
-          reasoning: a.reasoning,
-          matched_traits: a.matched_traits || [],
-          title: exp?.title || "",
-          offerInterviews: exp?.offerInterviews ?? false,
-          fieldIds: exp?.fieldIds || [],
-          email: exp?.email || "",
-        };
-      });
+      return affinities.slice(0, 6).map(a => ({
+        id: a.entity_id, name: a.entity_name, score: a.score,
+        reasoning: a.reasoning,
+        matched_traits: a.matched_traits || [],
+        title: "",
+        offerInterviews: false,
+        fieldIds: [] as string[],
+        email: "",
+      }));
     }
     return [];
   }, [affinities]);
@@ -824,10 +804,9 @@ function ExpertSuggestions({ userId }: { userId: string }) {
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {exp.fieldIds.map(fid => {
-                      const f = fields.find(ff => ff.id === fid);
-                      return f ? <span key={fid} className="text-[8px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{f.name}</span> : null;
-                    })}
+                    {exp.matched_traits.slice(0, 3).map((trait: string) => (
+                      <span key={trait} className="text-[8px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{trait}</span>
+                    ))}
                   </div>
                 </div>
               </motion.div>
@@ -851,11 +830,11 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
   const defaultItems = useMemo(() => {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
-        const comp = companies.find(c => c.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, domains: comp?.domains?.slice(0, 2) || [] };
+        const traits = a.matched_traits || [];
+        return { id: a.entity_id, name: a.entity_name, score: a.score, domains: traits.slice(0, 2) };
       });
     }
-    return companies.slice(0, 5).map(c => ({ id: c.id, name: c.name, score: null, domains: c.domains.slice(0, 2) }));
+    return [];
   }, [affinities]);
 
   useEffect(() => {
@@ -930,7 +909,6 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
   supervisorId: string | null; sectors: CareerSector[]; thesisTopic?: string | null;
 }) {
   const t = useT();
-  const sup = supervisorId ? supervisors.find(s => s.id === supervisorId) : null;
   const topSectors = sectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 3);
 
   return (
@@ -941,17 +919,14 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
           <p className="text-xs font-medium text-foreground">{thesisTopic}</p>
         </div>
       )}
-      {sup && (
+      {supervisorId && (
         <div className="space-y-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t("supervisor.label")}</p>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
               <GraduationCap className="w-3 h-3 text-accent" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-foreground">{sup.title} {sup.firstName} {sup.lastName}</p>
-              <p className="text-[10px] text-muted-foreground">{sup.researchInterests.slice(0, 2).join(", ")}</p>
-            </div>
+            <p className="text-xs font-medium text-foreground">Supervisore selezionato</p>
           </div>
         </div>
       )}
@@ -971,7 +946,7 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
           </div>
         </div>
       )}
-      {!sup && topSectors.length === 0 && (
+      {!supervisorId && topSectors.length === 0 && (
         <p className="text-xs text-muted-foreground text-center py-4 italic">{t("supervisor.confirm_to_proceed")}</p>
       )}
     </div>
@@ -1790,8 +1765,8 @@ export default function UnifiedDashboard() {
         fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "compute_career", thesis_content: thesisContent?.substring(0, 3000) || "" }) }),
         // Evaluate phase transition
         fetch(CAREER_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "evaluate_phase" }) }),
-        // Match experts and supervisors
-        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "match_people", expertsData, supervisorsData: supervisors, fieldsData: fields }) }),
+        // Match experts and supervisors (LLM knowledge-based, no local data)
+        fetch(SOCRATE_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ messages: recentMsgs, studentContext, latexContent: thesisContent, mode: "match_people" }) }),
         // Update roadmap if in planning+ phase
         fetch(TASK_URL, { method: "POST", headers: AUTH_HEADERS, body: JSON.stringify({ mode: "generate_roadmap", thesis_content: thesisContent?.substring(0, 3000) || "" }) }),
       ]);
@@ -2055,14 +2030,13 @@ export default function UnifiedDashboard() {
             className="flex items-center justify-center gap-4 flex-wrap"
           >
             {(() => {
-              const sup = selectedSupervisorId ? supervisors.find(s => s.id === selectedSupervisorId) : null;
               const topSectors = careerSectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 2);
               return (
                 <>
-                  {sup && (
+                  {selectedSupervisorId && (
                     <div className="flex items-center gap-1.5">
                       <GraduationCap className="w-3 h-3 text-accent" />
-                      <span className="text-[11px] text-muted-foreground">{sup.title} {sup.firstName} {sup.lastName}</span>
+                      <span className="text-[11px] text-muted-foreground">Supervisore selezionato</span>
                     </div>
                   )}
                   {topSectors.length > 0 && (

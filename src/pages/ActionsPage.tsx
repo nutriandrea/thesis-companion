@@ -10,12 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import { useSocrateTasks, type SocrateTask } from "@/hooks/useSocrateTasks";
-import supervisorsData from "@/data/supervisors.json";
-import companiesData from "@/data/companies.json";
-import type { Supervisor, Company } from "@/types/data";
-
-const supervisors = supervisorsData as Supervisor[];
-const companies = companiesData as Company[];
+import { useAffinityScores } from "@/hooks/useSocrateSuggestions";
 
 interface Action { id: string; type: string; title: string; content: string; }
 
@@ -45,11 +40,14 @@ export default function ActionsPage() {
   const [profilingLoading, setProfilingLoading] = useState(false);
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
-  const studentFields = profile?.field_ids || [];
+  const { affinities: supAffinities } = useAffinityScores(user?.id, "supervisor");
+  const { affinities: compAffinities } = useAffinityScores(user?.id, "company");
   const matchedSup = useMemo(() =>
-    supervisors.filter(s => s.fieldIds.some(f => studentFields.includes(f))).slice(0, 4),
-    [studentFields]);
-  const matchedCompanies = useMemo(() => companies.slice(0, 3), []);
+    supAffinities.slice(0, 4).map(a => ({ id: a.entity_id, name: a.entity_name, researchInterests: a.matched_traits || [], email: "" })),
+    [supAffinities]);
+  const matchedCompanies = useMemo(() =>
+    compAffinities.slice(0, 3).map(a => ({ id: a.entity_id, name: a.entity_name, domains: a.matched_traits || [] })),
+    [compAffinities]);
 
   // Task stats
   const pendingTasks = tasks.filter(t => t.status === "pending" || t.status === "in_progress");
@@ -159,12 +157,12 @@ export default function ActionsPage() {
     }
   };
 
-  const generateEmail = (sup: Supervisor) => {
-    const prompt = `Write a formal email per contattare ${sup.title} ${sup.firstName} ${sup.lastName} dell'università, esperto in ${sup.researchInterests.slice(0, 3).join(", ")}. The student wants to ask them to be the thesis supervisor. Include: introduction, motivation, skills, request for a meeting. Professional but personal tone. Do NOT ask Socratic questions, write ONLY the email ready to send.`;
-    generateWithAI(prompt, `Email per ${sup.title} ${sup.lastName}`, "email", `email-${sup.id}`);
+  const generateEmail = (sup: { id: string; name: string; researchInterests: string[] }) => {
+    const prompt = `Write a formal email per contattare ${sup.name}, esperto in ${sup.researchInterests.slice(0, 3).join(", ")}. The student wants to ask them to be the thesis supervisor. Include: introduction, motivation, skills, request for a meeting. Professional but personal tone. Do NOT ask Socratic questions, write ONLY the email ready to send.`;
+    generateWithAI(prompt, `Email per ${sup.name}`, "email", `email-${sup.id}`);
   };
 
-  const generateCompanyEmail = (company: Company) => {
+  const generateCompanyEmail = (company: { id: string; name: string; domains: string[] }) => {
     const prompt = `Write a formal email per contattare ${company.name} riguardo una potenziale collaborazione per la tesi. L'azienda opera in: ${company.domains.join(", ")}. Lo studente vuole proporre un progetto di tesi in partnership. Includi: presentazione, proposta di valore per l'azienda, competenze, richiesta di incontro. Tono professionale. NON fare domande socratiche, scrivi SOLO la email.`;
     generateWithAI(prompt, `Email per ${company.name}`, "email", `company-${company.id}`);
   };
@@ -322,12 +320,12 @@ export default function ActionsPage() {
               <div className="flex items-center gap-2 mb-1"><Mail className="w-5 h-5 text-accent" /><h3 className="font-semibold font-display">Email Supervisori</h3></div>
               <p className="text-xs text-muted-foreground mb-4">Bozze personalizzate per contattare professori</p>
               <div className="space-y-2">
-                {matchedSup.map(sup => (
+                {matchedSup.length > 0 ? matchedSup.map(sup => (
                   <Button key={sup.id} variant="outline" size="sm" className="w-full justify-start text-xs gap-2" onClick={() => generateEmail(sup)} disabled={!!generating}>
                     {generating === `email-${sup.id}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                    {sup.title} {sup.firstName} {sup.lastName}
+                    {sup.name}
                   </Button>
-                ))}
+                )) : <p className="text-xs text-muted-foreground text-center py-4">Parla con Socrate per generare contatti</p>}
               </div>
             </motion.div>
 
