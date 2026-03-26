@@ -1191,9 +1191,6 @@ ISTRUZIONI:
       const recentMessages = (msgRes.data || []).reverse();
       const existingAffinities = existingAffinityRes.data || [];
 
-      // Dataset comes from the request body
-      const { supervisorsData, topicsData, companiesData } = reqBody;
-
       const response = await fetch(AI_URL, {
         method: "POST",
         headers: aiHeaders,
@@ -1202,9 +1199,9 @@ ISTRUZIONI:
           messages: [
             {
               role: "system",
-              content: `Sei SOCRATE, la mente centrale del sistema di filtraggio intelligente del database.
+              content: `Sei SOCRATE, motore di raccomandazione personalizzata.
 
-OBIETTIVO: Filtra e ordina il database in base al profilo completo dello studente, alla fase della tesi, al contenuto LaTeX e alle interazioni passate.
+OBIETTIVO: Genera raccomandazioni personalizzate per questo studente basandoti sulla TUA CONOSCENZA del mondo accademico e professionale. NON hai bisogno di un database esterno — usa la tua knowledge base per suggerire professori REALI, argomenti di ricerca, aziende e libri.
 
 PROFILO STUDENTE:
 - Nome: ${profile?.first_name} ${profile?.last_name}
@@ -1236,44 +1233,20 @@ ${JSON.stringify(memories.slice(0, 15).map((m: any) => ({ type: m.type, title: m
 CONVERSAZIONE RECENTE:
 ${JSON.stringify(recentMessages.slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 200) })))}
 
-CONTENUTO LATEX:
-${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto LaTeX."}
-
-DATABASE DISPONIBILE:
-
-PROFESSORI (${supervisorsData?.length || 0}):
-${JSON.stringify(supervisorsData?.slice(0, 25).map((s: any) => ({
-  id: s.id, name: s.firstName + " " + s.lastName, title: s.title,
-  interests: s.researchInterests, fields: s.fieldIds, about: s.about?.substring(0, 150),
-})) || [])}
-
-TOPIC/TESI (${topicsData?.length || 0}):
-${JSON.stringify(topicsData?.slice(0, 30).map((t: any) => ({
-  id: t.id, title: t.title, desc: t.description?.substring(0, 100),
-  type: t.type, fields: t.fieldIds, employment: t.employment,
-})) || [])}
-
-AZIENDE (${companiesData?.length || 0}):
-${JSON.stringify(companiesData?.slice(0, 15).map((c: any) => ({
-  id: c.id, name: c.name, domains: c.domains, about: c.about?.substring(0, 150),
-})) || [])}
+CONTENUTO DOCUMENTO TESI:
+${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto disponibile."}
 
 AFFINITÀ ESISTENTI (per confronto):
 ${JSON.stringify(existingAffinities.slice(0, 10).map((a: any) => ({ id: a.entity_id, type: a.entity_type, score: a.score })))}
 
-REGOLE DI FILTRAGGIO:
-1. Considera SOLO entry rilevanti per il profilo centralizzato
-2. Filtra dinamicamente in base al progresso della tesi e risposte alle domande provocatorie
-3. Ordina per rilevanza rispetto alla FASE ATTUALE della tesi e obiettivi di carriera
-4. Mantieni un margine di esplorazione: suggerisci 1-2 alternative o percorsi non ancora considerati
-5. Per i libri/fonti: suggerisci in base ai topic trattati nella tesi e alle lacune rilevate
-
-OUTPUT RICHIESTO:
-- Lista PROFESSORI filtrati con punteggio di rilevanza e motivazione
-- Lista TOPIC filtrati con punteggio e motivazione
-- Lista AZIENDE filtrate con punteggio e motivazione
-- Lista LIBRI/FONTI suggeriti (basati sul profilo, non dal database)
-- Ogni entry deve avere: relevance_score (0-100), reason (breve), exploration_flag (true se è un'alternativa esplorativa)`,
+ISTRUZIONI DI GENERAZIONE:
+1. PROFESSORI: Suggerisci 5-10 professori REALI (esistenti nel mondo accademico) rilevanti per il tema della tesi. Includi nome completo, università, e specializzazione. Genera un entity_id univoco (es. "prof-generated-1").
+2. ARGOMENTI: Suggerisci 5-10 argomenti di ricerca correlati alla tesi che lo studente potrebbe esplorare. Genera un entity_id univoco.
+3. AZIENDE: Suggerisci 5-8 aziende REALI dove lo studente potrebbe fare stage o iniziare la carriera, basandoti sul suo campo. Genera un entity_id univoco.
+4. LIBRI/FONTI: Suggerisci 5-8 libri o fonti fondamentali (libri, paper, manuali, sentenze, codici, opere). Devono essere REALI e pubblicati.
+5. Mantieni 1-2 suggerimenti "esplorativi" per ogni categoria (exploration_flag = true).
+6. Adatta al TIPO di tesi: scientifica, umanistica, progettuale, argomentativa, compilativa.
+7. Ogni entry deve avere: relevance_score (0-100), reason (breve motivazione personalizzata), matched_traits (competenze/interessi dello studente che matchano).`,
             },
           ],
           tools: [
@@ -1404,7 +1377,6 @@ OUTPUT RICHIESTO:
 
         // Save books as suggestions
         if (filterResult.books?.length > 0) {
-          // Remove old book suggestions first
           await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "book");
           await supabase.from("socrate_suggestions").insert(
             filterResult.books.map((b: any) => ({
@@ -1413,6 +1385,48 @@ OUTPUT RICHIESTO:
               title: `${b.title} — ${b.author}`,
               detail: `Categoria: ${b.category}${b.exploration_flag ? " · 🔍 Esplorazione" : ""}`,
               reason: b.reason,
+            }))
+          );
+        }
+
+        // Save professors as suggestions
+        if (filterResult.professors?.length > 0) {
+          await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "professor");
+          await supabase.from("socrate_suggestions").insert(
+            filterResult.professors.map((p: any) => ({
+              user_id: userId,
+              category: "professor",
+              title: p.entity_name,
+              detail: `Rilevanza: ${p.relevance_score}%${p.exploration_flag ? " · 🔍 Esplorazione" : ""} · ${p.matched_traits?.join(", ") || ""}`,
+              reason: p.reason,
+            }))
+          );
+        }
+
+        // Save topics as suggestions
+        if (filterResult.topics?.length > 0) {
+          await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "topic");
+          await supabase.from("socrate_suggestions").insert(
+            filterResult.topics.map((t: any) => ({
+              user_id: userId,
+              category: "topic",
+              title: t.entity_name,
+              detail: `Rilevanza: ${t.relevance_score}%${t.exploration_flag ? " · 🔍 Esplorazione" : ""} · ${t.matched_traits?.join(", ") || ""}`,
+              reason: t.reason,
+            }))
+          );
+        }
+
+        // Save companies as suggestions
+        if (filterResult.companies?.length > 0) {
+          await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "company");
+          await supabase.from("socrate_suggestions").insert(
+            filterResult.companies.map((c: any) => ({
+              user_id: userId,
+              category: "company",
+              title: c.entity_name,
+              detail: `Rilevanza: ${c.relevance_score}%${c.exploration_flag ? " · 🔍 Esplorazione" : ""} · ${c.matched_traits?.join(", ") || ""}`,
+              reason: c.reason,
             }))
           );
         }

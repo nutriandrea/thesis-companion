@@ -6,15 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
-import topicsData from "@/data/topics.json";
-import companiesData from "@/data/companies.json";
-import fieldsData from "@/data/fields.json";
-import type { Topic, Company, Field } from "@/types/data";
-
-const topics = topicsData as Topic[];
-const companies = companiesData as Company[];
-const fields = fieldsData as Field[];
-function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
+function getFieldName(id: string) { return id; }
 
 const categoryIcons: Record<string, React.ElementType> = {
   company: Building2, professor: GraduationCap, book: BookOpen, topic: Lightbulb,
@@ -65,19 +57,13 @@ export default function SuggestionsPage() {
     return items;
   }, [search, aiSuggestions, tab]);
 
-  // Sort matched topics by affinity score
+  // Topic affinities from DB (LLM-generated)
   const matchedTopics = useMemo(() => {
-    const affinityMap = new Map(affinities.map(a => [a.entity_id, a]));
-    return topics
-      .filter(t => t.fieldIds.some(f => studentFields.includes(f)))
-      .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => {
-        const aScore = affinityMap.get(a.id)?.score || 0;
-        const bScore = affinityMap.get(b.id)?.score || 0;
-        return bScore - aScore;
-      })
+    return affinities
+      .filter(a => !search || a.entity_name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => b.score - a.score)
       .slice(0, 12);
-  }, [search, studentFields, affinities]);
+  }, [search, affinities]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -194,33 +180,26 @@ export default function SuggestionsPage() {
       {/* Dataset Match — sorted by affinity */}
       {tab === "dataset" && (
         <div className="grid gap-4 md:grid-cols-2">
-          {matchedTopics.map((topic, i) => {
-            const company = companies.find(c => c.id === topic.companyId);
-            const affinity = affinities.find(a => a.entity_id === topic.id);
-            return (
-              <motion.div key={topic.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className={`bg-card border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow ${affinity ? "border-ai/30" : ""}`}>
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold font-display text-base">{topic.title}</h3>
-                  {affinity && (
-                    <span className="text-sm font-bold text-ai shrink-0 ml-2">{affinity.score}%</span>
-                  )}
+          {matchedTopics.length === 0 ? (
+            <div className="col-span-2 bg-card border border-dashed rounded-xl p-8 text-center">
+              <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Clicca "Filtra Database" per generare match personalizzati.</p>
+            </div>
+          ) : matchedTopics.map((topic, i) => (
+            <motion.div key={topic.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              className="bg-card border border-ai/30 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-semibold font-display text-base">{topic.entity_name}</h3>
+                <span className="text-sm font-bold text-ai shrink-0 ml-2">{topic.score}%</span>
+              </div>
+              <p className="text-xs text-ai/70 italic mb-2 border-l-2 border-ai/20 pl-2">{topic.reasoning}</p>
+              {topic.matched_traits?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {(topic.matched_traits as string[]).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{topic.description}</p>
-                {affinity && (
-                  <p className="text-xs text-ai/70 italic mb-2 border-l-2 border-ai/20 pl-2">{affinity.reasoning}</p>
-                )}
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {topic.fieldIds.map(f => <Badge key={f} variant={studentFields.includes(f) ? "default" : "secondary"} className="text-xs">{getFieldName(f)}</Badge>)}
-                  {affinity?.matched_traits?.slice(0, 2).map((t, j) => <span key={j} className="text-[9px] px-1.5 py-0.5 rounded bg-ai/10 text-ai">{t}</span>)}
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  {company && <span className="font-medium">{company.name}</span>}
-                  {topic.degrees.map(d => <span key={d} className="uppercase">{d}</span>)}
-                </div>
-              </motion.div>
-            );
-          })}
+              )}
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
