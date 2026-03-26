@@ -444,14 +444,9 @@ function CareerTree({ sectors, userId, loading }: {
       }
     } catch { /* silent */ }
 
-    // Fallback: match from local data by domain keywords
+    // No local fallback — data comes from LLM
     if (!sectorCompanies[sectorName]) {
-      const kw = sectorName.toLowerCase();
-      const matched = companies.filter(c =>
-        c.domains.some(d => d.toLowerCase().includes(kw)) ||
-        c.description.toLowerCase().includes(kw)
-      ).slice(0, 5);
-      setSectorCompanies(prev => ({ ...prev, [sectorName]: matched.map(c => ({ name: c.name, description: c.description, domains: c.domains })) }));
+      setSectorCompanies(prev => ({ ...prev, [sectorName]: [] }));
     }
     setLoadingSector(null);
   }, [expandedSector, sectorCompanies]);
