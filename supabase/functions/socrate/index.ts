@@ -2094,7 +2094,7 @@ CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
 ${studentProfileCtx}
 
-${latexContent ? `CONTENUTO LATEX EDITOR:\n\`\`\`latex\n${latexContent.substring(0, 4000)}\n\`\`\`\nValuta: struttura, coerenza, completezza, qualità abstract, metodologia, bibliografia.` : "Nessun contenuto LaTeX."}
+${latexContent ? `CONTENUTO DOCUMENTO TESI:\n\`\`\`\n${latexContent.substring(0, 4000)}\n\`\`\`\nValuta: struttura, coerenza, completezza, qualità delle sezioni presenti. Adatta la valutazione al tipo di tesi.` : "Nessun contenuto documento."}
 
 STRUTTURA DEL REPORT:
 
@@ -2102,16 +2102,16 @@ STRUTTURA DEL REPORT:
 Descrivi stile di ragionamento, punti di forza e inclinazioni emersi.
 
 ## 🟢 Cosa funziona
-Punti di forza dalla conversazione e dal LaTeX. Sii specifico.
+Punti di forza dalla conversazione e dal documento. Sii specifico.
 
 ## 🔴 Cosa manca o va approfondito
 Lacune, fragilità, sezioni mancanti. Per ogni punto, indica cosa fare.
 
-## 📝 Compiti per il LaTeX Editor
-Lista numerata di azioni concrete e actionable.
+## 📝 Prossimi passi per il documento
+Lista numerata di azioni concrete e actionable per migliorare la tesi.
 
 ## 📚 Risorse Consigliate
-Libri, paper, fonti specifiche con motivazione.
+Libri, paper, fonti, risorse specifiche per la disciplina con motivazione.
 
 ## 🏢 Opportunità Professionali
 Aziende o percorsi di carriera pertinenti al profilo.
@@ -2119,7 +2119,7 @@ Aziende o percorsi di carriera pertinenti al profilo.
 ## 📊 Valutazione complessiva
 Giudizio 1-10 e indicazioni per il prossimo step.
 
-Italiano, diretto, specifico, provocatorio.`;
+Scrivi nella stessa lingua dello studente. Diretto, specifico, provocatorio.`;
     } else {
       // ─── CHAT MODE ───
 
