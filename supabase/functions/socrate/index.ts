@@ -197,7 +197,7 @@ Esempio (tesi progettuale): "Il tuo progetto non ha metriche di validazione. Com
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["cliche", "logic_gap", "methodology_flaw", "superficiality", "originality_deficit"] },
+                        type: { type: "string", enum: ["cliche", "logic_gap", "methodology_flaw", "superficiality", "originality_deficit", "weak_argument", "source_bias", "structural_incoherence"] },
                         title: { type: "string" },
                         description: { type: "string" },
                         severity: { type: "string", enum: ["critical", "high", "medium"] },
