@@ -14,7 +14,7 @@ export default function PathPage() {
   const { affinities: topics } = useAffinityScores(user?.id, "topic");
   const { affinities: companies } = useAffinityScores(user?.id, "company");
   const { affinities: experts } = useAffinityScores(user?.id, "expert");
-  const { filterDatabase, loading: generating } = useDatabaseFilter();
+  const { filterDatabase, loading: generating, progress } = useDatabaseFilter();
 
   const paths = useMemo(() => {
     if (topics.length === 0) return [];
