@@ -25,8 +25,13 @@ serve(async (req) => {
       });
     }
 
-    // Voice: Daniel (authoritative, calm) - good for a Socratic mentor
-    const voiceId = "onwK4e9ZLuTAKqWW03F9";
+    // Select voice based on detected language for better multilingual quality
+    // Daniel (onwK4e9ZLuTAKqWW03F9) - good for English
+    // Laura (FGY2WhTYpPnrIDTdsKH5) - excellent multilingual, natural for Romance languages
+    // Sarah (EXAVITQu4vr4xnSDxMaL) - good multilingual alternative
+    const lang = (language || "").toLowerCase();
+    const isEnglish = lang.startsWith("en");
+    const voiceId = isEnglish ? "onwK4e9ZLuTAKqWW03F9" : "FGY2WhTYpPnrIDTdsKH5";
 
     // Adjust voice settings based on severity (0-1)
     const sev = typeof severity === "number" ? Math.max(0, Math.min(1, severity)) : 0.5;

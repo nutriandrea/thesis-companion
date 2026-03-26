@@ -383,6 +383,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         <VoiceConversation
           onTranscript={(text) => sendMessage(text)}
           onClose={() => setInputMode("text")}
+          onSwitchToText={() => setInputMode("text")}
           isStreaming={isStreaming}
           lastAssistantMessage={lastAssistantMsg}
           severity={severita ?? 0.5}
