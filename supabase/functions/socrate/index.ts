@@ -2275,7 +2275,7 @@ ${vulnerabilitiesCtx}
 ${datasetPatternsCtx}
 ${ragContext}
 
-${latexContent ? "CONTENUTO TESI (da Google Docs):\n" + latexContent.substring(0, 3000) + "\nFai riferimento a sezioni specifiche." : ""}
+${latexContent ? "CONTENUTO DOCUMENTO TESI (da Google Docs):\n" + latexContent.substring(0, 3000) + "\nFai riferimento a sezioni specifiche. Adatta il tuo feedback al tipo di tesi (scientifica, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica)." : ""}
 
 ${memoryEntries && (memoryEntries as any[]).length > 0 ? "MEMORIA PRECEDENTE:\n" + JSON.stringify((memoryEntries as any[]).slice(-15).map((m: any) => ({ type: m.type, title: m.title }))) : ""}
 
