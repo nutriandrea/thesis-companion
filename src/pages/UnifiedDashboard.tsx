@@ -804,10 +804,9 @@ function ExpertSuggestions({ userId }: { userId: string }) {
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {exp.fieldIds.map(fid => {
-                      const f = fields.find(ff => ff.id === fid);
-                      return f ? <span key={fid} className="text-[8px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{f.name}</span> : null;
-                    })}
+                    {exp.matched_traits.slice(0, 3).map((trait: string) => (
+                      <span key={trait} className="text-[8px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{trait}</span>
+                    ))}
                   </div>
                 </div>
               </motion.div>
