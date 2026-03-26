@@ -1,61 +1,69 @@
 
 
-# Piano: Filter Database basato su LLM Knowledge (senza JSON locali)
+# Piano: Rimuovere dipendenza da JSON statici — tutto da LLM knowledge
 
-## Problema attuale
+## Situazione attuale
 
-Il sistema `filter_database` richiede che il frontend invii 3 grossi JSON (`supervisors.json`, `topics.json`, `companies.json`) al backend. Senza questi dati, il filtraggio non funziona. Questo è limitante: i dati sono statici, incompleti, e occupano banda inutile.
+6 pagine importano dati da file JSON statici (`supervisors.json`, `companies.json`, `topics.json`, `experts.json`, `fields.json`):
 
-## Soluzione
+| Pagina | JSON usati | Come li usa |
+|--------|-----------|-------------|
+| **UnifiedDashboard** | supervisors, companies, experts, fields | Lookup supervisori/aziende per affinità, invio a `match_people`, fallback career tree |
+| **SocratePage** | supervisors, companies, topics | `buildDatasetSummary()` — invia lista completa al backend come contesto |
+| **ActionsPage** | supervisors, companies | Filtra supervisori per campo, mostra aziende per email |
+| **PathPage** | supervisors, companies, experts, topics, fields | Genera percorsi incrociando topic/supervisori locali |
+| **FuturesPage** | topics | Genera scenari what-if da topic statici |
+| **ProfilePage** | fields, universities | Dropdown selezione campo/università (questi restano — sono UI config, non dati mock) |
 
-Eliminare la dipendenza dai JSON locali. L'LLM genererà direttamente professori, topic, aziende e libri rilevanti dalla sua knowledge base, basandosi esclusivamente sul profilo studente, la tesi, le memorie e le conversazioni.
+## Strategia
 
-## Modifiche
+Ogni pagina che oggi mostra dati da JSON deve invece:
+1. Leggere da `affinity_scores` e `socrate_suggestions` (già popolati dal filter_database LLM)
+2. Se vuoto → mostrare empty state con bottone "Genera con Socrate"
+3. I dati generati dall'LLM sono già salvati in DB dai hook esistenti (`useAffinityScores`, `useSocrateSuggestions`)
 
-### 1. Edge function `socrate/index.ts` — Modo `filter_database`
+**Eccezioni**: `fields.json` e `universities.json` in ProfilePage restano — sono liste di opzioni UI, non dati di raccomandazione.
 
-- Rimuovere la lettura di `supervisorsData`, `topicsData`, `companiesData` dal body della request
-- Riscrivere il prompt: invece di "filtra questo database", chiedere "genera raccomandazioni personalizzate"
-- Il prompt diventa: "Basandoti sulla tua conoscenza, suggerisci professori reali, argomenti di ricerca, aziende e libri rilevanti per questo studente"
-- Mantenere lo stesso tool calling schema (professors, topics, companies, books) — la struttura output resta identica
-- Mantenere il salvataggio in `affinity_scores` e `socrate_suggestions`
+## Modifiche per file
 
-### 2. Hook `useDatabaseFilter.ts`
+### 1. `src/pages/SocratePage.tsx`
+- Rimuovere import di `companiesData`, `supervisorsData`, `topicsData`
+- Rimuovere `buildDatasetSummary()` — non serve più inviare il dataset al backend
+- Rimuovere il parametro `datasetSummary` dalla fetch a Socrate (il backend genera tutto dalla sua knowledge)
 
-- Rimuovere import di `supervisorsData`, `topicsData`, `companiesData`
-- Rimuovere l'invio di questi 3 payload nel body della fetch
-- Il body diventa semplicemente `{ mode: "filter_database", latexContent }`
+### 2. `src/pages/UnifiedDashboard.tsx`
+- Rimuovere import di `supervisorsData`, `companiesData`, `expertsData`, `fieldsData`
+- Le funzioni che fanno `supervisors.find(s => s.id === a.entity_id)` devono usare i dati già presenti in `affinity_scores` (entity_name, reasoning, matched_traits)
+- Il career tree già usa dati dal backend; rimuovere solo il fallback `companies.filter(...)` locale
+- Rimuovere l'invio di `supervisorsData` e `fieldsData` alla fetch `match_people`
 
-### 3. Pagine consumer (`ContactsPage`, `SuggestionsPage`, `MarketPage`)
+### 3. `src/pages/ActionsPage.tsx`
+- Rimuovere import supervisors/companies
+- `matchedSup` e `matchedCompanies` → usare `useAffinityScores` per prendere supervisori e aziende dal DB
+- Email generation: usare `entity_name` dall'affinity invece del lookup locale
 
-- Rimuovere import dei JSON (`supervisors.json`, `topics.json`, `companies.json`) dove usati solo come "database locale"
-- Le pagine continueranno a leggere da `affinity_scores` e `socrate_suggestions` (già funzionante via realtime hooks)
-- Se le pagine mostrano anche la lista completa dal JSON, sostituire con i risultati generati dall'LLM salvati in DB
+### 4. `src/pages/PathPage.tsx`
+- Rimuovere tutti i 5 import JSON
+- Riscrivere per usare `useAffinityScores` (supervisori, topic, aziende dal DB)
+- Se nessun dato → empty state con "Genera con Socrate"
 
-### 4. Prompt aggiornato (concetto)
+### 5. `src/pages/FuturesPage.tsx`
+- Rimuovere import topics
+- Usare `useAffinityScores(userId, "topic")` per mostrare topic dal DB
+- Scenari what-if generati da dati LLM invece che da JSON statico
 
-```
-Sei SOCRATE. Genera raccomandazioni personalizzate per questo studente 
-basandoti sulla TUA CONOSCENZA del mondo accademico e professionale.
+### 6. `supabase/functions/socrate/index.ts`
+- Nel mode `chat`: rimuovere la lettura di `datasetSummary` dal body (non serve più, il backend usa la sua knowledge)
+- Nel mode `match_people` (se esiste): rimuovere la dipendenza da `supervisorsData`/`expertsData` passati dal frontend
 
-PROFILO: [profilo studente dal DB]
-TESI: [contenuto documento]  
-MEMORIE: [memory entries]
+### 7. Cleanup
+- I file `src/data/supervisors.json`, `companies.json`, `topics.json`, `experts.json` possono essere rimossi (o lasciati per la demo)
+- `src/data/fields.json` e `universities.json` restano per i dropdown del profilo
 
-GENERA:
-- 5-10 professori REALI del campo rilevante (con università e specializzazione)
-- 5-10 argomenti di ricerca correlati
-- 5-8 aziende rilevanti per stage/carriera
-- 5-8 libri/fonti fondamentali
-```
-
-## File da modificare
-
-| File | Cosa |
-|------|------|
-| `supabase/functions/socrate/index.ts` | Prompt LLM-based, rimuovere dipendenza da dataset esterni |
-| `src/hooks/useDatabaseFilter.ts` | Rimuovere import JSON, semplificare body request |
-| `src/pages/ContactsPage.tsx` | Adattare a dati generati da LLM |
-| `src/pages/SuggestionsPage.tsx` | Adattare a dati generati da LLM |
-| `src/pages/MarketPage.tsx` | Adattare a dati generati da LLM |
+## Ordine di implementazione
+1. Edge function — rimuovere dipendenza da dataset nel body
+2. SocratePage — rimuovere buildDatasetSummary
+3. UnifiedDashboard — sostituire lookup locali con dati DB
+4. ActionsPage, PathPage, FuturesPage — stessa sostituzione
+5. Test end-to-end
 
