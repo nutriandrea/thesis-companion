@@ -1712,7 +1712,7 @@ Chiama TUTTE le funzioni disponibili.`,
       }
 
       if (!latexContent || latexContent.trim().length < 50) {
-        return new Response(JSON.stringify({ error: "Contenuto LaTeX troppo breve per l'analisi." }), {
+        return new Response(JSON.stringify({ error: "Contenuto documento troppo breve per l'analisi." }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
