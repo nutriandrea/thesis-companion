@@ -18,6 +18,7 @@ const DEMO_PROFILE = {
   deep_interests: ["interpretability", "code security", "LLM reasoning"],
   strengths: ["strong ML foundations", "good at systematic analysis", "fast learner"],
   weaknesses: ["limited industry experience", "tendency to over-scope"],
+  thesis_type: "scientific/experimental",
 };
 
 serve(async (req) => {
@@ -39,7 +40,10 @@ serve(async (req) => {
 - Current Phase: ${DEMO_PROFILE.current_phase}
 - Deep interests: ${DEMO_PROFILE.deep_interests.join(", ")}
 - Strengths: ${DEMO_PROFILE.strengths.join(", ")}
-- Weaknesses: ${DEMO_PROFILE.weaknesses.join(", ")}`;
+- Weaknesses: ${DEMO_PROFILE.weaknesses.join(", ")}
+- Thesis type: ${DEMO_PROFILE.thesis_type}
+
+NOTE: This student has a scientific/experimental thesis. Adapt all outputs to the thesis type. The system supports ALL thesis types: scientific, argumentative, compilative, project-based, creative, legal, economic, humanities, artistic.`;
 
     // ─── GENERATE TASKS ───
     if (mode === "generate_tasks") {

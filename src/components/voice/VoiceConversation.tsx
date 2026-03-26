@@ -28,6 +28,23 @@ interface VoiceConversationProps {
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
+// Simple language detection based on common words
+function detectLanguage(text: string): string {
+  const lower = text.toLowerCase();
+  const itWords = ["che", "della", "nella", "sono", "questo", "questa", "anche", "perché", "alla", "una"];
+  const deWords = ["und", "der", "die", "das", "ist", "mit", "von", "für", "nicht", "ein"];
+  const frWords = ["que", "les", "des", "une", "est", "dans", "pour", "avec", "pas", "sur"];
+  const esWords = ["que", "los", "las", "una", "por", "para", "con", "del", "más", "pero"];
+  
+  const countMatches = (words: string[]) => words.filter(w => lower.includes(` ${w} `) || lower.startsWith(`${w} `)).length;
+  
+  const scores = { it: countMatches(itWords), de: countMatches(deWords), fr: countMatches(frWords), es: countMatches(esWords) };
+  const best = Object.entries(scores).sort(([,a], [,b]) => b - a)[0];
+  
+  if (best && best[1] >= 2) return best[0];
+  return "en";
+}
+
 // Concentric ring animation for speaking state
 function SpeakingRings({ active }: { active: boolean }) {
   if (!active) return null;
@@ -255,7 +272,7 @@ export default function VoiceConversation({
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ text: cleanText, severity }),
+        body: JSON.stringify({ text: cleanText, severity, language: detectLanguage(cleanText) }),
         signal: controller.signal,
       });
       if (unmountedRef.current) return;

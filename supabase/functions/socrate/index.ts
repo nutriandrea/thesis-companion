@@ -157,24 +157,30 @@ Tipi:
             {
               role: "system",
               content: `Sei l'analista critico del sistema Socrate. Identifica VULNERABILITÀ nella tesi e nel ragionamento dello studente.
+ADATTA la tua analisi al TIPO di tesi: scientifica/sperimentale, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica.
 
 CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
 
-${latexContent ? `CONTENUTO LATEX:\n${latexContent.substring(0, 3000)}` : ""}
+${latexContent ? `CONTENUTO DOCUMENTO TESI:\n${latexContent.substring(0, 3000)}` : ""}
 
 Categorie:
 - "cliche": frasi fatte, idee banali, argomenti già sentiti mille volte
 - "logic_gap": buchi logici, salti argomentativi, premesse non dimostrate
-- "methodology_flaw": errori metodologici, approcci deboli
+- "methodology_flaw": errori metodologici o di approccio (vale per qualsiasi tipo di tesi: metodo sperimentale, framework analitico, approccio critico, analisi casistica, progetto creativo)
 - "superficiality": trattazione superficiale, mancanza di profondità
-- "originality_deficit": niente di nuovo rispetto alla letteratura
+- "originality_deficit": niente di nuovo rispetto alla letteratura esistente
+- "weak_argument": argomentazione debole, tesi non supportata, conclusioni non derivate dalle premesse
+- "source_bias": fonti sbilanciate, mancanza di prospettive opposte, cherry-picking
+- "structural_incoherence": incoerenza strutturale, capitoli non collegati, filo logico assente
 
 Severity: "critical" (blocca la tesi), "high" (serio), "medium" (da migliorare)
 
 Sii DIRETTO, AGGRESSIVO, BRUTALE. Non addolcire.
 Esempio: "Questa introduzione potrebbe essere in qualsiasi tesi. Zero identità."
-Esempio: "Stai riscrivendo Wikipedia, non stai facendo ricerca."`,
+Esempio: "Stai riscrivendo Wikipedia, non stai facendo ricerca."
+Esempio (tesi umanistica): "Citi solo autori che supportano la tua tesi. Dov'è il contraddittorio?"
+Esempio (tesi progettuale): "Il tuo progetto non ha metriche di validazione. Come dimostri che funziona?"`,
             },
             { role: "user", content: JSON.stringify((messages as any[]).slice(-20)) },
           ],
@@ -191,7 +197,7 @@ Esempio: "Stai riscrivendo Wikipedia, non stai facendo ricerca."`,
                     items: {
                       type: "object",
                       properties: {
-                        type: { type: "string", enum: ["cliche", "logic_gap", "methodology_flaw", "superficiality", "originality_deficit"] },
+                        type: { type: "string", enum: ["cliche", "logic_gap", "methodology_flaw", "superficiality", "originality_deficit", "weak_argument", "source_bias", "structural_incoherence"] },
                         title: { type: "string" },
                         description: { type: "string" },
                         severity: { type: "string", enum: ["critical", "high", "medium"] },
@@ -245,23 +251,25 @@ Esempio: "Stai riscrivendo Wikipedia, non stai facendo ricerca."`,
           messages: [
             {
               role: "system",
-              content: `Sei un ricercatore esperto. Basandoti sul contesto dello studente, suggerisci paper accademici, articoli e risorse fondamentali da leggere per la sua tesi.
+              content: `Sei un ricercatore esperto. Basandoti sul contesto dello studente, suggerisci risorse fondamentali per la sua tesi.
+ADATTA i riferimenti al TIPO di tesi e disciplina dello studente.
 
 CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
 
-${latexContent ? `CONTENUTO LATEX:\n${latexContent.substring(0, 2000)}` : ""}
+${latexContent ? `CONTENUTO DOCUMENTO TESI:\n${latexContent.substring(0, 2000)}` : ""}
 
 CONVERSAZIONE RECENTE:
 ${JSON.stringify((messages as any[]).slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 300) })))}
 
 Regole:
-- Suggerisci 4-6 riferimenti REALI e verificabili (paper, articoli, libri)
-- Includi link diretti quando possibile (DOI, arXiv, Google Scholar, siti ufficiali)
+- Suggerisci 4-6 riferimenti REALI e verificabili
+- Tipi di risorse (adatta alla disciplina): paper accademici, libri, monografie, sentenze giuridiche, casi aziendali, rapporti di settore, opere d'arte/design, codice legislativo, standard tecnici, documentari, archivi storici, dataset
+- Includi link diretti quando possibile (DOI, arXiv, Google Scholar, SSRN, siti ufficiali, archivi giuridici)
 - Per ogni riferimento spiega BREVEMENTE perché è rilevante per la tesi dello studente
 - Categorie: "foundational" (basi teoriche), "methodology" (approccio metodologico), "recent" (stato dell'arte recente), "contrarian" (prospettive opposte)
 - Se non conosci un link preciso, usa il formato Google Scholar search: https://scholar.google.com/scholar?q=QUERY
-- Prioritizza paper seminali e survey recenti`,
+- Prioritizza fonti seminali e review/survey recenti`,
             },
             { role: "user", content: "Suggerisci i riferimenti principali per la mia tesi." },
           ],
@@ -327,7 +335,7 @@ Regole:
           messages: [
             {
               role: "system",
-              content: `Sei il MOTORE DI PROFILAZIONE CENTRALE di Socrate. Analizza TUTTO per generare:
+              content: `Sei il MOTORE DI PROFILAZIONE CENTRALE di Socrate. ADATTA la profilazione al tipo di tesi (scientifica, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica). Analizza TUTTO per generare:
 1. Suggerimenti mirati per le sezioni del sito
 2. Un aggiornamento del profilo intellettuale dello studente
 
@@ -850,6 +858,7 @@ Rispondi SOLO con JSON: {"approved": true/false, "feedback": "breve commento"}
             {
               role: "system",
               content: `Sei il TASK MANAGER di Socrate. Genera compiti concreti, personalizzati e azionabili per lo studente.
+ADATTA i compiti al TIPO di tesi dello studente (scientifica, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica).
 
 CONTESTO STUDENTE:
 - Nome: ${profile?.first_name} ${profile?.last_name}
@@ -880,8 +889,8 @@ ${JSON.stringify(memories.slice(0, 15).map((m: any) => ({ type: m.type, title: m
 CONVERSAZIONE RECENTE:
 ${JSON.stringify(recentMessages.slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 200) })))}
 
-CONTENUTO LATEX:
-${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto LaTeX."}
+CONTENUTO DOCUMENTO TESI:
+${latexContent ? latexContent.substring(0, 3000) : "Nessun contenuto documento."}
 
 COMPITI GIÀ ASSEGNATI (evita duplicati):
 ${JSON.stringify(existingTasks.map((t: any) => ({ title: t.title, status: t.status, section: t.section })))}
@@ -892,6 +901,7 @@ ISTRUZIONI:
 - Assegna priorità realistiche basate sullo stato attuale
 - Stima il tempo in minuti (15, 30, 45, 60, 90, 120, 180)
 - Indica la sezione della tesi o l'area tematica
+- SEZIONI POSSIBILI (adatta al tipo di tesi): Introduzione, Capitoli argomentativi, Analisi critica, Casi studio, Metodologia, Literature Review, Ricerca, Progetto, Framework teorico, Analisi dati, Risultati, Discussione, Conclusioni, Bibliografia, Abstract
 - I compiti devono essere NUOVI (non ripetere quelli già assegnati)
 - Adatta i compiti al livello di maturità dello studente`,
             },
@@ -912,7 +922,7 @@ ISTRUZIONI:
                         properties: {
                           title: { type: "string", description: "Short task title" },
                           description: { type: "string", description: "Detailed action description" },
-                          section: { type: "string", description: "Thesis section or topic area (e.g. Abstract, Metodologia, Literature Review, Ricerca, Bibliografia)" },
+                          section: { type: "string", description: "Thesis section or topic area (e.g. Introduzione, Metodologia, Literature Review, Analisi critica, Casi studio, Progetto, Framework teorico, Risultati, Discussione, Conclusioni, Bibliografia, Abstract)" },
                           priority: { type: "string", enum: ["critical", "high", "medium", "low"] },
                           estimated_minutes: { type: "integer", description: "Estimated time in minutes" },
                         },
@@ -1702,7 +1712,7 @@ Chiama TUTTE le funzioni disponibili.`,
       }
 
       if (!latexContent || latexContent.trim().length < 50) {
-        return new Response(JSON.stringify({ error: "Contenuto LaTeX troppo breve per l'analisi." }), {
+        return new Response(JSON.stringify({ error: "Contenuto documento troppo breve per l'analisi." }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -1724,12 +1734,20 @@ Chiama TUTTE le funzioni disponibili.`,
           messages: [
             {
               role: "system",
-              content: `Sei l'ANALIZZATORE LATEX di Socrate. Il tuo compito è analizzare il contenuto LaTeX della tesi e:
+              content: `Sei l'ANALIZZATORE DI DOCUMENTI di Socrate. Il tuo compito è analizzare il contenuto del documento di tesi (qualsiasi formato: LaTeX, Word, testo) e:
 
-1. VALUTARE la qualità di ogni sezione (abstract, introduzione, metodologia, risultati, bibliografia)
-2. IDENTIFICARE lacune, sezioni mancanti, argomentazioni deboli
-3. GENERARE feedback azionabili e next steps concreti
-4. AGGIORNARE il profilo intellettuale con dati sulla qualità della scrittura
+1. IDENTIFICARE il TIPO di tesi (scientifica, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica)
+2. VALUTARE la qualità di ogni sezione PRESENTE — NON aspettarti sezioni fisse. Le sezioni dipendono dal tipo di tesi.
+3. IDENTIFICARE lacune, sezioni mancanti, argomentazioni deboli
+4. GENERARE feedback azionabili e next steps concreti
+5. AGGIORNARE il profilo intellettuale con dati sulla qualità della scrittura
+
+Sezioni tipiche per tipo di tesi:
+- Scientifica/sperimentale: Abstract, Introduzione, Literature Review, Metodologia, Risultati, Discussione, Conclusioni, Bibliografia
+- Argomentativa/umanistica: Introduzione, Framework teorico, Capitoli argomentativi, Analisi critica, Conclusioni, Bibliografia
+- Progettuale/design: Introduzione, Stato dell'arte, Concept, Sviluppo progetto, Testing/Validazione, Conclusioni
+- Compilativa: Introduzione, Capitoli tematici, Analisi comparativa, Conclusioni, Bibliografia
+- Giuridica: Introduzione, Quadro normativo, Analisi giurisprudenziale, Casi studio, Conclusioni
 
 CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
@@ -1748,19 +1766,20 @@ ${existingProfile ? JSON.stringify({
 MEMORIA CONVERSAZIONI:
 ${JSON.stringify(memories.slice(0, 10).map((m: any) => ({ type: m.type, title: m.title })))}
 
-CONTENUTO LATEX COMPLETO:
-\`\`\`latex
+CONTENUTO DOCUMENTO COMPLETO:
+\`\`\`
 ${latexContent.substring(0, 8000)}
 \`\`\`
 
 ISTRUZIONI:
-1. Analizza OGNI sezione presente nel LaTeX
-2. Per ogni sezione: valuta completezza (0-100), qualità argomentativa, coerenza
-3. Identifica sezioni MANCANTI rispetto a una tesi completa
-4. Genera feedback specifici per sezione con suggerimenti concreti
-5. Calcola un punteggio qualità tesi complessivo (1-10)
-6. Genera next steps prioritizzati per l'editor
-7. Aggiorna il profilo con i nuovi dati sulla tesi
+1. Prima IDENTIFICA il tipo di tesi dal contenuto e dal contesto studente
+2. Analizza OGNI sezione presente nel documento
+3. Per ogni sezione: valuta completezza (0-100), qualità argomentativa, coerenza
+4. Identifica sezioni MANCANTI rispetto a una tesi completa di quel tipo
+5. Genera feedback specifici per sezione con suggerimenti concreti
+6. Calcola un punteggio qualità tesi complessivo (1-10)
+7. Genera next steps prioritizzati per il documento
+8. Aggiorna il profilo con i nuovi dati sulla tesi
 
 Chiama TUTTE le funzioni disponibili.`,
             },
@@ -2075,7 +2094,7 @@ CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
 ${studentProfileCtx}
 
-${latexContent ? `CONTENUTO LATEX EDITOR:\n\`\`\`latex\n${latexContent.substring(0, 4000)}\n\`\`\`\nValuta: struttura, coerenza, completezza, qualità abstract, metodologia, bibliografia.` : "Nessun contenuto LaTeX."}
+${latexContent ? `CONTENUTO DOCUMENTO TESI:\n\`\`\`\n${latexContent.substring(0, 4000)}\n\`\`\`\nValuta: struttura, coerenza, completezza, qualità delle sezioni presenti. Adatta la valutazione al tipo di tesi.` : "Nessun contenuto documento."}
 
 STRUTTURA DEL REPORT:
 
@@ -2083,16 +2102,16 @@ STRUTTURA DEL REPORT:
 Descrivi stile di ragionamento, punti di forza e inclinazioni emersi.
 
 ## 🟢 Cosa funziona
-Punti di forza dalla conversazione e dal LaTeX. Sii specifico.
+Punti di forza dalla conversazione e dal documento. Sii specifico.
 
 ## 🔴 Cosa manca o va approfondito
 Lacune, fragilità, sezioni mancanti. Per ogni punto, indica cosa fare.
 
-## 📝 Compiti per il LaTeX Editor
-Lista numerata di azioni concrete e actionable.
+## 📝 Prossimi passi per il documento
+Lista numerata di azioni concrete e actionable per migliorare la tesi.
 
 ## 📚 Risorse Consigliate
-Libri, paper, fonti specifiche con motivazione.
+Libri, paper, fonti, risorse specifiche per la disciplina con motivazione.
 
 ## 🏢 Opportunità Professionali
 Aziende o percorsi di carriera pertinenti al profilo.
@@ -2100,7 +2119,7 @@ Aziende o percorsi di carriera pertinenti al profilo.
 ## 📊 Valutazione complessiva
 Giudizio 1-10 e indicazioni per il prossimo step.
 
-Italiano, diretto, specifico, provocatorio.`;
+Scrivi nella stessa lingua dello studente. Diretto, specifico, provocatorio.`;
     } else {
       // ─── CHAT MODE ───
 
@@ -2233,8 +2252,9 @@ MODALITÀ POST-TESI ATTIVA — SEI IN FASE DI COSTRUZIONE:
 4. Tono: "Questa cosa è già stata fatta mille volte. Perché la tua dovrebbe essere diversa?"
 5. Se lo studente è vago: "Non hai detto nulla di concreto. Riformula con dati."
 6. Se lo studente è troppo sicuro: "Perfetto, allora dimmi il punto più debole della tua tesi."
-7. Chiedi SEMPRE di giustificare le scelte metodologiche.
+7. Chiedi SEMPRE di giustificare le scelte metodologiche o l'approccio scelto (vale per qualsiasi tipo di tesi).
 8. Non accettare "perché è interessante" — chiedi "interessante PER CHI? Con quale impatto?"
+9. Adatta le tue sfide al TIPO di tesi: per tesi argomentative chiedi fonti e controargomenti, per tesi progettuali chiedi metriche e validazione, per tesi compilative chiedi originalità nell'analisi.
 ` : "";
 
       systemPrompt = `Sei Socrate, assistente AI per la tesi. NON sei il filosofo antico.
@@ -2256,7 +2276,7 @@ ${vulnerabilitiesCtx}
 ${datasetPatternsCtx}
 ${ragContext}
 
-${latexContent ? "CONTENUTO TESI (da Google Docs):\n" + latexContent.substring(0, 3000) + "\nFai riferimento a sezioni specifiche." : ""}
+${latexContent ? "CONTENUTO DOCUMENTO TESI (da Google Docs):\n" + latexContent.substring(0, 3000) + "\nFai riferimento a sezioni specifiche. Adatta il tuo feedback al tipo di tesi (scientifica, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica)." : ""}
 
 ${memoryEntries && (memoryEntries as any[]).length > 0 ? "MEMORIA PRECEDENTE:\n" + JSON.stringify((memoryEntries as any[]).slice(-15).map((m: any) => ({ type: m.type, title: m.title }))) : ""}
 
