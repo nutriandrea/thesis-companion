@@ -921,17 +921,14 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
           <p className="text-xs font-medium text-foreground">{thesisTopic}</p>
         </div>
       )}
-      {sup && (
+      {supervisorId && (
         <div className="space-y-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t("supervisor.label")}</p>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
               <GraduationCap className="w-3 h-3 text-accent" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-foreground">{sup.title} {sup.firstName} {sup.lastName}</p>
-              <p className="text-[10px] text-muted-foreground">{sup.researchInterests.slice(0, 2).join(", ")}</p>
-            </div>
+            <p className="text-xs font-medium text-foreground">Supervisore selezionato</p>
           </div>
         </div>
       )}
