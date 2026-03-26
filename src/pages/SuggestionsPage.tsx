@@ -6,14 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
-import topicsData from "@/data/topics.json";
-import companiesData from "@/data/companies.json";
-import fieldsData from "@/data/fields.json";
-import type { Topic, Company, Field } from "@/types/data";
-
-const topics = topicsData as Topic[];
-const companies = companiesData as Company[];
-const fields = fieldsData as Field[];
 function getFieldName(id: string) { return fields.find(f => f.id === id)?.name || id; }
 
 const categoryIcons: Record<string, React.ElementType> = {
