@@ -157,12 +157,12 @@ export default function ActionsPage() {
     }
   };
 
-  const generateEmail = (sup: Supervisor) => {
-    const prompt = `Write a formal email per contattare ${sup.title} ${sup.firstName} ${sup.lastName} dell'università, esperto in ${sup.researchInterests.slice(0, 3).join(", ")}. The student wants to ask them to be the thesis supervisor. Include: introduction, motivation, skills, request for a meeting. Professional but personal tone. Do NOT ask Socratic questions, write ONLY the email ready to send.`;
-    generateWithAI(prompt, `Email per ${sup.title} ${sup.lastName}`, "email", `email-${sup.id}`);
+  const generateEmail = (sup: { id: string; name: string; researchInterests: string[] }) => {
+    const prompt = `Write a formal email per contattare ${sup.name}, esperto in ${sup.researchInterests.slice(0, 3).join(", ")}. The student wants to ask them to be the thesis supervisor. Include: introduction, motivation, skills, request for a meeting. Professional but personal tone. Do NOT ask Socratic questions, write ONLY the email ready to send.`;
+    generateWithAI(prompt, `Email per ${sup.name}`, "email", `email-${sup.id}`);
   };
 
-  const generateCompanyEmail = (company: Company) => {
+  const generateCompanyEmail = (company: { id: string; name: string; domains: string[] }) => {
     const prompt = `Write a formal email per contattare ${company.name} riguardo una potenziale collaborazione per la tesi. L'azienda opera in: ${company.domains.join(", ")}. Lo studente vuole proporre un progetto di tesi in partnership. Includi: presentazione, proposta di valore per l'azienda, competenze, richiesta di incontro. Tono professionale. NON fare domande socratiche, scrivi SOLO la email.`;
     generateWithAI(prompt, `Email per ${company.name}`, "email", `company-${company.id}`);
   };
