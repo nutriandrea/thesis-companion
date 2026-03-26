@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, severity } = await req.json();
+    const { text, severity, language } = await req.json();
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
     if (!ELEVENLABS_API_KEY) {
       return new Response(JSON.stringify({ error: "ELEVENLABS_API_KEY not configured" }), {
