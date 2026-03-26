@@ -1377,7 +1377,6 @@ ISTRUZIONI DI GENERAZIONE:
 
         // Save books as suggestions
         if (filterResult.books?.length > 0) {
-          // Remove old book suggestions first
           await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "book");
           await supabase.from("socrate_suggestions").insert(
             filterResult.books.map((b: any) => ({
@@ -1386,6 +1385,48 @@ ISTRUZIONI DI GENERAZIONE:
               title: `${b.title} — ${b.author}`,
               detail: `Categoria: ${b.category}${b.exploration_flag ? " · 🔍 Esplorazione" : ""}`,
               reason: b.reason,
+            }))
+          );
+        }
+
+        // Save professors as suggestions
+        if (filterResult.professors?.length > 0) {
+          await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "professor");
+          await supabase.from("socrate_suggestions").insert(
+            filterResult.professors.map((p: any) => ({
+              user_id: userId,
+              category: "professor",
+              title: p.entity_name,
+              detail: `Rilevanza: ${p.relevance_score}%${p.exploration_flag ? " · 🔍 Esplorazione" : ""} · ${p.matched_traits?.join(", ") || ""}`,
+              reason: p.reason,
+            }))
+          );
+        }
+
+        // Save topics as suggestions
+        if (filterResult.topics?.length > 0) {
+          await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "topic");
+          await supabase.from("socrate_suggestions").insert(
+            filterResult.topics.map((t: any) => ({
+              user_id: userId,
+              category: "topic",
+              title: t.entity_name,
+              detail: `Rilevanza: ${t.relevance_score}%${t.exploration_flag ? " · 🔍 Esplorazione" : ""} · ${t.matched_traits?.join(", ") || ""}`,
+              reason: t.reason,
+            }))
+          );
+        }
+
+        // Save companies as suggestions
+        if (filterResult.companies?.length > 0) {
+          await supabase.from("socrate_suggestions").delete().eq("user_id", userId).eq("category", "company");
+          await supabase.from("socrate_suggestions").insert(
+            filterResult.companies.map((c: any) => ({
+              user_id: userId,
+              category: "company",
+              title: c.entity_name,
+              detail: `Rilevanza: ${c.relevance_score}%${c.exploration_flag ? " · 🔍 Esplorazione" : ""} · ${c.matched_traits?.join(", ") || ""}`,
+              reason: c.reason,
             }))
           );
         }
