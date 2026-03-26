@@ -922,7 +922,7 @@ ISTRUZIONI:
                         properties: {
                           title: { type: "string", description: "Short task title" },
                           description: { type: "string", description: "Detailed action description" },
-                          section: { type: "string", description: "Thesis section or topic area (e.g. Abstract, Metodologia, Literature Review, Ricerca, Bibliografia)" },
+                          section: { type: "string", description: "Thesis section or topic area (e.g. Introduzione, Metodologia, Literature Review, Analisi critica, Casi studio, Progetto, Framework teorico, Risultati, Discussione, Conclusioni, Bibliografia, Abstract)" },
                           priority: { type: "string", enum: ["critical", "high", "medium", "low"] },
                           estimated_minutes: { type: "integer", description: "Estimated time in minutes" },
                         },
