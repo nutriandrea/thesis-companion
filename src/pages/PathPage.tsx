@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Route, GraduationCap, Building2, Users, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useAffinityScores, useSocrateSuggestions } from "@/hooks/useSocrateSuggestions";
 import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
+import GenerationProgress from "@/components/shared/GenerationProgress";
 
 export default function PathPage() {
   const { user } = useApp();
