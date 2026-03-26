@@ -50,13 +50,18 @@ export default function PathPage() {
           <div className="p-2 rounded-lg bg-success/10"><Route className="w-5 h-5 text-success" /></div>
           <div><h1 className="text-xl font-bold font-display">Percorsi Personalizzati</h1><p className="text-sm text-muted-foreground">Roadmap ottimizzate per te</p></div>
         </div>
-        <div className="text-center py-12 space-y-4">
-          <Route className="w-10 h-10 mx-auto text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">Nessun percorso generato ancora.</p>
-          <Button onClick={() => filterDatabase()} disabled={generating} className="gap-2">
-            <Sparkles className="w-4 h-4" /> {generating ? "Generando..." : "Genera con Socrate"}
-          </Button>
-        </div>
+        <AnimatePresence>
+          {progress && <GenerationProgress progress={progress} />}
+        </AnimatePresence>
+        {!progress && (
+          <div className="text-center py-12 space-y-4">
+            <Route className="w-10 h-10 mx-auto text-muted-foreground/30" />
+            <p className="text-sm text-muted-foreground">Nessun percorso generato ancora.</p>
+            <Button onClick={() => filterDatabase()} disabled={generating} className="gap-2">
+              <Sparkles className="w-4 h-4" /> {generating ? "Generando..." : "Genera con Socrate"}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

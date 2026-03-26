@@ -49,8 +49,13 @@ export default function ContactsPage() {
         </Button>
       </div>
 
+      {/* Progress indicator */}
+      <AnimatePresence>
+        {progress && <GenerationProgress progress={progress} />}
+      </AnimatePresence>
+
       {/* Empty state */}
-      {allAffinities.length === 0 && !filterLoading && (
+      {allAffinities.length === 0 && !filterLoading && !progress && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="bg-card border border-dashed rounded-xl p-8 text-center">
           <Sparkles className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
