@@ -9,10 +9,6 @@ import { AUTH_HEADERS } from "@/lib/auth-headers";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import ThesisConfirmDialog from "@/components/journey/ThesisConfirmDialog";
-import companiesData from "@/data/companies.json";
-import supervisorsData from "@/data/supervisors.json";
-import topicsData from "@/data/topics.json";
-import type { Company, Supervisor, Topic } from "@/types/data";
 
 interface SocratePageProps {
   explorationMode?: boolean;
