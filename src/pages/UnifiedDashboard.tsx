@@ -836,11 +836,11 @@ function DynamicCompanies({ userId, sectors, activeSector }: {
   const defaultItems = useMemo(() => {
     if (affinities.length > 0) {
       return affinities.slice(0, 5).map(a => {
-        const comp = companies.find(c => c.id === a.entity_id);
-        return { id: a.entity_id, name: a.entity_name, score: a.score, domains: comp?.domains?.slice(0, 2) || [] };
+        const traits = a.matched_traits || [];
+        return { id: a.entity_id, name: a.entity_name, score: a.score, domains: traits.slice(0, 2) };
       });
     }
-    return companies.slice(0, 5).map(c => ({ id: c.id, name: c.name, score: null, domains: c.domains.slice(0, 2) }));
+    return [];
   }, [affinities]);
 
   useEffect(() => {
