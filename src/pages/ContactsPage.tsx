@@ -19,7 +19,7 @@ export default function ContactsPage() {
   const { suggestions: companySuggestions } = useSocrateSuggestions(user?.id, ["company"]);
   const { affinities: supervisorAffinities } = useAffinityScores(user?.id, "supervisor");
   const { affinities: companyAffinities } = useAffinityScores(user?.id, "company");
-  const { filterDatabase, loading: filterLoading } = useDatabaseFilter();
+  const { filterDatabase, loading: filterLoading, progress } = useDatabaseFilter();
 
   const allAffinities = useMemo(() => [...supervisorAffinities, ...companyAffinities], [supervisorAffinities, companyAffinities]);
   const affinityMap = useMemo(() => new Map(allAffinities.map(a => [a.entity_id, a])), [allAffinities]);
