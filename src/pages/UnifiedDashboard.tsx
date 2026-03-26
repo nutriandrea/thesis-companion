@@ -915,7 +915,8 @@ function ConfirmedTrackSummary({ supervisorId, sectors, thesisTopic }: {
   supervisorId: string | null; sectors: CareerSector[]; thesisTopic?: string | null;
 }) {
   const t = useT();
-  const sup = supervisorId ? supervisors.find(s => s.id === supervisorId) : null;
+  // Supervisor info now comes from affinity_scores, not local JSON
+  const sup = null; // Will be populated from DB if needed
   const topSectors = sectors.filter(s => s.percentage > 0).sort((a, b) => b.percentage - a.percentage).slice(0, 3);
 
   return (
