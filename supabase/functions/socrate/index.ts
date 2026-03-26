@@ -335,7 +335,7 @@ Regole:
           messages: [
             {
               role: "system",
-              content: `Sei il MOTORE DI PROFILAZIONE CENTRALE di Socrate. Analizza TUTTO per generare:
+              content: `Sei il MOTORE DI PROFILAZIONE CENTRALE di Socrate. ADATTA la profilazione al tipo di tesi (scientifica, argomentativa, compilativa, progettuale, creativa, giuridica, economica, umanistica, artistica). Analizza TUTTO per generare:
 1. Suggerimenti mirati per le sezioni del sito
 2. Un aggiornamento del profilo intellettuale dello studente
 
