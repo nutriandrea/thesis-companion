@@ -251,23 +251,25 @@ Esempio (tesi progettuale): "Il tuo progetto non ha metriche di validazione. Com
           messages: [
             {
               role: "system",
-              content: `Sei un ricercatore esperto. Basandoti sul contesto dello studente, suggerisci paper accademici, articoli e risorse fondamentali da leggere per la sua tesi.
+              content: `Sei un ricercatore esperto. Basandoti sul contesto dello studente, suggerisci risorse fondamentali per la sua tesi.
+ADATTA i riferimenti al TIPO di tesi e disciplina dello studente.
 
 CONTESTO STUDENTE:
 ${studentContext || "Non disponibile"}
 
-${latexContent ? `CONTENUTO LATEX:\n${latexContent.substring(0, 2000)}` : ""}
+${latexContent ? `CONTENUTO DOCUMENTO TESI:\n${latexContent.substring(0, 2000)}` : ""}
 
 CONVERSAZIONE RECENTE:
 ${JSON.stringify((messages as any[]).slice(-10).map((m: any) => ({ role: m.role, content: m.content.substring(0, 300) })))}
 
 Regole:
-- Suggerisci 4-6 riferimenti REALI e verificabili (paper, articoli, libri)
-- Includi link diretti quando possibile (DOI, arXiv, Google Scholar, siti ufficiali)
+- Suggerisci 4-6 riferimenti REALI e verificabili
+- Tipi di risorse (adatta alla disciplina): paper accademici, libri, monografie, sentenze giuridiche, casi aziendali, rapporti di settore, opere d'arte/design, codice legislativo, standard tecnici, documentari, archivi storici, dataset
+- Includi link diretti quando possibile (DOI, arXiv, Google Scholar, SSRN, siti ufficiali, archivi giuridici)
 - Per ogni riferimento spiega BREVEMENTE perché è rilevante per la tesi dello studente
 - Categorie: "foundational" (basi teoriche), "methodology" (approccio metodologico), "recent" (stato dell'arte recente), "contrarian" (prospettive opposte)
 - Se non conosci un link preciso, usa il formato Google Scholar search: https://scholar.google.com/scholar?q=QUERY
-- Prioritizza paper seminali e survey recenti`,
+- Prioritizza fonti seminali e review/survey recenti`,
             },
             { role: "user", content: "Suggerisci i riferimenti principali per la mia tesi." },
           ],
