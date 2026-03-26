@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Contact, Search, Mail, Building2, GraduationCap, Filter, Sparkles, Loader2, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
+import GenerationProgress from "@/components/shared/GenerationProgress";
 
 export default function ContactsPage() {
   const { profile, user, setActiveSection } = useApp();
