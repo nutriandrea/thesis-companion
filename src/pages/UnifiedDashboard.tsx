@@ -741,18 +741,15 @@ function ExpertSuggestions({ userId }: { userId: string }) {
 
   const items = useMemo(() => {
     if (affinities.length > 0) {
-      return affinities.slice(0, 6).map(a => {
-        const exp = experts.find(e => e.id === a.entity_id);
-        return {
-          id: a.entity_id, name: a.entity_name, score: a.score,
-          reasoning: a.reasoning,
-          matched_traits: a.matched_traits || [],
-          title: exp?.title || "",
-          offerInterviews: exp?.offerInterviews ?? false,
-          fieldIds: exp?.fieldIds || [],
-          email: exp?.email || "",
-        };
-      });
+      return affinities.slice(0, 6).map(a => ({
+        id: a.entity_id, name: a.entity_name, score: a.score,
+        reasoning: a.reasoning,
+        matched_traits: a.matched_traits || [],
+        title: "",
+        offerInterviews: false,
+        fieldIds: [] as string[],
+        email: "",
+      }));
     }
     return [];
   }, [affinities]);
