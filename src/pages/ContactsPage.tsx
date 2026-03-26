@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Contact, Search, Mail, Building2, GraduationCap, Filter, Sparkles, Loader2, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useSocrateSuggestions, useAffinityScores } from "@/hooks/useSocrateSuggestions";
 import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
+import GenerationProgress from "@/components/shared/GenerationProgress";
 
 export default function ContactsPage() {
   const { profile, user, setActiveSection } = useApp();
@@ -19,7 +20,7 @@ export default function ContactsPage() {
   const { suggestions: companySuggestions } = useSocrateSuggestions(user?.id, ["company"]);
   const { affinities: supervisorAffinities } = useAffinityScores(user?.id, "supervisor");
   const { affinities: companyAffinities } = useAffinityScores(user?.id, "company");
-  const { filterDatabase, loading: filterLoading } = useDatabaseFilter();
+  const { filterDatabase, loading: filterLoading, progress } = useDatabaseFilter();
 
   const allAffinities = useMemo(() => [...supervisorAffinities, ...companyAffinities], [supervisorAffinities, companyAffinities]);
   const affinityMap = useMemo(() => new Map(allAffinities.map(a => [a.entity_id, a])), [allAffinities]);
@@ -48,8 +49,13 @@ export default function ContactsPage() {
         </Button>
       </div>
 
+      {/* Progress indicator */}
+      <AnimatePresence>
+        {progress && <GenerationProgress progress={progress} />}
+      </AnimatePresence>
+
       {/* Empty state */}
-      {allAffinities.length === 0 && !filterLoading && (
+      {allAffinities.length === 0 && !filterLoading && !progress && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="bg-card border border-dashed rounded-xl p-8 text-center">
           <Sparkles className="w-10 h-10 text-muted-foreground mx-auto mb-3" />

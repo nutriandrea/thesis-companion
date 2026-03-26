@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Route, GraduationCap, Building2, Users, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useAffinityScores, useSocrateSuggestions } from "@/hooks/useSocrateSuggestions";
 import { useDatabaseFilter } from "@/hooks/useDatabaseFilter";
+import GenerationProgress from "@/components/shared/GenerationProgress";
 
 export default function PathPage() {
   const { user } = useApp();
@@ -13,7 +14,7 @@ export default function PathPage() {
   const { affinities: topics } = useAffinityScores(user?.id, "topic");
   const { affinities: companies } = useAffinityScores(user?.id, "company");
   const { affinities: experts } = useAffinityScores(user?.id, "expert");
-  const { filterDatabase, loading: generating } = useDatabaseFilter();
+  const { filterDatabase, loading: generating, progress } = useDatabaseFilter();
 
   const paths = useMemo(() => {
     if (topics.length === 0) return [];
@@ -49,13 +50,18 @@ export default function PathPage() {
           <div className="p-2 rounded-lg bg-success/10"><Route className="w-5 h-5 text-success" /></div>
           <div><h1 className="text-xl font-bold font-display">Percorsi Personalizzati</h1><p className="text-sm text-muted-foreground">Roadmap ottimizzate per te</p></div>
         </div>
-        <div className="text-center py-12 space-y-4">
-          <Route className="w-10 h-10 mx-auto text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">Nessun percorso generato ancora.</p>
-          <Button onClick={() => filterDatabase()} disabled={generating} className="gap-2">
-            <Sparkles className="w-4 h-4" /> {generating ? "Generando..." : "Genera con Socrate"}
-          </Button>
-        </div>
+        <AnimatePresence>
+          {progress && <GenerationProgress progress={progress} />}
+        </AnimatePresence>
+        {!progress && (
+          <div className="text-center py-12 space-y-4">
+            <Route className="w-10 h-10 mx-auto text-muted-foreground/30" />
+            <p className="text-sm text-muted-foreground">Nessun percorso generato ancora.</p>
+            <Button onClick={() => filterDatabase()} disabled={generating} className="gap-2">
+              <Sparkles className="w-4 h-4" /> {generating ? "Generando..." : "Genera con Socrate"}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
