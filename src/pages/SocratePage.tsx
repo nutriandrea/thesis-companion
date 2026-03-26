@@ -91,7 +91,7 @@ export default function SocratePage({ explorationMode = false, onThesisConfirmed
         } else {
           const welcome: ChatMsg = {
             id: "welcome", role: "assistant",
-            content: `Before we go further, tell me: where do you find yourself in this journey?\n\nAre you still searching for a direction, or have you already begun to shape an idea?\n\nAre you looking for a topic, a supervisor, or something more concrete to work on?\n\nHelp me understand your starting point, so that I may meet you there.`,
+            content: `Prima di andare avanti, dimmi: dove ti trovi in questo percorso?\n\nStai ancora cercando una direzione, o hai già iniziato a dare forma a un'idea?\n\nCerchi un argomento, un relatore, o qualcosa di più concreto su cui lavorare?\n\nAiutami a capire il tuo punto di partenza, così posso incontrarti lì.`,
           };
           setMessages([welcome]);
           if (user) supabase.from("socrate_messages").insert({ user_id: user.id, role: "assistant", content: welcome.content });
