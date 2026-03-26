@@ -1496,8 +1496,7 @@ ${JSON.stringify(recentMessages.slice(-15).map((m: any) => ({ role: m.role, cont
 F) CONTENUTO LATEX:
 ${latexContent ? latexContent.substring(0, 4000) : "Nessun contenuto LaTeX presente."}
 
-G) DATASET DISPONIBILE (aziende, professori, topic):
-${datasetSummary || "Non fornito"}
+G) GENERA dalla tua KNOWLEDGE BASE professori, aziende, topic e libri REALI e rilevanti per questo studente.
 
 ISTRUZIONI:
 1. Analizza TUTTE le fonti per creare un profilo unificato
