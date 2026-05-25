@@ -1847,8 +1847,11 @@ function DemoDashboard() {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Demo banner */}
-      <div className="bg-accent/10 border-b border-accent/20 px-4 py-2 text-center shrink-0">
-        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Simulated data — Click phases to navigate</span>
+      <div className="bg-accent/10 border-b border-accent/20 px-4 py-2 text-center shrink-0 flex items-center justify-center gap-4">
+        <span className="text-xs font-semibold text-accent uppercase tracking-wider">Demo Mode — Simulated data</span>
+        <a href="/demo/explore/dashboard" className="text-[11px] font-semibold text-accent underline underline-offset-2 hover:opacity-80">
+          Esplora tutte le sezioni →
+        </a>
       </div>
 
       {/* ─── TOP: Identity ─── */}
