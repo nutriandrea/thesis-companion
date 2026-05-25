@@ -8,6 +8,7 @@ import AuthPage from "@/pages/AuthPage";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 import DemoPage from "@/pages/DemoPage";
+import DemoShell from "@/pages/demo/DemoShell";
 
 const App = () => (
   <BrowserRouter>
@@ -18,6 +19,7 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/login" element={<AuthPage />} />
+            <Route path="/demo/explore/*" element={<DemoShell />} />
             <Route path="/demo" element={<DemoPage />} />
             <Route
               path="/*"
