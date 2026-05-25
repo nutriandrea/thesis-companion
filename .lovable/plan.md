@@ -1,69 +1,98 @@
 
+# Piano: Socrate Demo Ready — `/demo` self-contained con tutte le sezioni
 
-# Piano: Rimuovere dipendenza da JSON statici — tutto da LLM knowledge
+## Obiettivo
 
-## Situazione attuale
+Trasformare la rotta pubblica `/demo` in una **versione completa e navigabile** di Socrate, popolata con dati sintetici coerenti (profilo "Marco Demo"), senza toccare né il flusso autenticato (`/dashboard`, `/socrate`) né le edge function di produzione. Chi apre il link demo vede tutte le sezioni della piattaforma riempite e può passare dall'una all'altra come se fosse un utente reale a metà tesi.
 
-6 pagine importano dati da file JSON statici (`supervisors.json`, `companies.json`, `topics.json`, `experts.json`, `fields.json`):
+## Stato attuale
 
-| Pagina | JSON usati | Come li usa |
-|--------|-----------|-------------|
-| **UnifiedDashboard** | supervisors, companies, experts, fields | Lookup supervisori/aziende per affinità, invio a `match_people`, fallback career tree |
-| **SocratePage** | supervisors, companies, topics | `buildDatasetSummary()` — invia lista completa al backend come contesto |
-| **ActionsPage** | supervisors, companies | Filtra supervisori per campo, mostra aziende per email |
-| **PathPage** | supervisors, companies, experts, topics, fields | Genera percorsi incrociando topic/supervisori locali |
-| **FuturesPage** | topics | Genera scenari what-if da topic statici |
-| **ProfilePage** | fields, universities | Dropdown selezione campo/università (questi restano — sono UI config, non dati mock) |
+- `/demo` (`src/pages/DemoPage.tsx`, 2030 righe) ha già: login fake → chat Socrate → dashboard unificata con career tree, supervisori, vulnerabilità, references, roadmap, expert match, task per fase.
+- Sono presenti `MOCK_*` per tutto: tesi, settori, task per fase, supervisori, esperti, references, vulnerabilità, conversazione Socrate, roadmap.
+- Manca completamente la **navigazione tra le sezioni satellite** (Contatti, Percorsi, Azioni, Futuro, Suggerimenti, Mercato, Memoria, Editor, Profilo): la demo finisce sulla dashboard.
+- Le pagine reali (`ContactsPage`, `PathPage`, `ActionsPage`, `FuturesPage`, ecc.) leggono da Supabase autenticato → non riutilizzabili così come sono.
 
 ## Strategia
 
-Ogni pagina che oggi mostra dati da JSON deve invece:
-1. Leggere da `affinity_scores` e `socrate_suggestions` (già popolati dal filter_database LLM)
-2. Se vuoto → mostrare empty state con bottone "Genera con Socrate"
-3. I dati generati dall'LLM sono già salvati in DB dai hook esistenti (`useAffinityScores`, `useSocrateSuggestions`)
+**Demo come universo parallelo**: zero scrittura su Supabase, zero hook autenticati. Tutto vive dentro un `DemoContext` in memoria con i dati sintetici già esistenti + qualche aggiunta. Le pagine demo sono **viste semplificate** delle pagine reali, costruite per riusare layout e componenti UI ma con dati dal context.
 
-**Eccezioni**: `fields.json` e `universities.json` in ProfilePage restano — sono liste di opzioni UI, non dati di raccomandazione.
+Si preserva ciò che già funziona:
+- `/login`, `/dashboard`, `/socrate` invariati
+- Edge function `socrate` e `demo-engine` invariate (la chat demo già le usa in modalità stateless)
+- Nessuna nuova tabella, nessuna RLS, nessuna migration
 
-## Modifiche per file
+## Architettura
 
-### 1. `src/pages/SocratePage.tsx`
-- Rimuovere import di `companiesData`, `supervisorsData`, `topicsData`
-- Rimuovere `buildDatasetSummary()` — non serve più inviare il dataset al backend
-- Rimuovere il parametro `datasetSummary` dalla fetch a Socrate (il backend genera tutto dalla sua knowledge)
+```text
+/demo                          → DemoPage (entry: login → chat → dashboard)
+/demo/dashboard                → DemoDashboard (overview attuale)
+/demo/socrate                  → DemoSocrate (chat persistente nel context)
+/demo/contacts                 → DemoContacts
+/demo/path                     → DemoPath
+/demo/actions                  → DemoActions
+/demo/futures                  → DemoFutures
+/demo/suggestions              → DemoSuggestions
+/demo/market                   → DemoMarket
+/demo/memory                   → DemoMemory
+/demo/editor                   → DemoEditor
+/demo/profile                  → DemoProfile
+```
 
-### 2. `src/pages/UnifiedDashboard.tsx`
-- Rimuovere import di `supervisorsData`, `companiesData`, `expertsData`, `fieldsData`
-- Le funzioni che fanno `supervisors.find(s => s.id === a.entity_id)` devono usare i dati già presenti in `affinity_scores` (entity_name, reasoning, matched_traits)
-- Il career tree già usa dati dal backend; rimuovere solo il fallback `companies.filter(...)` locale
-- Rimuovere l'invio di `supervisorsData` e `fieldsData` alla fetch `match_people`
+Tutto wrappato da un `DemoShell` con sidebar di navigazione (clone semplificato di `AppSidebar`) e un `DemoProvider` che espone profilo, supervisori, esperti, vulnerabilità, references, task, roadmap, messaggi Socrate, memoria, suggerimenti.
 
-### 3. `src/pages/ActionsPage.tsx`
-- Rimuovere import supervisors/companies
-- `matchedSup` e `matchedCompanies` → usare `useAffinityScores` per prendere supervisori e aziende dal DB
-- Email generation: usare `entity_name` dall'affinity invece del lookup locale
+## Sezioni — cosa contiene ognuna
 
-### 4. `src/pages/PathPage.tsx`
-- Rimuovere tutti i 5 import JSON
-- Riscrivere per usare `useAffinityScores` (supervisori, topic, aziende dal DB)
-- Se nessun dato → empty state con "Genera con Socrate"
+| Rotta | Cosa mostra (con dati sintetici già in DemoPage o da aggiungere) |
+|---|---|
+| **Dashboard** | Quella attuale: tesi, career tree, supervisori top 3, vulnerabilità, references, roadmap |
+| **Socrate** | Chat con `MOCK_SOCRATE_MESSAGES` come storico + input live verso edge function in modalità chat |
+| **Contatti** | Lista combinata supervisori + esperti (`MOCK_SUPERVISORS`, `MOCK_EXPERTS`) con email pre-generate |
+| **Percorsi** | 3-4 percorsi tesi alternativi generati da topic/supervisori (mock statici tematicamente coerenti) |
+| **Azioni** | Bozze email per ogni supervisore + task pendenti aggregate da `MOCK_TASKS` |
+| **Futuro** | 3 scenari what-if sulla tesi (industria/PhD/startup) — mock statico |
+| **Suggerimenti** | Aggregato di references, esperti, supervisori in formato "card suggerimento" |
+| **Mercato** | Trend di settore basati su `MOCK_SECTORS` con grafico stats |
+| **Memoria** | Timeline di "ricordi" sintetici (decisioni prese, milestones) |
+| **Editor** | Anteprima statica di un capitolo tesi (Markdown mock) — sola lettura |
+| **Profilo** | Marco Demo, ETH Zurich, skills, topic confermato — sola lettura |
 
-### 5. `src/pages/FuturesPage.tsx`
-- Rimuovere import topics
-- Usare `useAffinityScores(userId, "topic")` per mostrare topic dal DB
-- Scenari what-if generati da dati LLM invece che da JSON statico
+## File da creare
 
-### 6. `supabase/functions/socrate/index.ts`
-- Nel mode `chat`: rimuovere la lettura di `datasetSummary` dal body (non serve più, il backend usa la sua knowledge)
-- Nel mode `match_people` (se esiste): rimuovere la dipendenza da `supervisorsData`/`expertsData` passati dal frontend
+```
+src/pages/demo/
+  DemoShell.tsx              ← layout + sidebar + routing interno
+  DemoProvider.tsx           ← context con tutti i mock
+  DemoDashboard.tsx          ← estratto da DemoPage step "dashboard"
+  DemoSocrate.tsx            ← estratto da DemoPage step "socrate"
+  DemoContacts.tsx
+  DemoPath.tsx
+  DemoActions.tsx
+  DemoFutures.tsx
+  DemoSuggestions.tsx
+  DemoMarket.tsx
+  DemoMemory.tsx
+  DemoEditor.tsx
+  DemoProfile.tsx
+src/data/demo-mocks.ts       ← centralizzazione MOCK_* (estratti da DemoPage)
+```
 
-### 7. Cleanup
-- I file `src/data/supervisors.json`, `companies.json`, `topics.json`, `experts.json` possono essere rimossi (o lasciati per la demo)
-- `src/data/fields.json` e `universities.json` restano per i dropdown del profilo
+## File da modificare
+
+- `src/App.tsx` — aggiungere `<Route path="/demo/*" element={<DemoShell />} />` mantenendo `/demo` (intro flow) come prima
+- `src/pages/DemoPage.tsx` — alla fine dello step "dashboard" mostrare CTA "Esplora tutte le sezioni" → naviga a `/demo/dashboard` dentro `DemoShell`. Estrarre i MOCK_* in `src/data/demo-mocks.ts`.
 
 ## Ordine di implementazione
-1. Edge function — rimuovere dipendenza da dataset nel body
-2. SocratePage — rimuovere buildDatasetSummary
-3. UnifiedDashboard — sostituire lookup locali con dati DB
-4. ActionsPage, PathPage, FuturesPage — stessa sostituzione
-5. Test end-to-end
 
+1. Estrarre i mock in `src/data/demo-mocks.ts` (no logic change)
+2. Creare `DemoProvider` + `DemoShell` con sidebar e routing `/demo/*`
+3. Portare dashboard e socrate dentro lo Shell (riuso componenti già in DemoPage)
+4. Costruire le 9 pagine satellite come viste statiche/semi-statiche sui dati del provider
+5. Collegare il CTA finale da `DemoPage` allo Shell
+6. QA: cliccare ogni voce di sidebar, verificare che nessuna pagina sia vuota e che la chat Socrate continui a funzionare in streaming
+
+## Cosa NON cambia
+
+- `AppShell`, `ProtectedRoute`, `useApp`, hook `useAffinityScores`, `useSocrateSuggestions`, `useDatabaseFilter` → intatti
+- Tutte le pagine reali (`ContactsPage`, `PathPage`, …) → intatte
+- Edge function `socrate`, `demo-engine`, `dashboard-engine` → intatte
+- Schema DB e RLS → intatti
